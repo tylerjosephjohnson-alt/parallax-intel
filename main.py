@@ -2857,7 +2857,7 @@ The four intelligence_overview paragraphs are the core analytical product — ma
 
         # v8 robust JSON parse: strict -> repair pass -> debug fallback
         try:
-            brief = json.loads(json_text)
+            brief = json.loads(json_text, strict=False)
         except json.JSONDecodeError as parse_err:
             print(f"  Brief: strict parse failed at {parse_err}, attempting repair")
             import re as _re
@@ -2878,7 +2878,7 @@ The four intelligence_overview paragraphs are the core analytical product — ma
             # Remove stray // line comments
             repaired = _re.sub(r"^\s*//[^\n]*$", "", repaired, flags=_re.MULTILINE)
             try:
-                brief = json.loads(repaired)
+                brief = brief = json.loads(repaired, strict=False)
                 print(f"  Brief: repair successful")
             except json.JSONDecodeError as repair_err:
                 print(f"  Brief: repair failed too ({repair_err})")
