@@ -3243,24 +3243,6 @@ Return ONLY a JSON object (no markdown, no preamble):
 # ─────────────────────────────────────────────
 # ENTRY POINT
 # ─────────────────────────────────────────────
-if __name__ == "__main__":
-    print("Parallax starting...")
-    print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
-    print(f"Scrape interval: every {SCRAPE_INTERVAL_MINUTES} minutes")
-
-    # Flask is required — must be in requirements.txt
-    if not FLASK:
-        raise SystemExit("ERROR: Flask not installed. Add 'flask' to requirements.txt")
-
-    # Start scraper in background thread
-    scraper_thread = threading.Thread(target=scheduler, daemon=True)
-    scraper_thread.start()
-    print("Background scraper started")
-
-    # Start web server
-    port = int(os.environ.get("PORT", 8080))
-    print(f"Web server starting on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
 # ─────────────────────────────────────────────
 # SUPPLEMENTARY DATA SOURCES
 # ─────────────────────────────────────────────
@@ -3418,3 +3400,22 @@ def enrich_cluster_with_context(cluster_articles):
 
 
 
+
+if __name__ == "__main__":
+    print("Parallax starting...")
+    print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
+    print(f"Scrape interval: every {SCRAPE_INTERVAL_MINUTES} minutes")
+
+    # Flask is required — must be in requirements.txt
+    if not FLASK:
+        raise SystemExit("ERROR: Flask not installed. Add 'flask' to requirements.txt")
+
+    # Start scraper in background thread
+    scraper_thread = threading.Thread(target=scheduler, daemon=True)
+    scraper_thread.start()
+    print("Background scraper started")
+
+    # Start web server
+    port = int(os.environ.get("PORT", 8080))
+    print(f"Web server starting on port {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
