@@ -66,6 +66,14 @@ CLUSTER_MIN_SOURCES = 2
 MODEL = "claude-sonnet-4-6"
 DATA_FILE = "stories.json"
 
+# Global state tracking for /status endpoint
+last_run = {
+    "time": None,
+    "stories": 0,
+    "articles": 0,
+    "status": "not_yet_run"
+}
+
 RSS_FEEDS = [
     # ── Tier 1: Wire services ──────────────────────────────────────
     {"url": "https://feeds.reuters.com/reuters/topNews",          "source": "Reuters",        "lean": "centre"},
@@ -3095,6 +3103,7 @@ if FLASK:
     @app.route("/")
     def index():
         return send_file("parallax-FIXED-v2.html")
+
     @app.route("/stories.json")
     def stories():
         if not os.path.exists(DATA_FILE):
