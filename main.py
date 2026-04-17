@@ -2853,7 +2853,45 @@ The four intelligence_overview paragraphs are the core analytical product — ma
         clean = text.replace("```json","").replace("```","").strip()
         j_start = clean.find("{")
         j_end   = clean.rfind("}") + 1
-        brief   = json.loads(clean[j_start:j_end])
+        json_text = clean[j_start:j_end]
+
+        # v8 robust JSON parse: strict -> repair pass -> debug fallback
+        try:
+            brief = json.loads(json_text)
+        except json.JSONDecodeError as parse_err:
+            print(f"  Brief: strict parse failed at {parse_err}, attempting repair")
+            import re as _re
+            repaired = json_text
+            # Normalise smart quotes and fancy dashes Claude emits
+            _smart = {
+                "\u201c": '"', "\u201d": '"',
+                "\u2018": "'", "\u2019": "'",
+                "\u2013": "-", "\u2014": "-",
+                "\u2026": "...", "\u00a0": " ",
+            }
+            for _bad, _good in _smart.items():
+                repaired = repaired.replace(_bad, _good)
+            # Strip stray backtick fences left mid-document
+            repaired = repaired.replace("```", "")
+            # Remove trailing commas before } or ]
+            repaired = _re.sub(r",(\s*[}\]])", r"\1", repaired)
+            # Remove stray // line comments
+            repaired = _re.sub(r"^\s*//[^\n]*$", "", repaired, flags=_re.MULTILINE)
+            try:
+                brief = json.loads(repaired)
+                print(f"  Brief: repair successful")
+            except json.JSONDecodeError as repair_err:
+                print(f"  Brief: repair failed too ({repair_err})")
+                try:
+                    ts = utc_now().strftime("%Y%m%d-%H%M%S")
+                    with open(f"brief-raw-{ts}.txt", "w", encoding="utf-8") as f:
+                        f.write(text)
+                    with open(f"brief-repaired-{ts}.txt", "w", encoding="utf-8") as f:
+                        f.write(repaired)
+                    print(f"  Brief: wrote debug files brief-raw-{ts}.txt")
+                except Exception:
+                    pass
+                raise
 
         # Add metadata
         brief["generated_at_iso"] = utc_now().isoformat()
