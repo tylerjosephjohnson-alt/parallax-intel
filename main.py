@@ -3094,8 +3094,7 @@ if FLASK:
 
     @app.route("/")
     def index():
-        return send_file("parallax.html")
-
+return send_file("parallax-FIXED-v2.html")
     @app.route("/stories.json")
     def stories():
         if not os.path.exists(DATA_FILE):
