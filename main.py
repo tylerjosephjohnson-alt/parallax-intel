@@ -2820,7 +2820,7 @@ The four intelligence_overview paragraphs are the core analytical product — ma
 
     payload = json.dumps({
         "model":      "claude-sonnet-4-6",
-        "max_tokens": 8000,
+        "max_tokens": 16000,
         "system":     system_prompt,
         "messages":   [{"role": "user", "content": f"Generate the Parallax morning brief for {today}. Search for overnight developments now."}],
         "tools":      [{"type": "web_search_20250305", "name": "web_search"}]
