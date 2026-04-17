@@ -3216,6 +3216,36 @@ if FLASK:
         t.start()
         return jsonify({"status": "triggered", "message": "Brief generation started"})
 
+    @app.route("/debug-brief")
+    def debug_brief():
+        """Serves latest brief debug files. Query: ?file=raw|repaired, ?pos=<char>, ?ctx=<radius>"""
+        import glob as _glob, os as _os
+        kind = request.args.get("file", "raw")
+        pos  = request.args.get("pos", type=int)
+        ctx  = request.args.get("ctx", default=200, type=int)
+        pattern = f"brief-{kind}-*.txt"
+        files = sorted(_glob.glob(pattern), key=_os.path.getmtime, reverse=True)
+        if not files:
+            return jsonify({"error": f"no {pattern} files found"}), 404
+        latest = files[0]
+        try:
+            with open(latest, "r", encoding="utf-8") as f:
+                data = f.read()
+        except Exception as e:
+            return jsonify({"error": str(e), "file": latest}), 500
+        out = {"file": latest, "size_chars": len(data), "all_files": files[:10]}
+        if pos is not None:
+            lo = max(0, pos - ctx)
+            hi = min(len(data), pos + ctx)
+            out["pos"] = pos
+            out["context"] = data[lo:hi]
+            out["char_at_pos"] = data[pos] if pos < len(data) else None
+            out["ord_at_pos"] = ord(data[pos]) if pos < len(data) else None
+        else:
+            out["preview_start"] = data[:500]
+            out["preview_end"]   = data[-500:]
+        return jsonify(out)
+
     @app.route("/research", methods=["POST"])
     def research():
         """
