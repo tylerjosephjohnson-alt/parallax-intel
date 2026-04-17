@@ -66,6 +66,10 @@ CLUSTER_MIN_SOURCES = 2
 MODEL = "claude-sonnet-4-6"
 DATA_FILE = "stories.json"
 
+# FRED economic data series to fetch (empty = skip FRED)
+# To enable, populate with series codes like {"unemployment": "UNRATE", ...}
+FRED_SERIES = {}
+
 # Global state tracking for /status endpoint
 last_run = {
     "time": None,
@@ -2930,7 +2934,7 @@ def run_scraper():
             story = generate_story(cl)
             if story:
                 # Compute and inject velocity score
-                vel_score = score_signal_velocity(cl, story.get("id", sid))
+                vel_score = score_signal_velocity(cl, story.get("id", ""))
                 story["velocity_score"]      = vel_score
                 story["contradiction_flags"] = story.pop("_contradiction_flags", [])
                 story["provisional"]         = story.pop("_prov_ratio", 0.0) > 0.5
