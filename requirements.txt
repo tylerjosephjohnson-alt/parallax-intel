@@ -1,7 +1,3 @@
 flask
 newspaper4k
 trafilatura
-praw
-atproto
-telethon
-anthropic

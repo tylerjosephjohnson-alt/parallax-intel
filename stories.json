@@ -1,0 +1,10 @@
+{
+  "generated_at": "2026-04-17T00:00:00Z",
+  "story_count": 0,
+  "stories": [],
+  "economic_signals": {},
+  "meta": {
+    "status": "initializing",
+    "note": "Scraper runs on startup — first stories appear within ~2 minutes of deploy"
+  }
+}
