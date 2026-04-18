@@ -347,6 +347,28 @@
     font-family: ui-monospace, 'SF Mono', Menlo, monospace;
     font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
   }
+  .sc-location {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.06em;
+    color: var(--text-faint); text-transform: uppercase;
+  }
+  .sc-location::before {
+    content: '\25C9'; font-size: 8px; color: var(--steel);
+  }
+  .sc-topic.tp-conflict { background: rgba(201, 74, 59, 0.15); color: #e07668; }
+  .sc-topic.tp-politics { background: rgba(74, 144, 226, 0.12); color: #6fa7e8; }
+  .sc-topic.tp-economics { background: rgba(201, 166, 59, 0.15); color: #d4b24a; }
+  .sc-topic.tp-humanrights { background: rgba(180, 140, 200, 0.15); color: #c09dd1; }
+  .sc-topic.tp-environment { background: rgba(78, 168, 106, 0.15); color: #69b884; }
+  .sc-topic.tp-technology { background: rgba(122, 138, 151, 0.2); color: #a0b0bd; }
+  .sc-topic.tp-disinformation { background: rgba(201, 74, 59, 0.12); color: #e07668; }
+  .sc-conf-hint {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 9px; letter-spacing: 0.08em; font-weight: 600;
+    color: var(--text-faint); text-transform: uppercase;
+    margin-top: 2px;
+  }
   .sc-topic {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 8px; border-radius: 3px;
@@ -800,14 +822,40 @@
     const summaryPreview = summary.length > 240 ? summary.slice(0, 240) + '…' : summary;
     const srcCount = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
     const region = s.region || 'global';
-    const regionLabel = region === 'middle-east' ? 'Middle East' : region === 'east-asia' ? 'East Asia' : region.charAt(0).toUpperCase() + region.slice(1);
-    const tpClass = region === 'middle-east' ? 'tp-mideast' : region === 'east-asia' ? 'tp-asia' : 'tp-' + region.split('-')[0];
-    // Confidence badge logic
+    // Topic: prefer explicit category, fall back to region
+    const category = (s.category || '').toLowerCase();
+    const topicRaw = category || region;
+    const topicLabel = topicRaw === 'middle-east' ? 'Middle East' :
+      topicRaw === 'east-asia' ? 'East Asia' :
+      topicRaw === 'asia-pacific' ? 'Asia Pacific' :
+      topicRaw === 'russia-fsu' ? 'Russia / FSU' :
+      topicRaw.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    let tpClass = '';
+    if (category === 'conflict-war') tpClass = 'tp-conflict';
+    else if (category === 'politics') tpClass = 'tp-politics';
+    else if (category === 'economics') tpClass = 'tp-economics';
+    else if (category === 'human-rights') tpClass = 'tp-humanrights';
+    else if (category === 'environment') tpClass = 'tp-environment';
+    else if (category === 'technology') tpClass = 'tp-technology';
+    else if (category === 'disinformation') tpClass = 'tp-disinformation';
+    else {
+      // fall back to region coloring
+      tpClass = region === 'middle-east' ? 'tp-mideast' :
+        region === 'east-asia' || region === 'asia-pacific' ? 'tp-asia' :
+        region === 'europe' ? 'tp-europe' :
+        region === 'africa' ? 'tp-africa' :
+        region === 'americas' ? 'tp-americas' :
+        region === 'russia-fsu' || region === 'russia' ? 'tp-mideast' :
+        'tp-global';
+    }
+    // Confidence from data or derived
     let confBadge = 'b-unverified', confLabel = 'UNVERIFIED';
     if (srcCount >= 5) { confBadge = 'b-verified'; confLabel = 'VERIFIED'; }
     else if (srcCount >= 3) { confBadge = 'b-corroborated'; confLabel = 'CORROBORATED'; }
     else if (srcCount >= 2) { confBadge = 'b-single'; confLabel = 'MULTI-SOURCE'; }
     else if (srcCount >= 1) { confBadge = 'b-single'; confLabel = 'SINGLE SOURCE'; }
+    const aiConf = (s.confidence || '').toLowerCase();
+    const confHint = aiConf ? 'AI: ' + aiConf.toUpperCase() : '';
     const dateStr = (() => {
       const d = s.updated || s.published || s.date;
       if (!d) return '';
@@ -821,27 +869,33 @@
     if (s.has_econ) flags.push('ECON');
     if (s.has_prediction) flags.push('PREDICTION');
     if (s.has_psyop) flags.push('PSYOP');
+    const location = s.location && s.location !== 'Global' ? s.location : '';
     // Expanded content
     const connections = s.paragraph_2_connections || '';
     const watch = s.paragraph_3_watch || s.paragraph_3_what_watch || '';
     const buried = s.paragraph_4_buried || '';
     const contested = s.contested_claim || '';
     const sig = s.significance || '';
+    const groundTruth = s.ground_truth || '';
+    const whoBenefits = s.who_benefits || null;
     const sourcesList = Array.isArray(s.sources) ? s.sources.join(' · ') : (s.source || '');
-    const cascade = Array.isArray(s.story_card_ids) ? s.story_card_ids : [];
+    const cascade = Array.isArray(s.story_card_ids) ? s.story_card_ids : (Array.isArray(s.cascade_ids) ? s.cascade_ids : []);
     let expandHtml = '';
     if (summary && summary.length > 240) expandHtml += '<div class="sc-section"><div class="sc-section-label">Situation</div><p>' + escapeHtml(summary) + '</p></div>';
     if (connections) expandHtml += '<div class="sc-section"><div class="sc-section-label">Connections</div><p>' + escapeHtml(connections) + '</p></div>';
     if (watch) expandHtml += '<div class="sc-section"><div class="sc-section-label">Cascading effects</div><p>' + escapeHtml(watch) + '</p></div>';
     if (buried) expandHtml += '<div class="sc-section"><div class="sc-section-label">Narrative shift</div><p>' + escapeHtml(buried) + '</p></div>';
     if (contested) expandHtml += '<div class="sc-section"><div class="sc-section-label">Contested claim</div><p>' + escapeHtml(contested) + '</p></div>';
+    if (groundTruth) expandHtml += '<div class="sc-section"><div class="sc-section-label">Ground truth</div><p>' + escapeHtml(groundTruth) + '</p></div>';
+    if (whoBenefits && whoBenefits.civilian_impact) expandHtml += '<div class="sc-section"><div class="sc-section-label">Civilian impact</div><p>' + escapeHtml(whoBenefits.civilian_impact) + '</p></div>';
     if (sig) expandHtml += '<div class="sc-section"><div class="sc-section-label">Significance</div><p>' + escapeHtml(sig) + '</p></div>';
     if (cascade.length) expandHtml += '<div class="sc-section"><div class="sc-section-label">Cascade</div><div class="sc-cascade">' + cascade.map(c => '<span class="sc-cascade-link">' + escapeHtml(c) + '</span>').join('') + '</div></div>';
     if (sourcesList) expandHtml += '<div class="sc-section"><div class="sc-section-label">Sources</div><div class="sc-sources-list">' + escapeHtml(sourcesList) + '</div></div>';
     let html = '<div class="story-card-v2" onclick="this.classList.toggle(\'expanded\')">';
     html += '<div class="sc-left">';
     html += '<div class="sc-meta-row">';
-    html += '<span class="sc-topic ' + tpClass + '">' + escapeHtml(regionLabel) + '</span>';
+    html += '<span class="sc-topic ' + tpClass + '">' + escapeHtml(topicLabel) + '</span>';
+    if (location) html += '<span class="sc-location">' + escapeHtml(location) + '</span>';
     if (dateStr) html += '<span class="sc-pill">' + dateStr + '</span>';
     html += '<span class="sc-pill sc-sources">' + srcCount + ' SOURCES</span>';
     html += '</div>';
@@ -850,6 +904,7 @@
     html += '</div>';
     html += '<div class="sc-right">';
     html += '<span class="sc-badge ' + confBadge + '">' + confLabel + '</span>';
+    if (confHint) html += '<span class="sc-conf-hint">' + confHint + '</span>';
     if (flags.length) html += '<div class="sc-flags">' + flags.map(f => '<span class="sc-flag">' + f + '</span>').join('') + '</div>';
     html += '</div>';
     if (expandHtml) html += '<div class="sc-expand" onclick="event.stopPropagation()">' + expandHtml + '</div>';
@@ -857,59 +912,70 @@
     return html;
   }
   async function loadSources() {
-    // Hardcoded source registry for Phase 1A — Phase 1B wires this to backend
-    const groups = [
-      { name: 'Wires & mainstream', tier: 't1', sources: [
-        { name: 'Reuters', meta: 'rss · wire service' },
-        { name: 'Associated Press', meta: 'rss · wire service' },
-        { name: 'BBC News', meta: 'rss · public broadcaster' },
-        { name: 'Al Jazeera', meta: 'rss · news network' },
-        { name: 'The Economist', meta: 'rss · weekly' },
-        { name: 'Financial Times', meta: 'rss · paywall' },
-        { name: 'Bloomberg', meta: 'rss · paywall' },
-        { name: 'CNBC', meta: 'rss · business' },
-        { name: 'NPR', meta: 'rss · public radio' }
-      ]},
-      { name: 'Policy & think tanks', tier: 't1', sources: [
-        { name: 'Foreign Policy', meta: 'rss · policy magazine' },
-        { name: 'Crisis Group (ICG)', meta: 'rss · conflict analysis' },
-        { name: 'Stimson Center', meta: 'rss · security research' },
-        { name: 'Carnegie Endowment', meta: 'rss · policy research' },
-        { name: 'IISS', meta: 'rss · strategic studies' },
-        { name: 'Chatham House', meta: 'rss · international affairs' },
-        { name: 'SIPRI', meta: 'rss · peace research' },
-        { name: 'FDD', meta: 'rss · defense of democracies' }
-      ]},
-      { name: 'Investigative & OSINT', tier: 't2', sources: [
-        { name: 'Bellingcat', meta: 'rss · open-source investigation' },
-        { name: 'OCCRP', meta: 'rss · organised crime reporting' },
-        { name: 'The Intercept', meta: 'rss · investigative' },
-        { name: 'ProPublica', meta: 'rss · investigative' },
-        { name: 'ICIJ', meta: 'rss · consortium' },
-        { name: 'TBIJ', meta: 'rss · bureau of investigative journalism' },
-        { name: 'Correctiv', meta: 'rss · german investigative' }
-      ]},
-      { name: 'Regional specialist', tier: 't2', sources: [
-        { name: 'Kyiv Independent', meta: 'rss · ukraine' },
-        { name: 'Meduza', meta: 'rss · russia (in exile)' },
-        { name: 'Sudan War Monitor', meta: 'rss · sudan conflict' },
-        { name: 'Afghanistan Analysts', meta: 'rss · afghanistan' },
-        { name: 'Nikkei Asia', meta: 'rss · east asia' }
-      ]},
-      { name: 'Military & conflict', tier: 't2', sources: [
-        { name: 'ISW (Institute for the Study of War)', meta: 'rss · battlefield assessment' },
-        { name: 'PressTV', meta: 'rss · state media (iran) · monitored for narrative' }
-      ]},
-      { name: 'Open event aggregators', tier: 't3', sources: [
-        { name: 'GDELT', meta: 'api · global event database' }
-      ]}
-    ];
+    // Try backend endpoint first (Phase 1B) — falls back to hardcoded if not available
+    let groups = null;
+    try {
+      const r = await fetch('/sources.json', { cache: 'no-store' });
+      if (r.ok) {
+        const j = await r.json();
+        if (Array.isArray(j.groups) && j.groups.length) groups = j.groups;
+        else if (Array.isArray(j) && j.length) groups = j;
+      }
+    } catch (e) { /* fall through */ }
+    if (!groups) {
+      groups = [
+        { name: 'Wires & mainstream', tier: 't1', sources: [
+          { name: 'Reuters', meta: 'rss · wire service' },
+          { name: 'Associated Press', meta: 'rss · wire service' },
+          { name: 'BBC News', meta: 'rss · public broadcaster' },
+          { name: 'Al Jazeera', meta: 'rss · news network' },
+          { name: 'The Economist', meta: 'rss · weekly' },
+          { name: 'Financial Times', meta: 'rss · paywall' },
+          { name: 'Bloomberg', meta: 'rss · paywall' },
+          { name: 'CNBC', meta: 'rss · business' },
+          { name: 'NPR', meta: 'rss · public radio' }
+        ]},
+        { name: 'Policy & think tanks', tier: 't1', sources: [
+          { name: 'Foreign Policy', meta: 'rss · policy magazine' },
+          { name: 'Crisis Group (ICG)', meta: 'rss · conflict analysis' },
+          { name: 'Stimson Center', meta: 'rss · security research' },
+          { name: 'Carnegie Endowment', meta: 'rss · policy research' },
+          { name: 'IISS', meta: 'rss · strategic studies' },
+          { name: 'Chatham House', meta: 'rss · international affairs' },
+          { name: 'SIPRI', meta: 'rss · peace research' },
+          { name: 'FDD', meta: 'rss · defense of democracies' }
+        ]},
+        { name: 'Investigative & OSINT', tier: 't2', sources: [
+          { name: 'Bellingcat', meta: 'rss · open-source investigation' },
+          { name: 'OCCRP', meta: 'rss · organised crime reporting' },
+          { name: 'The Intercept', meta: 'rss · investigative' },
+          { name: 'ProPublica', meta: 'rss · investigative' },
+          { name: 'ICIJ', meta: 'rss · consortium' },
+          { name: 'TBIJ', meta: 'rss · bureau of investigative journalism' },
+          { name: 'Correctiv', meta: 'rss · german investigative' }
+        ]},
+        { name: 'Regional specialist', tier: 't2', sources: [
+          { name: 'Kyiv Independent', meta: 'rss · ukraine' },
+          { name: 'Meduza', meta: 'rss · russia (in exile)' },
+          { name: 'Sudan War Monitor', meta: 'rss · sudan conflict' },
+          { name: 'Afghanistan Analysts', meta: 'rss · afghanistan' },
+          { name: 'Nikkei Asia', meta: 'rss · east asia' }
+        ]},
+        { name: 'Military & conflict', tier: 't2', sources: [
+          { name: 'ISW (Institute for the Study of War)', meta: 'rss · battlefield assessment' },
+          { name: 'PressTV', meta: 'rss · state media (iran) · monitored for narrative' }
+        ]},
+        { name: 'Open event aggregators', tier: 't3', sources: [
+          { name: 'GDELT', meta: 'api · global event database' }
+        ]}
+      ];
+    }
     let html = '';
     groups.forEach(g => {
       html += '<div class="sources-group">';
       html += '<div class="sources-group-title">' + escapeHtml(g.name) + '</div>';
-      g.sources.forEach(s => {
-        html += '<div class="source-card"><div><div class="source-name">' + escapeHtml(s.name) + '</div><div class="source-meta">' + escapeHtml(s.meta) + '</div></div><span class="source-tier ' + g.tier + '">' + g.tier.toUpperCase() + '</span></div>';
+      (g.sources || []).forEach(s => {
+        html += '<div class="source-card"><div><div class="source-name">' + escapeHtml(s.name || '') + '</div><div class="source-meta">' + escapeHtml(s.meta || '') + '</div></div><span class="source-tier ' + (g.tier || 't2') + '">' + (g.tier || 't2').toUpperCase() + '</span></div>';
       });
       html += '</div>';
     });
