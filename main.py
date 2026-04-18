@@ -2838,7 +2838,7 @@ The four intelligence_overview paragraphs are the core analytical product — ma
     )
 
     try:
-        with urlopen(req, timeout=300) as r:
+        with urlopen(req, timeout=600) as r:
             data = json.loads(r.read())
 
         text = " ".join(
