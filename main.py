@@ -2661,7 +2661,7 @@ Respond with ONLY a JSON object (no markdown):
   ],
   "confidence_reason": "One sentence explaining this confidence level.",
   "source_citations": [
-    {"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "their lean", "url": "article url", "claim": "what this source specifically reported"}
+    {{"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "their lean", "url": "article url", "claim": "what this source specifically reported"}}
   ],
   "source_diversity": "brief note on whether sources represent multiple perspectives or are predominantly from one viewpoint",
   "signal_score": 50,
