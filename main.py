@@ -3172,7 +3172,7 @@ if FLASK:
 
     @app.route("/")
     def index():
-        return send_file("parallax-FIXED-v2.html")
+        return send_file("parallax.html")
 
     @app.route("/stories.json")
     def stories():
