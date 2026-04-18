@@ -177,6 +177,33 @@
     border-left: 3px solid var(--steel); border-radius: 0 8px 8px 0;
     font-size: 13px; line-height: 1.6; margin: 16px 0;
   }
+  .overview-section { margin-bottom: 20px; }
+  .overview-section:last-child { margin-bottom: 0; }
+  .overview-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--steel);
+    margin-bottom: 6px;
+  }
+  .overview-section p { font-size: 15px; line-height: 1.7; color: var(--text); }
+  .card-headline {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 17px; font-weight: 500; line-height: 1.35;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .card-para { margin-bottom: 14px; }
+  .card-para:last-child { margin-bottom: 0; }
+  .card-para-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--steel);
+    margin-bottom: 4px;
+  }
+  .card-para p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .card-meta span {
+    text-transform: uppercase; letter-spacing: 0.08em;
+    font-size: 10px; padding: 2px 8px; margin-right: 4px;
+    background: var(--bg-hover); color: var(--text-faint);
+    border-radius: 10px;
+  }
 </style>
 </head>
 <body>
@@ -263,15 +290,54 @@
       let html = '<div class="watch-banner"><span class="watch-level ' + watchClass + '"><span class="level-dot"></span>' + watchLabel + '</span><div class="watch-reason">' + escapeHtml(b.threat_level_reason || '') + '</div></div>';
       if (b.headline_brief) html += '<div class="section"><div class="headline">' + escapeHtml(b.headline_brief) + '</div></div>';
       if (b.intelligence_overview) {
-        const paras = typeof b.intelligence_overview === 'string' ? b.intelligence_overview.split(/\n\n+/) : (Array.isArray(b.intelligence_overview) ? b.intelligence_overview : [JSON.stringify(b.intelligence_overview)]);
-        html += '<div class="section"><div class="section-title">Intelligence overview</div><div class="overview">' + paras.map(p => '<p>' + escapeHtml(p) + '</p>').join('') + '</div></div>';
+        const ov = b.intelligence_overview;
+        const labels = {
+          paragraph_1_situation: 'Situation',
+          paragraph_2_connections: 'Connections',
+          paragraph_3_what_watch: 'What to watch',
+          paragraph_4_buried: 'Buried story'
+        };
+        let ovHtml = '';
+        if (typeof ov === 'object' && !Array.isArray(ov)) {
+          Object.keys(ov).forEach(k => {
+            const lbl = labels[k] || k.replace(/_/g, ' ');
+            ovHtml += '<div class="overview-section"><div class="overview-label">' + escapeHtml(lbl) + '</div><p>' + escapeHtml(ov[k]) + '</p></div>';
+          });
+        } else {
+          const paras = typeof ov === 'string' ? ov.split(/\n\n+/) : (Array.isArray(ov) ? ov : [JSON.stringify(ov)]);
+          ovHtml = paras.map(p => '<p>' + escapeHtml(p) + '</p>').join('');
+        }
+        html += '<div class="section"><div class="section-title">Intelligence overview</div><div class="overview">' + ovHtml + '</div></div>';
       }
       if (Array.isArray(b.top_stories) && b.top_stories.length) {
         html += '<div class="section"><div class="section-title">Top stories</div>';
         b.top_stories.forEach((s, i) => {
-          const brief = s.brief || s.headline || s.title || '';
-          const expand = s.expanded || s.analysis || s.detail || '';
-          html += '<div class="card" onclick="this.classList.toggle(\'expanded\')"><div class="card-brief">' + escapeHtml(brief) + '</div>' + (expand ? '<div class="card-expand">' + escapeHtml(expand) + '</div>' : '') + '</div>';
+          const headline = s.headline || s.title || s.brief || '(untitled)';
+          const brief = s.paragraph_1_situation || s.brief || s.summary || '';
+          const briefPreview = brief.length > 280 ? brief.slice(0, 280) + '…' : brief;
+          const connections = s.paragraph_2_connections || '';
+          const watch = s.paragraph_3_watch || s.paragraph_3_what_watch || '';
+          const buried = s.paragraph_4_buried || '';
+          const contested = s.contested_claim || '';
+          const sig = s.significance || '';
+          const src = s.source || '';
+          const flags = [];
+          if (s.has_econ) flags.push('econ');
+          if (s.has_prediction) flags.push('prediction');
+          if (s.has_psyop) flags.push('psyop');
+          html += '<div class="card" onclick="this.classList.toggle(\'expanded\')">';
+          html += '<div class="card-headline">' + escapeHtml(headline) + '</div>';
+          html += '<div class="card-brief">' + escapeHtml(briefPreview) + '</div>';
+          html += '<div class="card-expand">';
+          if (connections) html += '<div class="card-para"><div class="card-para-label">Connections</div><p>' + escapeHtml(connections) + '</p></div>';
+          if (watch) html += '<div class="card-para"><div class="card-para-label">What to watch</div><p>' + escapeHtml(watch) + '</p></div>';
+          if (buried) html += '<div class="card-para"><div class="card-para-label">Buried</div><p>' + escapeHtml(buried) + '</p></div>';
+          if (contested) html += '<div class="card-para"><div class="card-para-label">Contested claim</div><p>' + escapeHtml(contested) + '</p></div>';
+          if (sig) html += '<div class="card-para"><div class="card-para-label">Significance</div><p>' + escapeHtml(sig) + '</p></div>';
+          if (src) html += '<div class="card-para"><div class="card-para-label">Sources</div><p style="font-size:11px;color:var(--text-faint)">' + escapeHtml(src) + '</p></div>';
+          html += '</div>';
+          if (flags.length) html += '<div class="card-meta">' + flags.map(f => '<span>' + f + '</span>').join('') + '</div>';
+          html += '</div>';
         });
         html += '</div>';
       }
