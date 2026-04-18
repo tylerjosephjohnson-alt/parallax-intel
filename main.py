@@ -57,7 +57,7 @@ except ImportError:
 # CONFIG
 # ─────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-SCRAPE_INTERVAL_MINUTES = 420
+SCRAPE_INTERVAL_MINUTES = 720
 BRIEF_HOUR_UTC       = 5   # Generate daily brief at 05:00 UTC
 BRIEF_FILE           = "brief.json"
 MAX_STORIES = 20
