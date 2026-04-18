@@ -256,6 +256,11 @@
     font-family: inherit; padding: 4px 0;
   }
   .sources-num:focus { background: var(--bg-hover); }
+  .sources-num::-webkit-outer-spin-button,
+  .sources-num::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  .sources-num { -moz-appearance: textfield; appearance: textfield; }
   .sources-suffix {
     color: var(--text-faint); font-size: 12px; margin-left: 6px;
   }
