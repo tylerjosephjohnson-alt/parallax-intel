@@ -209,24 +209,56 @@
     border-bottom: 1px solid var(--border);
   }
   .filter-row {
-    display: flex; align-items: baseline; gap: 16px;
-    padding: 4px 0; font-size: 13px;
+    display: flex; align-items: center; gap: 20px;
+    padding: 8px 0; font-size: 14px;
+    flex-wrap: wrap;
   }
   .filter-label {
     color: var(--steel); font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    font-size: 10px; min-width: 60px; flex-shrink: 0;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    font-size: 11px; min-width: 72px; flex-shrink: 0;
   }
-  .filter-values { display: flex; flex-wrap: wrap; gap: 0; }
+  .filter-values { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .filter-chip {
-    color: var(--text-faint); cursor: pointer;
-    padding: 2px 0; transition: color 0.1s;
-    font-family: inherit; font-size: 13px;
-    background: none; border: none;
+    color: var(--text-dim); cursor: pointer;
+    padding: 6px 12px; transition: all 0.12s ease;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 4px; line-height: 1.2;
   }
-  .filter-chip:hover { color: var(--text-dim); }
-  .filter-chip.active { color: var(--text); font-weight: 600; }
-  .filter-sep { color: var(--text-faint); margin: 0 8px; user-select: none; }
+  .filter-chip:hover { color: var(--text); border-color: var(--border-strong); }
+  .filter-chip.active {
+    color: var(--text); font-weight: 600;
+    background: var(--bg-hover); border-color: var(--border-strong);
+  }
+  .filter-group {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sources-spinner {
+    display: flex; align-items: center;
+    border: 1px solid var(--border); border-radius: 4px;
+    overflow: hidden; background: transparent;
+  }
+  .sources-btn {
+    width: 28px; height: 28px;
+    background: transparent; border: none;
+    color: var(--text-dim); cursor: pointer;
+    font-size: 16px; line-height: 1; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s ease;
+  }
+  .sources-btn:hover { color: var(--text); background: var(--bg-hover); }
+  .sources-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .sources-num {
+    min-width: 32px; text-align: center;
+    color: var(--text); font-weight: 600; font-size: 14px;
+    background: transparent; border: none; outline: none;
+    font-family: inherit; padding: 4px 0;
+  }
+  .sources-num:focus { background: var(--bg-hover); }
+  .sources-suffix {
+    color: var(--text-faint); font-size: 12px; margin-left: 6px;
+  }
   .view-header-row {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 24px; padding-bottom: 16px;
@@ -333,12 +365,19 @@
           <div class="filter-values" id="filter-region"></div>
         </div>
         <div class="filter-row">
-          <span class="filter-label">Watch</span>
-          <div class="filter-values" id="filter-watch"></div>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Sources</span>
-          <div class="filter-values" id="filter-sources"></div>
+          <div class="filter-group">
+            <span class="filter-label">Watch</span>
+            <div class="filter-values" id="filter-watch"></div>
+          </div>
+          <div class="filter-group" style="margin-left:auto">
+            <span class="filter-label">Sources</span>
+            <div class="sources-spinner">
+              <button class="sources-btn" type="button" onclick="adjustSources(-1)" aria-label="Decrease">−</button>
+              <input type="number" class="sources-num" id="sources-num" value="1" min="1" max="50" onchange="setSourcesValue(this.value)" oninput="setSourcesValue(this.value)">
+              <button class="sources-btn" type="button" onclick="adjustSources(1)" aria-label="Increase">+</button>
+            </div>
+            <span class="sources-suffix">minimum</span>
+          </div>
         </div>
         <div class="filter-row-meta" id="filter-meta"></div>
       </div>
@@ -513,17 +552,34 @@
     const sortedRegions = regionOrder.filter(r => regions.has(r)).concat([...regions].filter(r => !regionOrder.includes(r)));
     renderChipRow('filter-region', sortedRegions, 'region', (r) => r === 'all' ? 'All' : r.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
     renderChipRow('filter-watch', ['all', 'routine', 'elevated', 'active', 'urgent'], 'watch', (w) => w === 'all' ? 'All' : w.charAt(0).toUpperCase() + w.slice(1));
-    renderChipRow('filter-sources', ['any', '2', '3', '5'], 'sources', (s) => s === 'any' ? 'Any' : s + '+');
+    // Sync sources spinner
+    const sn = document.getElementById('sources-num');
+    if (sn) sn.value = window._filters.sources === 'any' ? 1 : parseInt(window._filters.sources) || 1;
   }
   function renderChipRow(containerId, values, filterKey, labelFn) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const active = window._filters[filterKey];
-    container.innerHTML = values.map((v, i) => {
+    container.innerHTML = values.map((v) => {
       const isActive = v === active;
-      const sep = i > 0 ? '<span class="filter-sep">·</span>' : '';
-      return sep + '<button class="filter-chip' + (isActive ? ' active' : '') + '" data-value="' + escapeHtml(v) + '" onclick="setFilter(\'' + filterKey + '\', \'' + v + '\')">' + escapeHtml(labelFn(v)) + '</button>';
+      return '<button class="filter-chip' + (isActive ? ' active' : '') + '" data-value="' + escapeHtml(v) + '" onclick="setFilter(\'' + filterKey + '\', \'' + v + '\')">' + escapeHtml(labelFn(v)) + '</button>';
     }).join('');
+  }
+  function adjustSources(delta) {
+    const sn = document.getElementById('sources-num');
+    if (!sn) return;
+    let v = parseInt(sn.value) || 1;
+    v = Math.max(1, Math.min(50, v + delta));
+    sn.value = v;
+    setSourcesValue(v);
+  }
+  function setSourcesValue(val) {
+    let v = parseInt(val);
+    if (isNaN(v) || v < 1) v = 1;
+    if (v > 50) v = 50;
+    window._filters.sources = v === 1 ? 'any' : String(v);
+    updateURL();
+    renderStories();
   }
   function setFilter(key, value) {
     window._filters[key] = value;
