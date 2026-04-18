@@ -321,6 +321,155 @@
     cursor: pointer; font-size: 12px; font-family: inherit;
   }
   .settings-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  /* Parallax-style story card */
+  .story-card-v2 {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 18px 22px; margin-bottom: 12px;
+    cursor: pointer; transition: all 0.15s ease;
+    display: grid; grid-template-columns: 1fr auto; gap: 16px;
+  }
+  .story-card-v2:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-hover);
+  }
+  .story-card-v2.expanded {
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+  }
+  .story-card-v2 .sc-left { min-width: 0; }
+  .story-card-v2 .sc-right {
+    display: flex; flex-direction: column; align-items: flex-end;
+    gap: 6px; flex-shrink: 0; min-width: 120px;
+  }
+  .sc-meta-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .sc-topic {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 3px;
+    background: rgba(201, 74, 59, 0.12);
+    color: #e07668; font-weight: 600;
+  }
+  .sc-topic::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; flex-shrink: 0;
+  }
+  .sc-topic.tp-europe { background: rgba(74, 144, 226, 0.12); color: #6fa7e8; }
+  .sc-topic.tp-mideast { background: rgba(201, 74, 59, 0.12); color: #e07668; }
+  .sc-topic.tp-asia { background: rgba(201, 166, 59, 0.12); color: #d4b24a; }
+  .sc-topic.tp-africa { background: rgba(78, 168, 106, 0.12); color: #69b884; }
+  .sc-topic.tp-americas { background: rgba(122, 138, 151, 0.18); color: #a0b0bd; }
+  .sc-topic.tp-global { background: rgba(180, 140, 200, 0.12); color: #c09dd1; }
+  .sc-pill {
+    padding: 3px 8px; border-radius: 3px;
+    background: var(--bg-hover); color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .sc-pill.sc-sources {
+    color: var(--text); font-weight: 600;
+  }
+  .sc-headline {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 19px; font-weight: 500; line-height: 1.3;
+    color: var(--text); margin-bottom: 8px;
+  }
+  .sc-summary {
+    font-size: 14px; line-height: 1.55;
+    color: var(--text-dim);
+  }
+  .sc-badge {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.08em; font-weight: 600;
+    padding: 4px 10px; border-radius: 3px;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .sc-badge.b-verified { background: rgba(78, 168, 106, 0.15); color: #69b884; }
+  .sc-badge.b-corroborated { background: rgba(122, 138, 151, 0.18); color: #a0b0bd; }
+  .sc-badge.b-single { background: rgba(201, 166, 59, 0.15); color: #d4b24a; }
+  .sc-badge.b-unverified { background: rgba(201, 74, 59, 0.12); color: #e07668; }
+  .sc-flags {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    margin-top: auto;
+  }
+  .sc-flag {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 9px; letter-spacing: 0.08em; font-weight: 600;
+    padding: 2px 6px; border-radius: 2px;
+    background: var(--bg-hover); color: var(--text-faint);
+    text-transform: uppercase;
+  }
+  /* Expanded section */
+  .sc-expand {
+    display: none; grid-column: 1 / -1;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .story-card-v2.expanded .sc-expand { display: block; }
+  .sc-section { margin-bottom: 18px; }
+  .sc-section:last-child { margin-bottom: 0; }
+  .sc-section-label {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.1em; font-weight: 600;
+    text-transform: uppercase; color: var(--steel);
+    margin-bottom: 6px;
+  }
+  .sc-section p {
+    font-size: 14px; line-height: 1.65; color: var(--text);
+  }
+  .sc-cascade {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 8px;
+  }
+  .sc-cascade-link {
+    padding: 4px 10px; border-radius: 4px;
+    background: var(--bg-hover); color: var(--text-dim);
+    border: 1px solid var(--border); font-size: 12px;
+    cursor: pointer; transition: all 0.12s ease;
+  }
+  .sc-cascade-link:hover {
+    color: var(--text); border-color: var(--border-strong);
+  }
+  .sc-sources-list {
+    font-size: 12px; color: var(--text-faint);
+    line-height: 1.7; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  /* Source registry */
+  .source-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 18px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .source-name {
+    font-size: 14px; font-weight: 500; color: var(--text);
+  }
+  .source-meta {
+    font-size: 11px; color: var(--text-faint); margin-top: 2px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    letter-spacing: 0.04em;
+  }
+  .source-tier {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.08em; font-weight: 600;
+    padding: 3px 8px; border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .source-tier.t1 { background: rgba(78, 168, 106, 0.15); color: #69b884; }
+  .source-tier.t2 { background: rgba(122, 138, 151, 0.15); color: #a0b0bd; }
+  .source-tier.t3 { background: rgba(201, 166, 59, 0.15); color: #d4b24a; }
+  .sources-intro {
+    color: var(--text-dim); font-size: 14px; line-height: 1.6;
+    margin-bottom: 20px; max-width: 680px;
+  }
+  .sources-group { margin-bottom: 28px; }
+  .sources-group-title {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.1em; font-weight: 600;
+    text-transform: uppercase; color: var(--steel);
+    margin-bottom: 10px;
+  }
 </style>
 </head>
 <body>
@@ -349,6 +498,10 @@
       <div class="nav-group">
       <div class="nav-group-label">Account</div>
       <button class="nav-btn" data-view="settings" onclick="setView('settings')"><span class="dot"></span>Settings</button>
+    </div>
+      <div class="nav-group">
+      <div class="nav-group-label">Reference</div>
+      <button class="nav-btn" data-view="sources" onclick="setView('sources')"><span class="dot"></span>Source registry</button>
     </div>
   </aside>
   <main>
@@ -418,6 +571,11 @@
         </div>
       </div>
     </div>
+        <div id="view-sources" class="view">
+      <div class="view-header"><div class="view-title">Source registry</div></div>
+      <div class="sources-intro">Vantage aggregates reporting from the sources below. Every story cites its origin. We show you where we looked — the rest is analysis.</div>
+      <div id="sources-content"><div class="loading">Loading sources…</div></div>
+    </div>
     </main>
 </div>
 <script>
@@ -431,6 +589,7 @@
     if (b) b.classList.add('active');
     if (name === 'brief' && !briefLoaded) loadBrief();
     if (name === 'stories' && !storiesLoaded) loadStories();
+    if (name === 'sources') loadSources();
   }
   function toggleTheme() {
     const h = document.documentElement;
@@ -481,33 +640,8 @@
       }
       if (Array.isArray(b.top_stories) && b.top_stories.length) {
         html += '<div class="section"><div class="section-title">Top stories</div>';
-        b.top_stories.forEach((s, i) => {
-          const headline = s.headline || s.title || s.brief || '(untitled)';
-          const brief = s.paragraph_1_situation || s.brief || s.summary || '';
-          const briefPreview = brief.length > 280 ? brief.slice(0, 280) + '…' : brief;
-          const connections = s.paragraph_2_connections || '';
-          const watch = s.paragraph_3_watch || s.paragraph_3_what_watch || '';
-          const buried = s.paragraph_4_buried || '';
-          const contested = s.contested_claim || '';
-          const sig = s.significance || '';
-          const src = s.source || '';
-          const flags = [];
-          if (s.has_econ) flags.push('econ');
-          if (s.has_prediction) flags.push('prediction');
-          if (s.has_psyop) flags.push('psyop');
-          html += '<div class="card" onclick="this.classList.toggle(\'expanded\')">';
-          html += '<div class="card-headline">' + escapeHtml(headline) + '</div>';
-          html += '<div class="card-brief">' + escapeHtml(briefPreview) + '</div>';
-          html += '<div class="card-expand">';
-          if (connections) html += '<div class="card-para"><div class="card-para-label">Connections</div><p>' + escapeHtml(connections) + '</p></div>';
-          if (watch) html += '<div class="card-para"><div class="card-para-label">What to watch</div><p>' + escapeHtml(watch) + '</p></div>';
-          if (buried) html += '<div class="card-para"><div class="card-para-label">Buried</div><p>' + escapeHtml(buried) + '</p></div>';
-          if (contested) html += '<div class="card-para"><div class="card-para-label">Contested claim</div><p>' + escapeHtml(contested) + '</p></div>';
-          if (sig) html += '<div class="card-para"><div class="card-para-label">Significance</div><p>' + escapeHtml(sig) + '</p></div>';
-          if (src) html += '<div class="card-para"><div class="card-para-label">Sources</div><p style="font-size:11px;color:var(--text-faint)">' + escapeHtml(src) + '</p></div>';
-          html += '</div>';
-          if (flags.length) html += '<div class="card-meta">' + flags.map(f => '<span>' + f + '</span>').join('') + '</div>';
-          html += '</div>';
+        b.top_stories.forEach((s, idx) => {
+          html += renderStoryCardV2(s, 'brief-' + idx);
         });
         html += '</div>';
       }
@@ -621,15 +755,21 @@
     const stories = window._allStories || [];
     const f = window._filters;
     const watchMap = { low: 'routine', moderate: 'elevated', elevated: 'elevated', high: 'active', severe: 'urgent', urgent: 'urgent', critical: 'urgent' };
-    const filtered = stories.filter(s => {
+    // Sort newest first
+    const sorted = [...stories].sort((a, b) => {
+      const da = new Date(a.updated || a.published || a.date || 0).getTime();
+      const db = new Date(b.updated || b.published || b.date || 0).getTime();
+      return db - da;
+    });
+    const filtered = sorted.filter(s => {
       if (f.region && f.region !== 'all' && s.region !== f.region) return false;
       if (f.watch && f.watch !== 'all') {
-        const storyWatch = watchMap[(s.threat_level || s.watch_level || '').toLowerCase()] || (s.threat_level || '').toLowerCase();
-        if (storyWatch !== f.watch) return false;
+        const sw = watchMap[(s.threat_level || s.watch_level || '').toLowerCase()] || (s.threat_level || '').toLowerCase();
+        if (sw !== f.watch) return false;
       }
       if (f.sources && f.sources !== 'any') {
-        const count = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
-        if (count < parseInt(f.sources)) return false;
+        const c = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
+        if (c < parseInt(f.sources)) return false;
       }
       if (f.search) {
         const blob = ((s.headline || s.title || '') + ' ' + (s.summary || s.brief || s.description || '') + ' ' + (s.paragraph_1_situation || '')).toLowerCase();
@@ -649,14 +789,131 @@
       return;
     }
     let html = '';
-    filtered.forEach(s => {
-      const title = s.headline || s.title || '(untitled)';
-      const summary = s.summary || s.brief || s.description || s.paragraph_1_situation || '';
-      const sources = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
-      const confidence = s.confidence || '';
-      html += '<div class="story-card"><div class="story-title">' + escapeHtml(title) + '</div>' + (summary ? '<div style="font-size:13px;color:var(--text-dim);margin:4px 0 8px">' + escapeHtml(summary.slice(0, 240)) + (summary.length > 240 ? '…' : '') + '</div>' : '') + '<div class="story-meta">' + (sources ? '<span>' + sources + ' sources</span>' : '') + (confidence ? '<span>' + escapeHtml(confidence) + ' confidence</span>' : '') + (s.region ? '<span>' + escapeHtml(s.region) + '</span>' : '') + '</div></div>';
+    filtered.forEach((s, i) => {
+      html += renderStoryCardV2(s, 'stories-' + i);
     });
     document.getElementById('stories-content').innerHTML = html;
+  }
+  function renderStoryCardV2(s, key) {
+    const title = s.headline || s.title || '(untitled)';
+    const summary = s.summary || s.brief || s.description || s.paragraph_1_situation || '';
+    const summaryPreview = summary.length > 240 ? summary.slice(0, 240) + '…' : summary;
+    const srcCount = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
+    const region = s.region || 'global';
+    const regionLabel = region === 'middle-east' ? 'Middle East' : region === 'east-asia' ? 'East Asia' : region.charAt(0).toUpperCase() + region.slice(1);
+    const tpClass = region === 'middle-east' ? 'tp-mideast' : region === 'east-asia' ? 'tp-asia' : 'tp-' + region.split('-')[0];
+    // Confidence badge logic
+    let confBadge = 'b-unverified', confLabel = 'UNVERIFIED';
+    if (srcCount >= 5) { confBadge = 'b-verified'; confLabel = 'VERIFIED'; }
+    else if (srcCount >= 3) { confBadge = 'b-corroborated'; confLabel = 'CORROBORATED'; }
+    else if (srcCount >= 2) { confBadge = 'b-single'; confLabel = 'MULTI-SOURCE'; }
+    else if (srcCount >= 1) { confBadge = 'b-single'; confLabel = 'SINGLE SOURCE'; }
+    const dateStr = (() => {
+      const d = s.updated || s.published || s.date;
+      if (!d) return '';
+      try {
+        const dt = new Date(d);
+        if (isNaN(dt)) return '';
+        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+      } catch(e) { return ''; }
+    })();
+    const flags = [];
+    if (s.has_econ) flags.push('ECON');
+    if (s.has_prediction) flags.push('PREDICTION');
+    if (s.has_psyop) flags.push('PSYOP');
+    // Expanded content
+    const connections = s.paragraph_2_connections || '';
+    const watch = s.paragraph_3_watch || s.paragraph_3_what_watch || '';
+    const buried = s.paragraph_4_buried || '';
+    const contested = s.contested_claim || '';
+    const sig = s.significance || '';
+    const sourcesList = Array.isArray(s.sources) ? s.sources.join(' · ') : (s.source || '');
+    const cascade = Array.isArray(s.story_card_ids) ? s.story_card_ids : [];
+    let expandHtml = '';
+    if (summary && summary.length > 240) expandHtml += '<div class="sc-section"><div class="sc-section-label">Situation</div><p>' + escapeHtml(summary) + '</p></div>';
+    if (connections) expandHtml += '<div class="sc-section"><div class="sc-section-label">Connections</div><p>' + escapeHtml(connections) + '</p></div>';
+    if (watch) expandHtml += '<div class="sc-section"><div class="sc-section-label">Cascading effects</div><p>' + escapeHtml(watch) + '</p></div>';
+    if (buried) expandHtml += '<div class="sc-section"><div class="sc-section-label">Narrative shift</div><p>' + escapeHtml(buried) + '</p></div>';
+    if (contested) expandHtml += '<div class="sc-section"><div class="sc-section-label">Contested claim</div><p>' + escapeHtml(contested) + '</p></div>';
+    if (sig) expandHtml += '<div class="sc-section"><div class="sc-section-label">Significance</div><p>' + escapeHtml(sig) + '</p></div>';
+    if (cascade.length) expandHtml += '<div class="sc-section"><div class="sc-section-label">Cascade</div><div class="sc-cascade">' + cascade.map(c => '<span class="sc-cascade-link">' + escapeHtml(c) + '</span>').join('') + '</div></div>';
+    if (sourcesList) expandHtml += '<div class="sc-section"><div class="sc-section-label">Sources</div><div class="sc-sources-list">' + escapeHtml(sourcesList) + '</div></div>';
+    let html = '<div class="story-card-v2" onclick="this.classList.toggle(\'expanded\')">';
+    html += '<div class="sc-left">';
+    html += '<div class="sc-meta-row">';
+    html += '<span class="sc-topic ' + tpClass + '">' + escapeHtml(regionLabel) + '</span>';
+    if (dateStr) html += '<span class="sc-pill">' + dateStr + '</span>';
+    html += '<span class="sc-pill sc-sources">' + srcCount + ' SOURCES</span>';
+    html += '</div>';
+    html += '<div class="sc-headline">' + escapeHtml(title) + '</div>';
+    if (summaryPreview) html += '<div class="sc-summary">' + escapeHtml(summaryPreview) + '</div>';
+    html += '</div>';
+    html += '<div class="sc-right">';
+    html += '<span class="sc-badge ' + confBadge + '">' + confLabel + '</span>';
+    if (flags.length) html += '<div class="sc-flags">' + flags.map(f => '<span class="sc-flag">' + f + '</span>').join('') + '</div>';
+    html += '</div>';
+    if (expandHtml) html += '<div class="sc-expand" onclick="event.stopPropagation()">' + expandHtml + '</div>';
+    html += '</div>';
+    return html;
+  }
+  async function loadSources() {
+    // Hardcoded source registry for Phase 1A — Phase 1B wires this to backend
+    const groups = [
+      { name: 'Wires & mainstream', tier: 't1', sources: [
+        { name: 'Reuters', meta: 'rss · wire service' },
+        { name: 'Associated Press', meta: 'rss · wire service' },
+        { name: 'BBC News', meta: 'rss · public broadcaster' },
+        { name: 'Al Jazeera', meta: 'rss · news network' },
+        { name: 'The Economist', meta: 'rss · weekly' },
+        { name: 'Financial Times', meta: 'rss · paywall' },
+        { name: 'Bloomberg', meta: 'rss · paywall' },
+        { name: 'CNBC', meta: 'rss · business' },
+        { name: 'NPR', meta: 'rss · public radio' }
+      ]},
+      { name: 'Policy & think tanks', tier: 't1', sources: [
+        { name: 'Foreign Policy', meta: 'rss · policy magazine' },
+        { name: 'Crisis Group (ICG)', meta: 'rss · conflict analysis' },
+        { name: 'Stimson Center', meta: 'rss · security research' },
+        { name: 'Carnegie Endowment', meta: 'rss · policy research' },
+        { name: 'IISS', meta: 'rss · strategic studies' },
+        { name: 'Chatham House', meta: 'rss · international affairs' },
+        { name: 'SIPRI', meta: 'rss · peace research' },
+        { name: 'FDD', meta: 'rss · defense of democracies' }
+      ]},
+      { name: 'Investigative & OSINT', tier: 't2', sources: [
+        { name: 'Bellingcat', meta: 'rss · open-source investigation' },
+        { name: 'OCCRP', meta: 'rss · organised crime reporting' },
+        { name: 'The Intercept', meta: 'rss · investigative' },
+        { name: 'ProPublica', meta: 'rss · investigative' },
+        { name: 'ICIJ', meta: 'rss · consortium' },
+        { name: 'TBIJ', meta: 'rss · bureau of investigative journalism' },
+        { name: 'Correctiv', meta: 'rss · german investigative' }
+      ]},
+      { name: 'Regional specialist', tier: 't2', sources: [
+        { name: 'Kyiv Independent', meta: 'rss · ukraine' },
+        { name: 'Meduza', meta: 'rss · russia (in exile)' },
+        { name: 'Sudan War Monitor', meta: 'rss · sudan conflict' },
+        { name: 'Afghanistan Analysts', meta: 'rss · afghanistan' },
+        { name: 'Nikkei Asia', meta: 'rss · east asia' }
+      ]},
+      { name: 'Military & conflict', tier: 't2', sources: [
+        { name: 'ISW (Institute for the Study of War)', meta: 'rss · battlefield assessment' },
+        { name: 'PressTV', meta: 'rss · state media (iran) · monitored for narrative' }
+      ]},
+      { name: 'Open event aggregators', tier: 't3', sources: [
+        { name: 'GDELT', meta: 'api · global event database' }
+      ]}
+    ];
+    let html = '';
+    groups.forEach(g => {
+      html += '<div class="sources-group">';
+      html += '<div class="sources-group-title">' + escapeHtml(g.name) + '</div>';
+      g.sources.forEach(s => {
+        html += '<div class="source-card"><div><div class="source-name">' + escapeHtml(s.name) + '</div><div class="source-meta">' + escapeHtml(s.meta) + '</div></div><span class="source-tier ' + g.tier + '">' + g.tier.toUpperCase() + '</span></div>';
+      });
+      html += '</div>';
+    });
+    document.getElementById('sources-content').innerHTML = html;
   }
   function clearFilters() {
     window._filters = { region: 'all', watch: 'all', sources: 'any', search: '' };
