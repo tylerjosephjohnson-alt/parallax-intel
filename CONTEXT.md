@@ -27,7 +27,7 @@
 - Backend brief generation — returns valid 44K-char JSON with all 13 fields
 - New clean Vantage UI live at `/` — loads in both dark and light modes, nav swaps views, theme toggle works, zero JS errors on current page
 - `/debug-brief` endpoint for inspecting brief generation failures
-- Scraper running at 420-min interval (~$1/day cost)
+- Scraper running at 720-min interval (~$0.50/day cost target, 2x/day cadence)
 - Backend routes: `/` `/brief.json` `/stories.json` `/story-history.json` `/trigger-brief` (GET) `/debug-brief` `/research` (POST)
 
 ### What's broken / flagged
@@ -44,6 +44,9 @@
 - **v13**: rename `parallax-FIXED-v2.html` → `parallax-FIXED-v2-legacy.html` (preserve, not delete)
 - **v14**: add clean `parallax.html` (16KB, 330 lines, Vantage design)
 - **v15**: line 3175 main.py changed to `send_file("parallax.html")`
+- **v17**: brief API timeout 300→600 sec (line 2841 main.py) — fix read timeout on slow Anthropic responses
+- **v18**: parallax.html updated to render intelligence_overview object structure (4 labeled paragraphs) and top_stories with real field names (headline, paragraph_1-4, contested_claim, significance, source, flags)
+- **v19**: scrape interval 420→720 min (line 60 main.py), cost target reduced to ~$0.50/day, 2x/day cadence for testing phase
 
 ---
 
@@ -79,7 +82,7 @@
 - **Primary audience:** ex-intel and active intel-community professionals. Every design decision prioritizes them.
 - **Secondary audience:** curious average Joe, as long as they're willing to think. Lose the TikTok-news person permanently — right person to lose.
 - **Pricing:** ~$30/mo target tier eventually. Tiered free/paid plans are Phase 3+, not MVP.
-- **MVP rule:** Must run 100 days without incident before Phase 2 features ship.
+- **MVP rule:** Must run 30 days without incident before Phase 2 features ship (reduced from 100 during testing phase).
 
 ### Perspectives framework (every brief applies this)
 
@@ -144,7 +147,7 @@ Primary docs (3): SEC EDGAR, Federal Register, DOD press briefings.
 
 ### Key line numbers in main.py (as of v15)
 
-- **Line 60:** `SCRAPE_INTERVAL_MINUTES = 420` (v12)
+- **Line 60:** `SCRAPE_INTERVAL_MINUTES = 720` (v19)
 - **Line 2823:** `"max_tokens": 16000` — brief API call (v11)
 - **Line 3175:** `return send_file("parallax.html")` — `/` route (v15)
 - **Lines 2853-2894:** JSON repair block in `generate_daily_brief()` (v8)
@@ -252,6 +255,6 @@ Forbidden without asking:
 - Theme toggle works both directions ✅
 - Nav swaps views without console errors ✅
 - No stale legacy content visible to users ✅
-- Runs 100 days without crashing — the finish line for Phase 1
+- Runs 30 days without crashing — the finish line for Phase 1 (reduced from 100 during testing phase)
 
 Current state: 4 of 7 boxes checked. Two more depend on scraper/brief finishing; the 100-day test is where we are now.
