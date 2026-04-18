@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vantage — One event. Every perspective.</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --bg-card: #14171c;
+    --bg-hover: #1c2026;
+    --border: rgba(245, 239, 224, 0.08);
+    --border-strong: rgba(245, 239, 224, 0.16);
+    --text: #f5efe0;
+    --text-dim: #9aa1ab;
+    --text-faint: #5a6068;
+    --steel: #7a8a97;
+    --steel-dim: #5a6b7a;
+    --watch-routine: #4ea86a;
+    --watch-elevated: #c9a63b;
+    --watch-active: #c97a3b;
+    --watch-urgent: #c94a3b;
+  }
+  [data-theme="light"] {
+    --bg: #e8e2d0;
+    --bg-card: #f2ecda;
+    --bg-hover: #ddd5c0;
+    --border: rgba(11, 13, 16, 0.1);
+    --border-strong: rgba(11, 13, 16, 0.2);
+    --text: #0b0d10;
+    --text-dim: #4a5058;
+    --text-faint: #7a8088;
+    --steel: #5a6b7a;
+    --steel-dim: #7a8a97;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    background: var(--bg);
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 20px; }
+  .brand-mark { width: 32px; height: 32px; flex-shrink: 0; }
+  .brand-name { font-size: 20px; font-weight: 500; letter-spacing: 0.01em; color: var(--text); }
+  .brand-tag { font-size: 11px; color: var(--text-faint); padding: 0 8px 16px; }
+  .nav-group { margin-bottom: 16px; }
+  .nav-group-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-faint);
+    padding: 8px; margin-bottom: 4px;
+  }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 8px 10px;
+    background: transparent; border: none;
+    color: var(--text-dim);
+    font-size: 14px; text-align: left; cursor: pointer;
+    border-radius: 6px;
+    font-family: inherit;
+    transition: all 0.1s;
+  }
+  .nav-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .nav-btn.active { background: var(--bg-hover); color: var(--text); }
+  .nav-btn .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-faint); flex-shrink: 0;
+  }
+  .nav-btn.active .dot { background: var(--steel); }
+  main { padding: 32px 40px; max-width: 960px; }
+  .view { display: none; }
+  .view.active { display: block; }
+  .view-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .view-title { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; }
+  .view-meta { font-size: 12px; color: var(--text-faint); }
+  .theme-toggle {
+    position: absolute; top: 20px; right: 20px;
+    background: transparent; border: 1px solid var(--border-strong);
+    color: var(--text-dim); padding: 6px 12px; border-radius: 6px;
+    cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+  .loading { color: var(--text-faint); font-style: italic; padding: 24px 0; }
+  .error { color: var(--watch-urgent); padding: 16px; border: 1px solid var(--watch-urgent); border-radius: 8px; }
+  .watch-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; border-radius: 10px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .watch-level {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .watch-level .level-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .watch-level.routine { background: rgba(78, 168, 106, 0.15); color: var(--watch-routine); }
+  .watch-level.routine .level-dot { background: var(--watch-routine); }
+  .watch-level.elevated { background: rgba(201, 166, 59, 0.15); color: var(--watch-elevated); }
+  .watch-level.elevated .level-dot { background: var(--watch-elevated); }
+  .watch-level.active { background: rgba(201, 122, 59, 0.15); color: var(--watch-active); }
+  .watch-level.active .level-dot { background: var(--watch-active); }
+  .watch-level.urgent { background: rgba(201, 74, 59, 0.15); color: var(--watch-urgent); }
+  .watch-level.urgent .level-dot { background: var(--watch-urgent); }
+  .watch-reason { flex: 1; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  .section { margin: 28px 0; }
+  .section-title {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--text-faint);
+    margin-bottom: 12px;
+  }
+  .headline {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 22px; font-weight: 500; line-height: 1.35;
+    color: var(--text); margin-bottom: 8px;
+  }
+  .overview {
+    font-size: 15px; line-height: 1.7; color: var(--text);
+    padding: 16px 0;
+  }
+  .overview p { margin-bottom: 14px; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; margin-bottom: 10px;
+    cursor: pointer; transition: all 0.1s;
+  }
+  .card:hover { border-color: var(--border-strong); background: var(--bg-hover); }
+  .card-brief { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .card-expand { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .card.expanded .card-expand { display: block; }
+  .card-meta {
+    display: flex; gap: 10px; margin-top: 8px;
+    font-size: 11px; color: var(--text-faint);
+  }
+  .signal-list { list-style: none; padding: 0; }
+  .signal-list li {
+    padding: 10px 14px; margin-bottom: 6px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13px; color: var(--text);
+    line-height: 1.5;
+  }
+  .story-card {
+    padding: 14px 16px; margin-bottom: 8px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .story-title { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .story-meta { font-size: 11px; color: var(--text-faint); display: flex; gap: 12px; }
+  .sources-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .source-chip {
+    font-size: 10px; padding: 3px 8px;
+    background: var(--bg-hover); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text-dim);
+  }
+  .placeholder {
+    padding: 40px; text-align: center; color: var(--text-faint);
+    border: 1px dashed var(--border-strong); border-radius: 10px;
+  }
+  .analyst-note {
+    font-style: italic; color: var(--text-dim);
+    padding: 14px 18px; background: var(--bg-card);
+    border-left: 3px solid var(--steel); border-radius: 0 8px 8px 0;
+    font-size: 13px; line-height: 1.6; margin: 16px 0;
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="toggleTheme()">☾ Dark</button>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg">
+        <g transform="rotate(15)">
+          <path d="M 0 -4 m -32 0 A 32 32 0 0 1 0 -36 L 0 28 A 32 32 0 0 1 -32 -4 Z" fill="var(--text)"/>
+          <path d="M 0 4 m 32 0 A 32 32 0 0 0 0 -28 L 0 36 A 32 32 0 0 0 32 4 Z" fill="var(--steel)"/>
+        </g>
+      </svg>
+      <div class="brand-name">Vantage</div>
+    </div>
+    <div class="brand-tag">One event. Every perspective.</div>
+    <div class="nav-group">
+      <div class="nav-group-label">Daily</div>
+      <button class="nav-btn active" data-view="brief" onclick="setView('brief')"><span class="dot"></span>Daily brief</button>
+      <button class="nav-btn" data-view="stories" onclick="setView('stories')"><span class="dot"></span>All stories</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Analysis</div>
+      <button class="nav-btn" data-view="predictions" onclick="setView('predictions')"><span class="dot"></span>Predictions</button>
+      <button class="nav-btn" data-view="psyops" onclick="setView('psyops')"><span class="dot"></span>Psyops</button>
+    </div>
+  </aside>
+  <main>
+    <div id="view-brief" class="view active">
+      <div class="view-header"><div class="view-title">Daily brief</div><div class="view-meta" id="brief-date">Loading…</div></div>
+      <div id="brief-content"><div class="loading">Loading brief…</div></div>
+    </div>
+    <div id="view-stories" class="view">
+      <div class="view-header"><div class="view-title">All stories</div><div class="view-meta" id="stories-count"></div></div>
+      <div id="stories-content"><div class="loading">Loading stories…</div></div>
+    </div>
+    <div id="view-predictions" class="view">
+      <div class="view-header"><div class="view-title">Predictions</div></div>
+      <div class="placeholder">Predictor feeds arrive in Phase 2. Tracked forecasters with probability scores and falsifiable claims.</div>
+    </div>
+    <div id="view-psyops" class="view">
+      <div class="view-header"><div class="view-title">Psyops</div></div>
+      <div class="placeholder">Source silence detection and narrative-divergence tracking arrive in Phase 2.</div>
+    </div>
+  </main>
+</div>
+<script>
+  let briefLoaded = false, storiesLoaded = false;
+  function setView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const v = document.getElementById('view-' + name);
+    if (v) v.classList.add('active');
+    const b = document.querySelector('.nav-btn[data-view="' + name + '"]');
+    if (b) b.classList.add('active');
+    if (name === 'brief' && !briefLoaded) loadBrief();
+    if (name === 'stories' && !storiesLoaded) loadStories();
+  }
+  function toggleTheme() {
+    const h = document.documentElement;
+    const cur = h.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    h.setAttribute('data-theme', next);
+    document.querySelector('.theme-toggle').textContent = next === 'dark' ? '☾ Dark' : '☀ Light';
+  }
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  }
+  async function loadBrief() {
+    try {
+      const r = await fetch('/brief.json', { cache: 'no-store' });
+      if (!r.ok) {
+        document.getElementById('brief-content').innerHTML = '<div class="placeholder">No brief available yet. Briefs generate at 05:00 UTC daily or on manual trigger.</div>';
+        return;
+      }
+      const b = await r.json();
+      briefLoaded = true;
+      document.getElementById('brief-date').textContent = b.date || '';
+      const level = (b.threat_level || 'routine').toLowerCase();
+      const levelMap = { low: 'routine', moderate: 'elevated', elevated: 'elevated', high: 'active', severe: 'urgent', urgent: 'urgent', critical: 'urgent' };
+      const watchClass = levelMap[level] || 'routine';
+      const watchLabel = watchClass.charAt(0).toUpperCase() + watchClass.slice(1);
+      let html = '<div class="watch-banner"><span class="watch-level ' + watchClass + '"><span class="level-dot"></span>' + watchLabel + '</span><div class="watch-reason">' + escapeHtml(b.threat_level_reason || '') + '</div></div>';
+      if (b.headline_brief) html += '<div class="section"><div class="headline">' + escapeHtml(b.headline_brief) + '</div></div>';
+      if (b.intelligence_overview) {
+        const paras = typeof b.intelligence_overview === 'string' ? b.intelligence_overview.split(/\n\n+/) : (Array.isArray(b.intelligence_overview) ? b.intelligence_overview : [JSON.stringify(b.intelligence_overview)]);
+        html += '<div class="section"><div class="section-title">Intelligence overview</div><div class="overview">' + paras.map(p => '<p>' + escapeHtml(p) + '</p>').join('') + '</div></div>';
+      }
+      if (Array.isArray(b.top_stories) && b.top_stories.length) {
+        html += '<div class="section"><div class="section-title">Top stories</div>';
+        b.top_stories.forEach((s, i) => {
+          const brief = s.brief || s.headline || s.title || '';
+          const expand = s.expanded || s.analysis || s.detail || '';
+          html += '<div class="card" onclick="this.classList.toggle(\'expanded\')"><div class="card-brief">' + escapeHtml(brief) + '</div>' + (expand ? '<div class="card-expand">' + escapeHtml(expand) + '</div>' : '') + '</div>';
+        });
+        html += '</div>';
+      }
+      if (Array.isArray(b.overnight_signals) && b.overnight_signals.length) {
+        html += '<div class="section"><div class="section-title">Overnight signals</div><ul class="signal-list">';
+        b.overnight_signals.forEach(s => { html += '<li>' + escapeHtml(typeof s === 'string' ? s : (s.signal || s.text || JSON.stringify(s))) + '</li>'; });
+        html += '</ul></div>';
+      }
+      if (Array.isArray(b.contested_numbers_today) && b.contested_numbers_today.length) {
+        html += '<div class="section"><div class="section-title">Contested numbers</div><ul class="signal-list">';
+        b.contested_numbers_today.forEach(n => { html += '<li>' + escapeHtml(typeof n === 'string' ? n : (n.claim || JSON.stringify(n))) + '</li>'; });
+        html += '</ul></div>';
+      }
+      if (b.analyst_note) html += '<div class="section"><div class="section-title">Analyst note</div><div class="analyst-note">' + escapeHtml(b.analyst_note) + '</div></div>';
+      if (Array.isArray(b.sources_consulted) && b.sources_consulted.length) {
+        html += '<div class="section"><div class="section-title">Sources consulted (' + b.sources_consulted.length + ')</div><div class="sources-grid">';
+        b.sources_consulted.forEach(s => { html += '<span class="source-chip">' + escapeHtml(typeof s === 'string' ? s : (s.name || s.source || '')) + '</span>'; });
+        html += '</div></div>';
+      }
+      document.getElementById('brief-content').innerHTML = html;
+    } catch (e) {
+      document.getElementById('brief-content').innerHTML = '<div class="error">Error loading brief: ' + escapeHtml(e.message) + '</div>';
+    }
+  }
+  async function loadStories() {
+    try {
+      const r = await fetch('/stories.json', { cache: 'no-store' });
+      if (!r.ok) {
+        document.getElementById('stories-content').innerHTML = '<div class="placeholder">No stories available.</div>';
+        return;
+      }
+      const data = await r.json();
+      storiesLoaded = true;
+      const stories = Array.isArray(data) ? data : (data.stories || []);
+      document.getElementById('stories-count').textContent = stories.length + ' stories';
+      if (!stories.length) { document.getElementById('stories-content').innerHTML = '<div class="placeholder">No stories yet — scraper may not have run.</div>'; return; }
+      let html = '';
+      stories.forEach(s => {
+        const title = s.title || s.headline || '(untitled)';
+        const summary = s.summary || s.brief || s.description || '';
+        const sources = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
+        const confidence = s.confidence || '';
+        html += '<div class="story-card"><div class="story-title">' + escapeHtml(title) + '</div>' + (summary ? '<div style="font-size:13px;color:var(--text-dim);margin:4px 0 8px">' + escapeHtml(summary.slice(0, 240)) + (summary.length > 240 ? '…' : '') + '</div>' : '') + '<div class="story-meta">' + (sources ? '<span>' + sources + ' sources</span>' : '') + (confidence ? '<span>' + escapeHtml(confidence) + ' confidence</span>' : '') + '</div></div>';
+      });
+      document.getElementById('stories-content').innerHTML = html;
+    } catch (e) {
+      document.getElementById('stories-content').innerHTML = '<div class="error">Error loading stories: ' + escapeHtml(e.message) + '</div>';
+    }
+  }
+  window.setView = setView;
+  window.toggleTheme = toggleTheme;
+  loadBrief();
+</script>
+</body>
+</html>
