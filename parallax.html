@@ -204,10 +204,89 @@
     background: var(--bg-hover); color: var(--text-faint);
     border-radius: 10px;
   }
+  .filter-bar {
+    padding: 0 0 16px 0; margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-row {
+    display: flex; align-items: baseline; gap: 16px;
+    padding: 4px 0; font-size: 13px;
+  }
+  .filter-label {
+    color: var(--steel); font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: 10px; min-width: 60px; flex-shrink: 0;
+  }
+  .filter-values { display: flex; flex-wrap: wrap; gap: 0; }
+  .filter-chip {
+    color: var(--text-faint); cursor: pointer;
+    padding: 2px 0; transition: color 0.1s;
+    font-family: inherit; font-size: 13px;
+    background: none; border: none;
+  }
+  .filter-chip:hover { color: var(--text-dim); }
+  .filter-chip.active { color: var(--text); font-weight: 600; }
+  .filter-sep { color: var(--text-faint); margin: 0 8px; user-select: none; }
+  .view-header-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border); gap: 16px;
+  }
+  .view-header-row .view-title { margin: 0; }
+  .search-box {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 6px 10px; border-radius: 4px;
+    min-width: 260px;
+  }
+  .search-box:focus-within { border-color: var(--border-strong); }
+  .search-icon {
+    width: 12px; height: 12px; flex-shrink: 0;
+    color: var(--steel); opacity: 0.7;
+  }
+  .search-input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: inherit;
+    font-size: 13px; flex: 1; min-width: 0;
+  }
+  .search-input::placeholder { color: var(--text-faint); }
+  .clear-filters {
+    font-size: 11px; color: var(--steel); cursor: pointer;
+    text-decoration: underline; margin-left: auto;
+    padding: 4px 0;
+  }
+  .clear-filters:hover { color: var(--text); }
+  .filter-row-meta { font-size: 11px; color: var(--text-faint); padding: 4px 0 0 0; }
+  .settings-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 24px; margin-bottom: 16px;
+    max-width: 560px;
+  }
+  .settings-card h3 {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--text-faint);
+    margin-bottom: 12px;
+  }
+  .settings-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+  }
+  .settings-row + .settings-row { border-top: 1px solid var(--border); }
+  .settings-label {
+    font-size: 14px; color: var(--text);
+  }
+  .settings-sub {
+    font-size: 12px; color: var(--text-faint); margin-top: 2px;
+  }
+  .settings-btn {
+    background: transparent; border: 1px solid var(--border-strong);
+    color: var(--text-dim); padding: 6px 14px; border-radius: 4px;
+    cursor: pointer; font-size: 12px; font-family: inherit;
+  }
+  .settings-btn:hover { color: var(--text); border-color: var(--text-dim); }
 </style>
 </head>
 <body>
-<button class="theme-toggle" onclick="toggleTheme()">☾ Dark</button>
 <div class="app">
   <aside>
     <div class="brand">
@@ -230,6 +309,10 @@
       <button class="nav-btn" data-view="predictions" onclick="setView('predictions')"><span class="dot"></span>Predictions</button>
       <button class="nav-btn" data-view="psyops" onclick="setView('psyops')"><span class="dot"></span>Psyops</button>
     </div>
+      <div class="nav-group">
+      <div class="nav-group-label">Account</div>
+      <button class="nav-btn" data-view="settings" onclick="setView('settings')"><span class="dot"></span>Settings</button>
+    </div>
   </aside>
   <main>
     <div id="view-brief" class="view active">
@@ -237,8 +320,30 @@
       <div id="brief-content"><div class="loading">Loading brief…</div></div>
     </div>
     <div id="view-stories" class="view">
-      <div class="view-header"><div class="view-title">All stories</div><div class="view-meta" id="stories-count"></div></div>
+      <div class="view-header-row">
+        <div class="view-title">All stories</div>
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="stories-search" class="search-input" placeholder="Search stories..." oninput="applyFilters()">
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-row">
+          <span class="filter-label">Region</span>
+          <div class="filter-values" id="filter-region"></div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Watch</span>
+          <div class="filter-values" id="filter-watch"></div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Sources</span>
+          <div class="filter-values" id="filter-sources"></div>
+        </div>
+        <div class="filter-row-meta" id="filter-meta"></div>
+      </div>
       <div id="stories-content"><div class="loading">Loading stories…</div></div>
+    </div></div>
     </div>
     <div id="view-predictions" class="view">
       <div class="view-header"><div class="view-title">Predictions</div></div>
@@ -248,7 +353,29 @@
       <div class="view-header"><div class="view-title">Psyops</div></div>
       <div class="placeholder">Source silence detection and narrative-divergence tracking arrive in Phase 2.</div>
     </div>
-  </main>
+      <div id="view-settings" class="view">
+      <div class="view-header"><div class="view-title">Settings</div></div>
+      <div class="settings-card">
+        <h3>Appearance</h3>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Theme</div>
+            <div class="settings-sub" id="theme-sub">Dark mode active</div>
+          </div>
+          <button class="settings-btn" onclick="toggleTheme()">Switch theme</button>
+        </div>
+      </div>
+      <div class="settings-card">
+        <h3>About</h3>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Vantage</div>
+            <div class="settings-sub">One event. Every perspective.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </main>
 </div>
 <script>
   let briefLoaded = false, storiesLoaded = false;
@@ -372,21 +499,117 @@
       const data = await r.json();
       storiesLoaded = true;
       const stories = Array.isArray(data) ? data : (data.stories || []);
-      document.getElementById('stories-count').textContent = stories.length + ' stories';
-      if (!stories.length) { document.getElementById('stories-content').innerHTML = '<div class="placeholder">No stories yet — scraper may not have run.</div>'; return; }
-      let html = '';
-      stories.forEach(s => {
-        const title = s.title || s.headline || '(untitled)';
-        const summary = s.summary || s.brief || s.description || '';
-        const sources = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
-        const confidence = s.confidence || '';
-        html += '<div class="story-card"><div class="story-title">' + escapeHtml(title) + '</div>' + (summary ? '<div style="font-size:13px;color:var(--text-dim);margin:4px 0 8px">' + escapeHtml(summary.slice(0, 240)) + (summary.length > 240 ? '…' : '') + '</div>' : '') + '<div class="story-meta">' + (sources ? '<span>' + sources + ' sources</span>' : '') + (confidence ? '<span>' + escapeHtml(confidence) + ' confidence</span>' : '') + '</div></div>';
-      });
-      document.getElementById('stories-content').innerHTML = html;
+      window._allStories = stories;
+      buildFilterChips(stories);
+      restoreFiltersFromURL();
+      renderStories();
     } catch (e) {
       document.getElementById('stories-content').innerHTML = '<div class="error">Error loading stories: ' + escapeHtml(e.message) + '</div>';
     }
   }
+  function buildFilterChips(stories) {
+    const regions = new Set(['all']);
+    stories.forEach(s => { if (s.region) regions.add(s.region); });
+    const regionOrder = ['all', 'middle-east', 'east-asia', 'europe', 'africa', 'americas', 'global'];
+    const sortedRegions = regionOrder.filter(r => regions.has(r)).concat([...regions].filter(r => !regionOrder.includes(r)));
+    renderChipRow('filter-region', sortedRegions, 'region', (r) => r === 'all' ? 'All' : r.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+    renderChipRow('filter-watch', ['all', 'routine', 'elevated', 'active', 'urgent'], 'watch', (w) => w === 'all' ? 'All' : w.charAt(0).toUpperCase() + w.slice(1));
+    renderChipRow('filter-sources', ['any', '2', '3', '5'], 'sources', (s) => s === 'any' ? 'Any' : s + '+');
+  }
+  function renderChipRow(containerId, values, filterKey, labelFn) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const active = window._filters[filterKey];
+    container.innerHTML = values.map((v, i) => {
+      const isActive = v === active;
+      const sep = i > 0 ? '<span class="filter-sep">·</span>' : '';
+      return sep + '<button class="filter-chip' + (isActive ? ' active' : '') + '" data-value="' + escapeHtml(v) + '" onclick="setFilter(\'' + filterKey + '\', \'' + v + '\')">' + escapeHtml(labelFn(v)) + '</button>';
+    }).join('');
+  }
+  function setFilter(key, value) {
+    window._filters[key] = value;
+    updateURL();
+    renderStories();
+    // Re-render chip rows to update active state
+    if (window._allStories) buildFilterChips(window._allStories);
+  }
+  function applyFilters() {
+    window._filters.search = (document.getElementById('stories-search')?.value || '').toLowerCase();
+    updateURL();
+    renderStories();
+  }
+  function updateURL() {
+    const params = new URLSearchParams();
+    const f = window._filters;
+    if (f.region && f.region !== 'all') params.set('region', f.region);
+    if (f.watch && f.watch !== 'all') params.set('watch', f.watch);
+    if (f.sources && f.sources !== 'any') params.set('sources', f.sources);
+    if (f.search) params.set('q', f.search);
+    const qs = params.toString();
+    history.replaceState(null, '', qs ? '?' + qs : location.pathname);
+  }
+  function restoreFiltersFromURL() {
+    const params = new URLSearchParams(location.search);
+    window._filters.region = params.get('region') || 'all';
+    window._filters.watch = params.get('watch') || 'all';
+    window._filters.sources = params.get('sources') || 'any';
+    window._filters.search = (params.get('q') || '').toLowerCase();
+    const si = document.getElementById('stories-search');
+    if (si && window._filters.search) si.value = window._filters.search;
+  }
+  function renderStories() {
+    const stories = window._allStories || [];
+    const f = window._filters;
+    const watchMap = { low: 'routine', moderate: 'elevated', elevated: 'elevated', high: 'active', severe: 'urgent', urgent: 'urgent', critical: 'urgent' };
+    const filtered = stories.filter(s => {
+      if (f.region && f.region !== 'all' && s.region !== f.region) return false;
+      if (f.watch && f.watch !== 'all') {
+        const storyWatch = watchMap[(s.threat_level || s.watch_level || '').toLowerCase()] || (s.threat_level || '').toLowerCase();
+        if (storyWatch !== f.watch) return false;
+      }
+      if (f.sources && f.sources !== 'any') {
+        const count = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
+        if (count < parseInt(f.sources)) return false;
+      }
+      if (f.search) {
+        const blob = ((s.headline || s.title || '') + ' ' + (s.summary || s.brief || s.description || '') + ' ' + (s.paragraph_1_situation || '')).toLowerCase();
+        if (!blob.includes(f.search)) return false;
+      }
+      return true;
+    });
+    const countEl = document.getElementById('stories-count');
+    if (countEl) countEl.textContent = filtered.length + ' of ' + stories.length + ' stories';
+    const metaEl = document.getElementById('filter-meta');
+    if (metaEl) {
+      const hasFilters = (f.region !== 'all') || (f.watch !== 'all') || (f.sources !== 'any') || f.search;
+      metaEl.innerHTML = hasFilters ? 'Showing ' + filtered.length + ' of ' + stories.length + ' · <span class="clear-filters" onclick="clearFilters()">Clear all</span>' : filtered.length + ' stories total';
+    }
+    if (!filtered.length) {
+      document.getElementById('stories-content').innerHTML = '<div class="placeholder">No stories match current filters.</div>';
+      return;
+    }
+    let html = '';
+    filtered.forEach(s => {
+      const title = s.headline || s.title || '(untitled)';
+      const summary = s.summary || s.brief || s.description || s.paragraph_1_situation || '';
+      const sources = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
+      const confidence = s.confidence || '';
+      html += '<div class="story-card"><div class="story-title">' + escapeHtml(title) + '</div>' + (summary ? '<div style="font-size:13px;color:var(--text-dim);margin:4px 0 8px">' + escapeHtml(summary.slice(0, 240)) + (summary.length > 240 ? '…' : '') + '</div>' : '') + '<div class="story-meta">' + (sources ? '<span>' + sources + ' sources</span>' : '') + (confidence ? '<span>' + escapeHtml(confidence) + ' confidence</span>' : '') + (s.region ? '<span>' + escapeHtml(s.region) + '</span>' : '') + '</div></div>';
+    });
+    document.getElementById('stories-content').innerHTML = html;
+  }
+  function clearFilters() {
+    window._filters = { region: 'all', watch: 'all', sources: 'any', search: '' };
+    const si = document.getElementById('stories-search');
+    if (si) si.value = '';
+    updateURL();
+    if (window._allStories) buildFilterChips(window._allStories);
+    renderStories();
+  }
+  window._filters = { region: 'all', watch: 'all', sources: 'any', search: '' };
+  window.setFilter = setFilter;
+  window.applyFilters = applyFilters;
+  window.clearFilters = clearFilters;
   window.setView = setView;
   window.toggleTheme = toggleTheme;
   loadBrief();
