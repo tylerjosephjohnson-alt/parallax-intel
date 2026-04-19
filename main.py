@@ -3186,18 +3186,58 @@ if FLASK:
     def sources_json():
         # Group RSS_FEEDS by lean into tiers for the frontend Source Registry
         tier_map = {
+            # Wires & mainstream
             "centre": ("Wires & mainstream", "t1"),
             "centre-left": ("Wires & mainstream", "t1"),
             "centre-right": ("Wires & mainstream", "t1"),
             "financial-centre": ("Wires & mainstream", "t1"),
+            "independent": ("Wires & mainstream", "t1"),
+            # Primary documents & official
+            "primary-document": ("Primary documents", "t1"),
+            "multilateral": ("Primary documents", "t1"),
+            "us-government": ("Primary documents", "t1"),
+            # Policy & think tanks
+            "us-foreign-policy": ("Policy & think tanks", "t1"),
+            "think-tank": ("Policy & think tanks", "t1"),
+            "uk-analytical": ("Policy & think tanks", "t1"),
+            "nato-aligned": ("Policy & think tanks", "t1"),
+            # Investigative & OSINT
+            "investigative-osint": ("Investigative & OSINT", "t2"),
+            "osint": ("Investigative & OSINT", "t2"),
+            "left-investigative": ("Investigative & OSINT", "t2"),
+            "investigative": ("Investigative & OSINT", "t2"),
+            # Conflict analysis
+            "analytical": ("Conflict analysis", "t2"),
+            "arms-research": ("Conflict analysis", "t2"),
+            "defence-analytical": ("Conflict analysis", "t2"),
+            "conflict-analysis": ("Conflict analysis", "t2"),
+            "conflict-data": ("Conflict analysis", "t2"),
+            "military": ("Conflict analysis", "t2"),
+            "russia-critical": ("Conflict analysis", "t2"),
+            # Humanitarian & human rights
+            "humanitarian": ("Humanitarian & human rights", "t2"),
+            "human-rights": ("Humanitarian & human rights", "t2"),
+            # Regional specialist
+            "regional": ("Regional specialist", "t2"),
+            "regional-specialist": ("Regional specialist", "t2"),
+            "china-hk": ("Regional specialist", "t2"),
+            "pan-african": ("Regional specialist", "t2"),
+            "pakistan-press": ("Regional specialist", "t2"),
+            "saudi-aligned": ("Regional specialist", "t2"),
+            "israel-centre": ("Regional specialist", "t2"),
+            "israel-left": ("Regional specialist", "t2"),
+            "iran-independent": ("Regional specialist", "t2"),
+            "iran-opposition": ("Regional specialist", "t2"),
+            "indian-nationalist": ("Regional specialist", "t2"),
+            # State media (monitored for narrative)
             "state-russia": ("State media (monitored)", "t3"),
             "state-china": ("State media (monitored)", "t3"),
             "state-iran": ("State media (monitored)", "t3"),
             "state-israel": ("State media (monitored)", "t3"),
-            "regional": ("Regional specialist", "t2"),
-            "investigative": ("Investigative & OSINT", "t2"),
-            "think-tank": ("Policy & think tanks", "t1"),
-            "military": ("Military & conflict", "t2"),
+            "russian-state": ("State media (monitored)", "t3"),
+            "chinese-state": ("State media (monitored)", "t3"),
+            "iran-state": ("State media (monitored)", "t3"),
+            # Open event aggregators
             "aggregator": ("Open event aggregators", "t3"),
         }
         grouped = {}
