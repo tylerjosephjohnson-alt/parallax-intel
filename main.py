@@ -3182,6 +3182,35 @@ if FLASK:
                            "economic_signals": {}, "meta": {"status": "generating"}})
         return send_file(DATA_FILE, mimetype="application/json")
 
+    @app.route("/sources.json")
+    def sources_json():
+        # Group RSS_FEEDS by lean into tiers for the frontend Source Registry
+        tier_map = {
+            "centre": ("Wires & mainstream", "t1"),
+            "centre-left": ("Wires & mainstream", "t1"),
+            "centre-right": ("Wires & mainstream", "t1"),
+            "financial-centre": ("Wires & mainstream", "t1"),
+            "state-russia": ("State media (monitored)", "t3"),
+            "state-china": ("State media (monitored)", "t3"),
+            "state-iran": ("State media (monitored)", "t3"),
+            "state-israel": ("State media (monitored)", "t3"),
+            "regional": ("Regional specialist", "t2"),
+            "investigative": ("Investigative & OSINT", "t2"),
+            "think-tank": ("Policy & think tanks", "t1"),
+            "military": ("Military & conflict", "t2"),
+            "aggregator": ("Open event aggregators", "t3"),
+        }
+        grouped = {}
+        for f in RSS_FEEDS:
+            lean = f.get("lean", "centre")
+            group_name, tier = tier_map.get(lean, ("Other sources", "t2"))
+            grouped.setdefault(group_name, {"name": group_name, "tier": tier, "sources": []})
+            grouped[group_name]["sources"].append({
+                "name": f.get("source", "unknown"),
+                "meta": "rss \u00b7 " + lean,
+            })
+        return jsonify({"groups": list(grouped.values())})
+
     @app.route("/status")
     def status():
         return jsonify(last_run)
