@@ -976,7 +976,7 @@
     const all = window._allStories || [];
     if (!all.length) {
       container.innerHTML = '<div class="empty-placeholder">No stories match current filters.</div>';
-      document.getElementById('stories-count').textContent = '0 stories total';
+      { const _sc = document.getElementById('stories-count'); if (_sc) _sc.textContent = '0 stories total'; }
       return;
     }
     const f = window._filters || { region: 'all', watch: 'all', sources: 'any', search: '' };
@@ -1007,7 +1007,7 @@
       const db = new Date(b.updated || b.published || b.date || 0).getTime();
       return db - da;
     });
-    document.getElementById('stories-count').textContent = filtered.length + ' ' + (filtered.length === 1 ? 'story' : 'stories') + ' total';
+    { const _sc = document.getElementById('stories-count'); if (_sc) _sc.textContent = filtered.length + ' ' + (filtered.length === 1 ? 'story' : 'stories') + ' total'; }
     if (!filtered.length) {
       container.innerHTML = '<div class="empty-placeholder">No stories match current filters.</div>';
       return;
