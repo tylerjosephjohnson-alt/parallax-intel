@@ -21,7 +21,7 @@
 
 ---
 
-## Current state (end of v15 session, 2026-04-17)
+## Current state (end of v29 session, 2026-04-18)
 
 ### What works
 - Backend brief generation — returns valid 44K-char JSON with all 13 fields
@@ -47,6 +47,16 @@
 - **v17**: brief API timeout 300→600 sec (line 2841 main.py) — fix read timeout on slow Anthropic responses
 - **v18**: parallax.html updated to render intelligence_overview object structure (4 labeled paragraphs) and top_stories with real field names (headline, paragraph_1-4, contested_claim, significance, source, flags)
 - **v19**: scrape interval 420→720 min (line 60 main.py), cost target reduced to ~$0.50/day, 2x/day cadence for testing phase
+- **v20** (6530179): CONTEXT.md — added v17-v19 entries, reduced stability watch 100→30 days, updated interval/cost refs
+- **v21** (be3d550): fixed scraper f-string `ValueError` at main.py:2664 — single `{...}` → `{{...}}` (root cause of earlier Story 1 generation crashes)
+- **v22** (7b5ca75): filter bar + search on All Stories view, Settings page with theme toggle relocated there, 6-column sidebar nav with groups (DAILY / ANALYSIS / ACCOUNT / REFERENCE)
+- **v23** (8c8fcda): fixed extra `</div>` from v22 that pushed views outside `<main>` — Settings layout now correctly nested
+- **v24** (ebcc261): boxed filter chips (14px bold), proper click boxes with borders, Sources spinner replacing chips, Watch+Sources share a row
+- **v25** (b18f3b1): hide native number input spinner arrows on Sources (redundant with +/- buttons)
+- **v26** (77c48da): major v26 redesign — Parallax-inspired story cards with topic pills (color-coded by region), date/sources pills in mono, serif headline (Georgia 19px), editorial confidence badges (VERIFIED/CORROBORATED/MULTI-SOURCE/SINGLE SOURCE/UNVERIFIED), ECON/PREDICTION/PSYOP flag chips, newest-first sort, click-to-expand (Situation/Connections/Cascading effects/Narrative shift sections), Source Registry view with 6 tier-badged groups (hardcoded)
+- **v27** (50d55ee): wired frontend `renderStoryCardV2` to existing backend fields — `category` drives topic pill (conflict-war/politics/economics/human-rights/environment/technology/disinformation with dedicated color classes), `location` renders inline after topic, `confidence` from AI shown as hint under badge. Source Registry now fetches `/sources.json` with hardcoded fallback. Added `ground_truth` and `who_benefits.civilian_impact` to expanded card
+- **v28** (68192e6): added `/sources.json` Flask route in main.py — reads RSS_FEEDS, groups by `lean` field into tiers via `tier_map` dict. First version covered 6 lean values (67 feeds fell into "Other sources")
+- **v29** (ce3aed8): expanded `tier_map` to cover all 31 real lean values in RSS_FEEDS → 8 proper groups (Wires & mainstream 25, Primary documents 16, Policy & think tanks 3, Regional specialist 11, Investigative & OSINT 10, Conflict analysis 9, Humanitarian & human rights 5, State media monitored 4). Zero "Other" stragglers. Source Registry view confirmed live-wired to backend (83 cards render, 44 T1 / 35 T2 / 4 T3)
 
 ---
 
