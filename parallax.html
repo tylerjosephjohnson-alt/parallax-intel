@@ -820,7 +820,7 @@
     const title = s.headline || s.title || '(untitled)';
     const summary = s.summary || s.brief || s.description || s.paragraph_1_situation || '';
     const summaryPreview = summary.length > 240 ? summary.slice(0, 240) + '…' : summary;
-    const srcCount = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
+    const srcCount = Array.isArray(s.sources) ? s.sources.length : (typeof s.source === 'string' && s.source ? s.source.split(',').filter(x => x.trim()).length : (s.source_count || 0));
     const region = s.region || 'global';
     // Topic: prefer explicit category, fall back to region
     const category = (s.category || '').toLowerCase();
@@ -878,7 +878,7 @@
     const sig = s.significance || '';
     const groundTruth = s.ground_truth || '';
     const whoBenefits = s.who_benefits || null;
-    const sourcesList = Array.isArray(s.sources) ? s.sources.join(' · ') : (s.source || '');
+    const sourcesList = Array.isArray(s.sources) ? s.sources.join(' \u00b7 ') : (typeof s.source === 'string' ? s.source.split(',').map(x => x.trim()).filter(x => x).join(' \u00b7 ') : '');
     const cascade = Array.isArray(s.story_card_ids) ? s.story_card_ids : (Array.isArray(s.cascade_ids) ? s.cascade_ids : []);
     let expandHtml = '';
     if (summary && summary.length > 240) expandHtml += '<div class="sc-section"><div class="sc-section-label">Situation</div><p>' + escapeHtml(summary) + '</p></div>';
