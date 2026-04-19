@@ -1763,6 +1763,7 @@ def call_claude(prompt, max_tokens=4000):
             return json.loads(r.read())["content"][0]["text"]
     except Exception as e:
         print(f"  Claude error: {e}"); return None
+        globals()['_LAST_CLAUDE_ERROR'] = f"{type(e).__name__}: {str(e)[:250]}"
 
 
 # ─────────────────────────────────────────────
@@ -2288,6 +2289,7 @@ def find_cross_citations(cluster_articles):
     return citations[:6]  # max 6 citation relationships
 
 _DEBUG_STORY_GEN = []  # in-memory log for diagnosing stories=0 silent failures (v34)
+_LAST_CLAUDE_ERROR = None  # v42: captures last call_claude exception string for debug endpoint
 def generate_story(cluster_articles):
     sources = list({a["source"] for a in cluster_articles})
 
@@ -2678,7 +2680,7 @@ Respond with ONLY a JSON object (no markdown):
 }}"""
     result = call_claude(prompt)
     if not result:
-            _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else ""})
+            _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
             print(f"  Story gen: Claude returned empty")
             return None
     result = result.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
