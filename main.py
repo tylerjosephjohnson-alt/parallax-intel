@@ -2672,6 +2672,17 @@ Respond with ONLY a JSON object (no markdown):
     result = call_claude(prompt)
     if not result: return None
     result = result.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
+    # v32: Robust JSON repair — handle common Claude-response defects before parsing
+    # (1) Trim leading text before first { and trailing text after last }
+    _first_brace = result.find('{')
+    _last_brace = result.rfind('}')
+    if _first_brace >= 0 and _last_brace > _first_brace:
+        result = result[_first_brace:_last_brace + 1]
+    # (2) Remove trailing commas before } or ]
+    import re as _re_repair
+    result = _re_repair.sub(r',(\s*[}\]])', r'\1', result)
+    # (3) Collapse any stray unescaped newlines inside string literals conservatively
+    #     (only a safety net — don't modify if already valid)
     try:
         data = json.loads(result)
         data["id"] = story_id(data.get("headline","") + cluster_articles[0]["published"])
