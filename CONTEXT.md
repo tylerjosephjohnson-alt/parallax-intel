@@ -21,7 +21,7 @@
 
 ---
 
-## Current state (end of v29 session, 2026-04-18)
+## Current state (end of v36 session, 2026-04-19)
 
 ### What works
 - Backend brief generation — returns valid 44K-char JSON with all 13 fields
@@ -57,6 +57,13 @@
 - **v27** (50d55ee): wired frontend `renderStoryCardV2` to existing backend fields — `category` drives topic pill (conflict-war/politics/economics/human-rights/environment/technology/disinformation with dedicated color classes), `location` renders inline after topic, `confidence` from AI shown as hint under badge. Source Registry now fetches `/sources.json` with hardcoded fallback. Added `ground_truth` and `who_benefits.civilian_impact` to expanded card
 - **v28** (68192e6): added `/sources.json` Flask route in main.py — reads RSS_FEEDS, groups by `lean` field into tiers via `tier_map` dict. First version covered 6 lean values (67 feeds fell into "Other sources")
 - **v29** (ce3aed8): expanded `tier_map` to cover all 31 real lean values in RSS_FEEDS → 8 proper groups (Wires & mainstream 25, Primary documents 16, Policy & think tanks 3, Regional specialist 11, Investigative & OSINT 10, Conflict analysis 9, Humanitarian & human rights 5, State media monitored 4). Zero "Other" stragglers. Source Registry view confirmed live-wired to backend (83 cards render, 44 T1 / 35 T2 / 4 T3)
+- **v30** (60b8259): CONTEXT.md — added v20-v29 entries, bumped heading to end-of-v29 session
+- **v31** (3018074): parallax.html — `renderStoryCardV2` handles brief top_stories schema's `source` (singular, comma-separated string). Before: "0 SOURCES / UNVERIFIED" on real brief cards. After: "8 SOURCES / VERIFIED" on Iran Hormuz
+- **v32** (ba3b267): JSON repair in `generate_story()` at main.py:2674 — trim pre/post-blob text, kill trailing commas before `json.loads`. Additive only. Turned out to be irrelevant: stories=0 bug was NOT JSON-parse.
+- **v33** (ad366c9): `call_claude` default max_tokens 900→4000 to prevent truncation. Didn't help — bug was upstream, call never returned.
+- **v34** (a98b814): added `_DEBUG_STORY_GEN` in-memory log + `/debug-story-gen` endpoint. **Gave us the definitive answer**: all 20 clusters failed at `claude_empty` stage — not JSON, not tokens, the Claude API call itself was returning empty. Root cause: **credit balance exhausted** ($21.60 grant burned, -$0.76 unpaid balance). Fixed when user bought more credits.
+- **v35** (8bf23da): route JSON files through `/data` volume with `DATA_DIR` env+fallback logic. All 5 file paths (BRIEF_FILE, DATA_FILE, VELOCITY_FILE, NARRATIVE_FILE, STORY_HISTORY_FILE) use `os.path.join(DATA_DIR, ...)`. Auto-creates dir. **Persistent storage finally live** — no more losing state on every push.
+- **v36** (46db150): **major UI rebuild for intel-community demo**: region-grouped layout, compact-first cards (click to expand), threat level meter per region (horizontal bar: routine/elevated/active/urgent), delta indicators (↑ +N / ↓ -N / ↔ flat), global overview strip (Stories / Regions / Verified / Top Watch). Uses existing backend fields — zero Python changes, +8,239 chars HTML
 
 ---
 
@@ -130,6 +137,26 @@ Stable daily brief, stories feed, basic UI. Must run 100 days stable before any 
 - Silence detection (flag when Western wires skip stories non-Western sources cover)
 - Foreign-language translation (Russian, Chinese, Arabic, Farsi, Spanish, Turkish — highest-leverage differentiator)
 - Source expansion to ~50-60 total (staged list — see below)
+
+
+### Phase 2 deferred (explicit list — from v36 session)
+
+User asks from 2026-04-19 session that we deferred to Phase 2 because they genuinely require infrastructure we don't have yet:
+
+1. **User accounts + cross-device saved feeds** — requires full auth system (signup/login/password-reset/session management/per-user DB). 1-2 weeks of engineering. Defer until we have 10+ beta testers who actually need cross-device persistence.
+2. **Push / email notifications** — requires accounts (see #1) + service integration (SendGrid / OneSignal / Firebase). Cost ~$15-50/mo baseline. Defer with accounts.
+3. **Real satellite feed integration** — Sentinel Hub Enterprise = $250/mo minimum, Planet Labs = thousands. Skip until there's paying enterprise demand. MVP can use free NASA GIBS (MODIS daily imagery) as a layer on the map, and link out to Sentinel Hub EO Browser when a story has coordinates.
+
+These are GOOD ideas, not wrong ideas. They're just expensive in engineering time or operational cost and would delay getting the MVP in front of testers.
+
+### Phase 2 shipped in v37 (scoped-down versions of those user asks)
+
+- **Location filter down to city** (uses existing `s.location` field — pure frontend)
+- **Interactive map view with draw-a-rectangle filter** (Leaflet + OpenStreetMap, free, no auth)
+- **Optional NASA GIBS satellite layer toggle** (free, no API key)
+- **"Create a Card" custom feeds saved to localStorage** (per-browser, no accounts, ~$0.05 Claude call per card)
+
+When we add real accounts later, migrate localStorage feeds to server-side per-user storage.
 
 ### Phase 3+
 Track-record scoring, narrative clustering, framing divergence, entity dossiers, watchlists, tiered free/paid plans.
