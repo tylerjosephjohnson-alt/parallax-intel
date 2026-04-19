@@ -2281,6 +2281,7 @@ def find_cross_citations(cluster_articles):
 
     return citations[:6]  # max 6 citation relationships
 
+_DEBUG_STORY_GEN = []  # in-memory log for diagnosing stories=0 silent failures (v34)
 def generate_story(cluster_articles):
     sources = list({a["source"] for a in cluster_articles})
 
@@ -2670,7 +2671,10 @@ Respond with ONLY a JSON object (no markdown):
   "provisional": false
 }}"""
     result = call_claude(prompt)
-    if not result: return None
+    if not result:
+            _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else ""})
+            print(f"  Story gen: Claude returned empty")
+            return None
     result = result.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
     # v32: Robust JSON repair — handle common Claude-response defects before parsing
     # (1) Trim leading text before first { and trailing text after last }
@@ -2701,7 +2705,8 @@ Respond with ONLY a JSON object (no markdown):
         data["_diversity_score"]     = diversity_score     if "diversity_score"     in dir() else 50
         return data
     except Exception as e:
-        print(f"  JSON error: {e}"); return None
+            _DEBUG_STORY_GEN.append({"stage": "json_error", "error": str(e)[:300], "result_tail": result[-200:] if result else "", "result_head": result[:200] if result else "", "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else ""})
+            print(f"  JSON error: {e}"); return None
 
 # ─────────────────────────────────────────────
 # FRED
@@ -3261,6 +3266,14 @@ if FLASK:
                 "meta": "rss \u00b7 " + lean,
             })
         return jsonify({"groups": list(grouped.values())})
+
+    @app.route("/debug-story-gen")
+    def debug_story_gen():
+        # v34: expose last ~50 story-gen failures for diagnosis
+        return jsonify({
+            "entries": _DEBUG_STORY_GEN[-50:],
+            "total_failures": len(_DEBUG_STORY_GEN)
+        })
 
     @app.route("/status")
     def status():
