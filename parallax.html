@@ -679,8 +679,71 @@
     font-family: ui-monospace, Menlo, monospace;
     font-size: 11px; letter-spacing: 0.05em;
   }
+  
+  /* v39: Map view */
+  #map-canvas {
+    width: 100%;
+    height: calc(100vh - 180px);
+    min-height: 520px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-raised);
+  }
+  .map-toolbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; margin-bottom: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .map-toolbar .map-count {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.12em;
+    color: var(--text-faint); text-transform: uppercase;
+  }
+  .map-toolbar .map-count strong {
+    color: var(--text); font-weight: 600;
+  }
+  .map-toolbar button {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 12px; border-radius: 4px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; cursor: pointer;
+    transition: border-color 120ms, background 120ms;
+  }
+  .map-toolbar button:hover { border-color: var(--steel); background: var(--bg-hover); }
+  .map-toolbar button.active { background: var(--steel); color: var(--bg); border-color: var(--steel); }
+  .leaflet-popup-content {
+    font-family: Georgia, serif;
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 260px;
+  }
+  .leaflet-popup-content .popup-meta {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.1em;
+    color: #555; text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .leaflet-popup-content .popup-sources {
+    color: #777; font-size: 10px; margin-top: 4px;
+  }
+  /* Custom marker — tiny colored dot */
+  .vantage-marker {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  }
+  .vantage-marker.urgent { background: #c94a3b; }
+  .vantage-marker.active { background: #c97a3b; }
+  .vantage-marker.elevated { background: #c9a63b; }
+  .vantage-marker.routine { background: #4ea86a; }
   </style>
-</head>
+
+  <!-- v39: Leaflet for map view -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-BwHfrr4c9kmRkLw6iXFdzcdWV/PGkVgiIyIWLLlTSXzWQzxuSg4DiQUCpauz/EWjgk5TYQqX/kvn9pG1NpYfqg==" crossorigin="anonymous"></script></head>
 <body>
 <div class="app">
   <aside>
@@ -698,6 +761,7 @@
       <div class="nav-group-label">Daily</div>
       <button class="nav-btn active" data-view="brief" onclick="setView('brief')"><span class="dot"></span>Daily brief</button>
       <button class="nav-btn" data-view="stories" onclick="setView('stories')"><span class="dot"></span>All stories</button>
+      <button class="nav-btn" data-view="map" onclick="setView('map')"><span class="dot"></span>Map</button>
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Analysis</div>
@@ -789,7 +853,20 @@
       <div class="sources-intro">Vantage aggregates reporting from the sources below. Every story cites its origin. We show you where we looked — the rest is analysis.</div>
       <div id="sources-content"><div class="loading">Loading sources…</div></div>
     </div>
-    </main>
+    
+  <div id="view-map" class="view">
+    <div class="view-header">
+      <h1 class="view-title">Intel map</h1>
+      <p class="view-sub">Story locations plotted. Click a pin for details.</p>
+    </div>
+    <div class="map-toolbar">
+      <span class="map-count"><strong id="map-pin-count">0</strong> pins</span>
+      <button type="button" id="map-layer-street" class="active" onclick="setMapLayer('street')">Street</button>
+      <button type="button" id="map-layer-satellite" onclick="setMapLayer('satellite')">Satellite (NASA)</button>
+      <button type="button" id="map-refresh" onclick="refreshMapPins()">Refresh pins</button>
+    </div>
+    <div id="map-canvas"></div>
+  </div></main>
 </div>
 <script>
   let briefLoaded = false, storiesLoaded = false;
@@ -1281,6 +1358,179 @@
   window.setView = setView;
   window.toggleTheme = toggleTheme;
   loadBrief();
-</script>
+
+  // v39: Map view — Leaflet + story pin plotting
+  window._MAP_COORDS = {
+    // country / city approximate coords (lat, lng). Used as a fallback dictionary
+    // for common intel locations. Extend freely.
+    'ukraine': [49.0, 32.0], 'kyiv': [50.45, 30.52], 'kiev': [50.45, 30.52],
+    'russia': [55.75, 37.62], 'moscow': [55.75, 37.62], 'st petersburg': [59.93, 30.33],
+    'iran': [35.69, 51.39], 'tehran': [35.69, 51.39],
+    'iraq': [33.31, 44.36], 'baghdad': [33.31, 44.36],
+    'israel': [31.77, 35.21], 'jerusalem': [31.77, 35.21], 'tel aviv': [32.08, 34.78],
+    'gaza': [31.5, 34.45], 'west bank': [32.0, 35.28],
+    'lebanon': [33.89, 35.50], 'beirut': [33.89, 35.50],
+    'syria': [33.51, 36.28], 'damascus': [33.51, 36.28], 'aleppo': [36.20, 37.15],
+    'yemen': [15.55, 44.20], 'sanaa': [15.35, 44.21],
+    'saudi arabia': [24.77, 46.68], 'riyadh': [24.77, 46.68],
+    'uae': [24.47, 54.37], 'dubai': [25.20, 55.27],
+    'qatar': [25.30, 51.52], 'doha': [25.30, 51.52],
+    'turkey': [39.93, 32.86], 'ankara': [39.93, 32.86], 'istanbul': [41.01, 28.98],
+    'egypt': [30.04, 31.24], 'cairo': [30.04, 31.24],
+    'libya': [32.89, 13.19], 'tripoli': [32.89, 13.19],
+    'sudan': [15.59, 32.54], 'khartoum': [15.59, 32.54], 'darfur': [13.63, 25.35], 'el fasher': [13.63, 25.35],
+    'ethiopia': [9.03, 38.74], 'addis ababa': [9.03, 38.74],
+    'somalia': [2.04, 45.34], 'mogadishu': [2.04, 45.34],
+    'kenya': [-1.29, 36.82], 'nairobi': [-1.29, 36.82],
+    'nigeria': [9.08, 7.54], 'abuja': [9.08, 7.54], 'lagos': [6.52, 3.38],
+    'south africa': [-33.92, 18.42], 'cape town': [-33.92, 18.42],
+    'china': [39.91, 116.40], 'beijing': [39.91, 116.40], 'shanghai': [31.23, 121.47], 'hong kong': [22.32, 114.17],
+    'taiwan': [25.03, 121.57], 'taipei': [25.03, 121.57],
+    'japan': [35.68, 139.69], 'tokyo': [35.68, 139.69],
+    'south korea': [37.57, 126.98], 'seoul': [37.57, 126.98],
+    'north korea': [39.02, 125.75], 'pyongyang': [39.02, 125.75],
+    'india': [28.61, 77.21], 'new delhi': [28.61, 77.21], 'mumbai': [19.08, 72.88],
+    'pakistan': [33.69, 73.05], 'islamabad': [33.69, 73.05],
+    'afghanistan': [34.53, 69.17], 'kabul': [34.53, 69.17],
+    'philippines': [14.60, 120.98], 'manila': [14.60, 120.98],
+    'indonesia': [-6.21, 106.85], 'jakarta': [-6.21, 106.85],
+    'malaysia': [3.14, 101.69], 'kuala lumpur': [3.14, 101.69], 'sabah': [5.98, 116.07],
+    'thailand': [13.75, 100.50], 'bangkok': [13.75, 100.50],
+    'vietnam': [21.03, 105.85], 'hanoi': [21.03, 105.85],
+    'australia': [-35.31, 149.13], 'canberra': [-35.31, 149.13], 'sydney': [-33.87, 151.21],
+    'united states': [38.90, -77.04], 'washington': [38.90, -77.04], 'usa': [38.90, -77.04],
+    'new york': [40.71, -74.00], 'los angeles': [34.05, -118.24],
+    'mexico': [19.43, -99.13], 'mexico city': [19.43, -99.13],
+    'canada': [45.42, -75.70], 'ottawa': [45.42, -75.70],
+    'brazil': [-15.78, -47.93], 'brasilia': [-15.78, -47.93], 'sao paulo': [-23.55, -46.63],
+    'argentina': [-34.61, -58.38], 'buenos aires': [-34.61, -58.38],
+    'venezuela': [10.48, -66.90], 'caracas': [10.48, -66.90],
+    'france': [48.86, 2.35], 'paris': [48.86, 2.35],
+    'germany': [52.52, 13.40], 'berlin': [52.52, 13.40],
+    'united kingdom': [51.51, -0.13], 'london': [51.51, -0.13], 'uk': [51.51, -0.13],
+    'spain': [40.42, -3.70], 'madrid': [40.42, -3.70],
+    'italy': [41.90, 12.49], 'rome': [41.90, 12.49],
+    'poland': [52.23, 21.01], 'warsaw': [52.23, 21.01],
+    'bulgaria': [42.70, 23.32], 'sofia': [42.70, 23.32],
+    'austria': [48.21, 16.37], 'vienna': [48.21, 16.37],
+    'belgium': [50.85, 4.35], 'brussels': [50.85, 4.35],
+    'netherlands': [52.37, 4.90], 'amsterdam': [52.37, 4.90],
+    'switzerland': [46.95, 7.45], 'geneva': [46.20, 6.15],
+    'sweden': [59.33, 18.07], 'stockholm': [59.33, 18.07],
+    'norway': [59.91, 10.75], 'oslo': [59.91, 10.75],
+    'finland': [60.17, 24.94], 'helsinki': [60.17, 24.94],
+    'greece': [37.98, 23.72], 'athens': [37.98, 23.72],
+    'hormuz': [26.57, 56.25], 'strait of hormuz': [26.57, 56.25]
+  };
+  window._REGION_CENTERS = {
+    'middle-east': [31.0, 40.0], 'russia-fsu': [55.75, 37.62],
+    'europe': [50.0, 10.0], 'east-asia': [35.0, 115.0],
+    'asia-pacific': [1.0, 115.0], 'africa': [8.0, 20.0],
+    'americas': [38.0, -77.0], 'china': [35.0, 105.0], 'global': [20.0, 10.0]
+  };
+  window.geocodeStory = function(story) {
+    const loc = (story.location || '').toLowerCase().trim();
+    if (loc) {
+      // Try exact match first
+      if (window._MAP_COORDS[loc]) return window._MAP_COORDS[loc];
+      // Then try tokens (split by commas)
+      const tokens = loc.split(/[,;\/]/).map(t => t.trim()).filter(Boolean);
+      for (const t of tokens) {
+        if (window._MAP_COORDS[t]) return window._MAP_COORDS[t];
+      }
+      // Try substring on tokens (e.g. "darfur" inside "north darfur")
+      for (const t of tokens) {
+        for (const key in window._MAP_COORDS) {
+          if (t.includes(key) || key.includes(t)) return window._MAP_COORDS[key];
+        }
+      }
+    }
+    // Fallback: region center
+    const region = (story.region || 'global').toLowerCase();
+    return window._REGION_CENTERS[region] || window._REGION_CENTERS.global;
+  };
+  window._mapInstance = null;
+  window._mapLayerStreet = null;
+  window._mapLayerSatellite = null;
+  window._mapPins = [];
+  window.initMap = function() {
+    if (window._mapInstance) return;
+    if (typeof L === 'undefined') { console.warn('Leaflet not loaded yet'); return; }
+    const canvas = document.getElementById('map-canvas');
+    if (!canvas) return;
+    const m = L.map('map-canvas', { worldCopyJump: true, zoomControl: true, minZoom: 2 }).setView([25, 20], 3);
+    window._mapLayerStreet = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap contributors'
+    });
+    // NASA GIBS MODIS Terra true-color daily imagery (free, no API key)
+    const today = new Date();
+    const yyyy = today.getUTCFullYear(); const mm = String(today.getUTCMonth()+1).padStart(2,'0'); const dd = String(today.getUTCDate()-1).padStart(2,'0');
+    const dateStr = yyyy + '-' + mm + '-' + dd;
+    window._mapLayerSatellite = L.tileLayer(
+      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
+      { maxZoom: 9, minZoom: 1, attribution: 'NASA GIBS MODIS Terra' }
+    );
+    window._mapLayerStreet.addTo(m);
+    window._mapInstance = m;
+    window.refreshMapPins();
+  };
+  window.setMapLayer = function(which) {
+    if (!window._mapInstance) return;
+    const m = window._mapInstance;
+    if (which === 'satellite') {
+      if (window._mapLayerStreet) m.removeLayer(window._mapLayerStreet);
+      if (window._mapLayerSatellite) window._mapLayerSatellite.addTo(m);
+      document.getElementById('map-layer-street').classList.remove('active');
+      document.getElementById('map-layer-satellite').classList.add('active');
+    } else {
+      if (window._mapLayerSatellite) m.removeLayer(window._mapLayerSatellite);
+      if (window._mapLayerStreet) window._mapLayerStreet.addTo(m);
+      document.getElementById('map-layer-satellite').classList.remove('active');
+      document.getElementById('map-layer-street').classList.add('active');
+    }
+  };
+  window.refreshMapPins = function() {
+    if (!window._mapInstance) return;
+    const m = window._mapInstance;
+    // Clear old
+    window._mapPins.forEach(p => m.removeLayer(p));
+    window._mapPins = [];
+    const stories = window._allStories || [];
+    stories.forEach(s => {
+      const coords = window.geocodeStory(s);
+      if (!coords) return;
+      const threat = (s.threat_level || s.watch_level || 'routine').toLowerCase();
+      const icon = L.divIcon({
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7],
+        html: '<div class="vantage-marker ' + threat + '"></div>'
+      });
+      const marker = L.marker(coords, { icon });
+      const srcCount = Array.isArray(s.sources) ? s.sources.length :
+        (typeof s.source === 'string' ? s.source.split(',').filter(x => x.trim()).length : 0);
+      const safeHead = (s.headline || s.title || '(untitled)').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const safeLoc = (s.location || (s.region || 'Global')).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const popup = '<div><strong>' + safeHead + '</strong><div class="popup-meta">' + safeLoc + '</div><div class="popup-sources">' + srcCount + ' sources · ' + threat.toUpperCase() + '</div></div>';
+      marker.bindPopup(popup);
+      marker.addTo(m);
+      window._mapPins.push(marker);
+    });
+    const countEl = document.getElementById('map-pin-count');
+    if (countEl) countEl.textContent = window._mapPins.length;
+  };
+  // Hook: when setView switches to 'map', init or refresh map
+  (function() {
+    const origSetView = window.setView;
+    window.setView = function(v) {
+      const r = origSetView.apply(this, arguments);
+      if (v === 'map') {
+        setTimeout(() => {
+          if (!window._mapInstance) window.initMap();
+          else { window._mapInstance.invalidateSize(); window.refreshMapPins(); }
+        }, 60);
+      }
+      return r;
+    };
+  })();
+  </script>
 </body>
 </html>
