@@ -1743,7 +1743,7 @@ def cluster(articles, threshold=0.12):
 # ─────────────────────────────────────────────
 # CLAUDE
 # ─────────────────────────────────────────────
-def call_claude(prompt, max_tokens=900):
+def call_claude(prompt, max_tokens=4000):
     if not ANTHROPIC_API_KEY: return None
     payload = json.dumps({
         "model": MODEL, "max_tokens": max_tokens,
