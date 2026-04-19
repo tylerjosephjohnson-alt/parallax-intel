@@ -57,7 +57,7 @@ except ImportError:
 # CONFIG
 # ─────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-SCRAPE_INTERVAL_MINUTES = 720
+SCRAPE_INTERVAL_MINUTES = 1440  # v43: once daily (was 720 twice-daily) — cost reduction
 BRIEF_HOUR_UTC       = 5   # Generate daily brief at 05:00 UTC
 # v35: Persistent data directory — use /data volume on Railway, cwd locally
 DATA_DIR = os.environ.get("DATA_DIR") or ("/data" if os.path.isdir("/data") else ".")
@@ -68,7 +68,7 @@ except Exception as _e:
 BRIEF_FILE           = os.path.join(DATA_DIR, "brief.json")
 MAX_STORIES = 20
 HOURS_LOOKBACK = 48
-CLUSTER_MIN_SOURCES = 2
+CLUSTER_MIN_SOURCES = 3  # v43: raised from 2 — fewer clusters qualify, less Claude calls
 MODEL = "claude-sonnet-4-6"
 DATA_FILE            = os.path.join(DATA_DIR, "stories.json")
 
@@ -1749,7 +1749,7 @@ def cluster(articles, threshold=0.12):
 # ─────────────────────────────────────────────
 # CLAUDE
 # ─────────────────────────────────────────────
-def call_claude(prompt, max_tokens=4000):
+def call_claude(prompt, max_tokens=2000):
     if not ANTHROPIC_API_KEY: return None
     payload = json.dumps({
         "model": MODEL, "max_tokens": max_tokens,
