@@ -739,6 +739,16 @@
   .vantage-marker.active { background: #c97a3b; }
   .vantage-marker.elevated { background: #c9a63b; }
   .vantage-marker.routine { background: #4ea86a; }
+  
+  /* v41: Satellite date pill group */
+  .map-satdate-group {
+    display: flex; align-items: center; gap: 4px;
+    margin-left: 8px; padding-left: 8px;
+    border-left: 1px solid var(--border);
+  }
+  .map-satdate-group button {
+    padding: 4px 10px; font-size: 10px;
+  }
   </style>
 
   <!-- v39: Leaflet for map view -->
@@ -863,6 +873,10 @@
       <span class="map-count"><strong id="map-pin-count">0</strong> pins</span>
       <button type="button" id="map-layer-street" class="active" onclick="setMapLayer('street')">Street</button>
       <button type="button" id="map-layer-satellite" onclick="setMapLayer('satellite')">Satellite (NASA)</button>
+      <span class="map-satdate-group" id="map-satdate-group" style="display:none;">
+        <button type="button" id="map-satdate-yesterday" class="active" onclick="setSatDate('yesterday')">Yesterday</button>
+        <button type="button" id="map-satdate-today" onclick="setSatDate('today')">Today</button>
+      </span>
       <button type="button" id="map-refresh" onclick="refreshMapPins()">Refresh pins</button>
     </div>
     <div id="map-canvas"></div>
@@ -1466,10 +1480,22 @@
     const today = new Date();
     const yyyy = today.getUTCFullYear(); const mm = String(today.getUTCMonth()+1).padStart(2,'0'); const dd = String(today.getUTCDate()-1).padStart(2,'0');
     const dateStr = yyyy + '-' + mm + '-' + dd;
-    window._mapLayerSatellite = L.tileLayer(
-      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
-      { maxZoom: 9, minZoom: 1, attribution: 'NASA GIBS MODIS Terra' }
-    );
+    window._satDate = 'yesterday';
+    window._buildSatelliteLayer = function(which) {
+      const d = new Date();
+      // 'yesterday' here means 2 days ago (GIBS publishing lag + orbital gaps fill-in). 'today' means 1 day ago (fresher but may have orbital stripe gaps in the Pacific).
+      const offsetDays = which === 'today' ? 1 : 2;
+      d.setUTCDate(d.getUTCDate() - offsetDays);
+      const y = d.getUTCFullYear();
+      const mo = String(d.getUTCMonth()+1).padStart(2,'0');
+      const da = String(d.getUTCDate()).padStart(2,'0');
+      const dateStr = y + '-' + mo + '-' + da;
+      return L.tileLayer(
+        'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/' + dateStr + '/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg',
+        { maxZoom: 9, minZoom: 1, attribution: 'NASA GIBS MODIS Terra (' + dateStr + ')' }
+      );
+    };
+    window._mapLayerSatellite = window._buildSatelliteLayer(window._satDate);
     window._mapLayerStreet.addTo(m);
     window._mapInstance = m;
     window.refreshMapPins();
@@ -1517,6 +1543,31 @@
     const countEl = document.getElementById('map-pin-count');
     if (countEl) countEl.textContent = window._mapPins.length;
   };
+  window.setSatDate = function(which) {
+    if (which !== 'today' && which !== 'yesterday') which = 'yesterday';
+    window._satDate = which;
+    // Rebuild the satellite layer with the new date
+    if (!window._mapInstance) return;
+    const m = window._mapInstance;
+    const wasActive = window._mapLayerSatellite && m.hasLayer(window._mapLayerSatellite);
+    if (window._mapLayerSatellite && wasActive) m.removeLayer(window._mapLayerSatellite);
+    window._mapLayerSatellite = window._buildSatelliteLayer(which);
+    if (wasActive) window._mapLayerSatellite.addTo(m);
+    // Update button active states
+    const yBtn = document.getElementById('map-satdate-yesterday');
+    const tBtn = document.getElementById('map-satdate-today');
+    if (yBtn) yBtn.classList.toggle('active', which === 'yesterday');
+    if (tBtn) tBtn.classList.toggle('active', which === 'today');
+  };
+  (function() {
+    const origSetMapLayer = window.setMapLayer;
+    window.setMapLayer = function(which) {
+      const r = origSetMapLayer.apply(this, arguments);
+      const grp = document.getElementById('map-satdate-group');
+      if (grp) grp.style.display = (which === 'satellite') ? 'flex' : 'none';
+      return r;
+    };
+  })();
   // Hook: when setView switches to 'map', init or refresh map
   (function() {
     const origSetView = window.setView;
