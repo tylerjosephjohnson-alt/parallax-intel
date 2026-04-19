@@ -492,7 +492,176 @@
     text-transform: uppercase; color: var(--steel);
     margin-bottom: 10px;
   }
-</style>
+
+  /* v36: Region-grouped layout */
+  .region-group {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-raised);
+  }
+  .region-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid transparent;
+    transition: border-color 120ms;
+  }
+  .region-header:hover { background: var(--bg-hover); }
+  .region-group.expanded .region-header { border-bottom-color: var(--border); }
+  .region-chevron {
+    font-family: ui-monospace, Menlo, monospace;
+    color: var(--text-faint);
+    font-size: 11px; width: 12px;
+    transition: transform 160ms;
+  }
+  .region-group.expanded .region-chevron { transform: rotate(90deg); }
+  .region-name {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+    font-weight: 600;
+    min-width: 140px;
+  }
+  .region-count {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.08em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+  }
+  .region-delta {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 3px;
+  }
+  .region-delta.up { color: #e07668; background: rgba(201, 74, 59, 0.12); }
+  .region-delta.down { color: #69b884; background: rgba(78, 168, 106, 0.12); }
+  .region-delta.flat { color: var(--text-faint); background: rgba(122, 138, 151, 0.1); }
+  /* Threat meter — horizontal bar */
+  .region-threat {
+    flex: 1; max-width: 240px;
+    display: flex; align-items: center; gap: 8px;
+    margin-left: auto;
+  }
+  .threat-bar {
+    flex: 1; height: 6px;
+    background: rgba(122, 138, 151, 0.18);
+    border-radius: 3px; overflow: hidden;
+    position: relative;
+  }
+  .threat-fill {
+    height: 100%;
+    transition: width 200ms;
+  }
+  .threat-fill.routine { background: #4ea86a; width: 15%; }
+  .threat-fill.elevated { background: #c9a63b; width: 40%; }
+  .threat-fill.active { background: #c97a3b; width: 70%; }
+  .threat-fill.urgent { background: #c94a3b; width: 100%; }
+  .threat-label {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase;
+    min-width: 62px; text-align: right;
+  }
+  .threat-label.routine { color: #4ea86a; }
+  .threat-label.elevated { color: #c9a63b; }
+  .threat-label.active { color: #c97a3b; }
+  .threat-label.urgent { color: #c94a3b; }
+  .region-body {
+    display: none;
+    padding: 4px 12px 12px 12px;
+  }
+  .region-group.expanded .region-body { display: block; }
+  /* Compact card — collapsed state */
+  .story-card-v2.compact {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px 16px;
+    padding: 10px 14px;
+    margin: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    cursor: pointer;
+    transition: background 120ms, border-color 120ms;
+  }
+  .story-card-v2.compact:hover {
+    background: var(--bg-hover);
+    border-color: var(--steel);
+  }
+  .story-card-v2.compact .sc-expand { display: none; }
+  .story-card-v2.compact.expanded {
+    background: var(--bg-raised);
+    padding-bottom: 14px;
+  }
+  .story-card-v2.compact.expanded .sc-expand { display: block; margin-top: 10px; }
+  .story-card-v2.compact .sc-left { min-width: 0; }
+  .story-card-v2.compact .sc-meta-row {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    margin-bottom: 4px;
+  }
+  .story-card-v2.compact .sc-headline {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 15px; font-weight: 500;
+    line-height: 1.3;
+    color: var(--text);
+    margin: 0;
+  }
+  .story-card-v2.compact .sc-summary {
+    display: none; /* hidden in compact */
+  }
+  .story-card-v2.compact.expanded .sc-summary {
+    display: block; margin-top: 8px;
+    font-size: 13px; color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .story-card-v2.compact .sc-right {
+    display: flex; flex-direction: column;
+    align-items: flex-end; gap: 4px;
+    min-width: 110px;
+  }
+  .story-card-v2.compact .sc-badge {
+    font-size: 9px; padding: 2px 6px;
+  }
+  .story-card-v2.compact .sc-flags {
+    display: flex; gap: 3px;
+  }
+  .story-card-v2.compact .sc-flag {
+    font-size: 8px; padding: 1px 4px;
+  }
+  /* Region overview / global summary */
+  .global-overview {
+    display: flex; gap: 16px; align-items: center;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .overview-label {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .overview-total {
+    font-family: Georgia, serif;
+    font-size: 28px; font-weight: 400;
+    color: var(--text);
+    line-height: 1;
+  }
+  .overview-stat {
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 60px;
+  }
+  .overview-divider {
+    width: 1px; height: 28px; background: var(--border);
+  }
+  </style>
 </head>
 <body>
 <div class="app">
@@ -625,67 +794,68 @@
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   }
   async function loadBrief() {
+    const container = document.getElementById('brief-content');
+    if (!container) return;
+    container.innerHTML = '<div class="loading">Loading daily brief...</div>';
     try {
       const r = await fetch('/brief.json', { cache: 'no-store' });
       if (!r.ok) {
-        document.getElementById('brief-content').innerHTML = '<div class="placeholder">No brief available yet. Briefs generate at 05:00 UTC daily or on manual trigger.</div>';
+        container.innerHTML = '<div class="empty-placeholder">No brief yet. The next scheduled brief generates at 05:00 UTC.</div>';
         return;
       }
-      const b = await r.json();
-      briefLoaded = true;
-      document.getElementById('brief-date').textContent = b.date || '';
-      const level = (b.threat_level || 'routine').toLowerCase();
-      const levelMap = { low: 'routine', moderate: 'elevated', elevated: 'elevated', high: 'active', severe: 'urgent', urgent: 'urgent', critical: 'urgent' };
-      const watchClass = levelMap[level] || 'routine';
-      const watchLabel = watchClass.charAt(0).toUpperCase() + watchClass.slice(1);
-      let html = '<div class="watch-banner"><span class="watch-level ' + watchClass + '"><span class="level-dot"></span>' + watchLabel + '</span><div class="watch-reason">' + escapeHtml(b.threat_level_reason || '') + '</div></div>';
-      if (b.headline_brief) html += '<div class="section"><div class="headline">' + escapeHtml(b.headline_brief) + '</div></div>';
-      if (b.intelligence_overview) {
-        const ov = b.intelligence_overview;
-        const labels = {
-          paragraph_1_situation: 'Situation',
-          paragraph_2_connections: 'Connections',
-          paragraph_3_what_watch: 'What to watch',
-          paragraph_4_buried: 'Buried story'
-        };
-        let ovHtml = '';
-        if (typeof ov === 'object' && !Array.isArray(ov)) {
-          Object.keys(ov).forEach(k => {
-            const lbl = labels[k] || k.replace(/_/g, ' ');
-            ovHtml += '<div class="overview-section"><div class="overview-label">' + escapeHtml(lbl) + '</div><p>' + escapeHtml(ov[k]) + '</p></div>';
-          });
-        } else {
-          const paras = typeof ov === 'string' ? ov.split(/\n\n+/) : (Array.isArray(ov) ? ov : [JSON.stringify(ov)]);
-          ovHtml = paras.map(p => '<p>' + escapeHtml(p) + '</p>').join('');
-        }
-        html += '<div class="section"><div class="section-title">Intelligence overview</div><div class="overview">' + ovHtml + '</div></div>';
+      const brief = await r.json();
+      if (!brief || brief.error || !brief.headline_brief) {
+        container.innerHTML = '<div class="empty-placeholder">Brief is being generated. Check back in a few minutes.</div>';
+        return;
       }
-      if (Array.isArray(b.top_stories) && b.top_stories.length) {
-        html += '<div class="section"><div class="section-title">Top stories</div>';
-        b.top_stories.forEach((s, idx) => {
-          html += renderStoryCardV2(s, 'brief-' + idx);
+      let html = '';
+      // Brief meta strip
+      const dateStr = (() => {
+        const d = brief.date || brief.generated_at;
+        if (!d) return '';
+        try {
+          const dt = new Date(d);
+          if (isNaN(dt)) return escapeHtml(String(d));
+          return dt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        } catch(e) { return escapeHtml(String(d)); }
+      })();
+      const threat = (brief.threat_level || 'elevated').toLowerCase();
+      html += '<div class="brief-meta-strip">';
+      html += '<div class="brief-date">' + escapeHtml(dateStr) + '</div>';
+      html += '<div class="brief-threat"><span class="threat-label ' + threat + '">' + threat.toUpperCase() + '</span>';
+      if (brief.threat_level_reason) html += '<span class="brief-threat-reason">' + escapeHtml(brief.threat_level_reason) + '</span>';
+      html += '</div>';
+      html += '</div>';
+      // Headline brief
+      html += '<h1 class="brief-headline">' + escapeHtml(brief.headline_brief) + '</h1>';
+      // Intelligence overview
+      if (brief.intelligence_overview) {
+        const io = brief.intelligence_overview;
+        html += '<div class="brief-overview">';
+        ['main_event','broader_context','whats_next','buried_detail'].forEach(k => {
+          if (io[k]) {
+            const label = k.replace(/_/g, ' ').toUpperCase();
+            html += '<div class="overview-block"><div class="overview-block-label">' + label + '</div><p>' + escapeHtml(io[k]) + '</p></div>';
+          }
         });
         html += '</div>';
       }
-      if (Array.isArray(b.overnight_signals) && b.overnight_signals.length) {
-        html += '<div class="section"><div class="section-title">Overnight signals</div><ul class="signal-list">';
-        b.overnight_signals.forEach(s => { html += '<li>' + escapeHtml(typeof s === 'string' ? s : (s.signal || s.text || JSON.stringify(s))) + '</li>'; });
-        html += '</ul></div>';
+      // Top stories — region-grouped
+      if (Array.isArray(brief.top_stories) && brief.top_stories.length) {
+        html += '<h2 class="brief-section-heading">Top Stories</h2>';
+        html += window._renderGlobalOverview(brief.top_stories);
+        const grouped = window._groupByRegion(brief.top_stories);
+        grouped.forEach(([region, stories]) => {
+          html += window._renderRegionGroup(region, stories, { showDelta: false, defaultExpanded: true });
+        });
       }
-      if (Array.isArray(b.contested_numbers_today) && b.contested_numbers_today.length) {
-        html += '<div class="section"><div class="section-title">Contested numbers</div><ul class="signal-list">';
-        b.contested_numbers_today.forEach(n => { html += '<li>' + escapeHtml(typeof n === 'string' ? n : (n.claim || JSON.stringify(n))) + '</li>'; });
-        html += '</ul></div>';
+      // Analyst note
+      if (brief.analyst_note) {
+        html += '<div class="brief-note"><div class="overview-block-label">Analyst note</div><p>' + escapeHtml(brief.analyst_note) + '</p></div>';
       }
-      if (b.analyst_note) html += '<div class="section"><div class="section-title">Analyst note</div><div class="analyst-note">' + escapeHtml(b.analyst_note) + '</div></div>';
-      if (Array.isArray(b.sources_consulted) && b.sources_consulted.length) {
-        html += '<div class="section"><div class="section-title">Sources consulted (' + b.sources_consulted.length + ')</div><div class="sources-grid">';
-        b.sources_consulted.forEach(s => { html += '<span class="source-chip">' + escapeHtml(typeof s === 'string' ? s : (s.name || s.source || '')) + '</span>'; });
-        html += '</div></div>';
-      }
-      document.getElementById('brief-content').innerHTML = html;
+      container.innerHTML = html;
     } catch (e) {
-      document.getElementById('brief-content').innerHTML = '<div class="error">Error loading brief: ' + escapeHtml(e.message) + '</div>';
+      container.innerHTML = '<div class="empty-placeholder">Error loading brief: ' + escapeHtml(String(e.message || e)) + '</div>';
     }
   }
   async function loadStories() {
@@ -774,55 +944,144 @@
     if (si && window._filters.search) si.value = window._filters.search;
   }
   function renderStories() {
-    const stories = window._allStories || [];
-    const f = window._filters;
-    const watchMap = { low: 'routine', moderate: 'elevated', elevated: 'elevated', high: 'active', severe: 'urgent', urgent: 'urgent', critical: 'urgent' };
-    // Sort newest first
-    const sorted = [...stories].sort((a, b) => {
+    const container = document.getElementById('stories-content');
+    if (!container) return;
+    const all = window._allStories || [];
+    if (!all.length) {
+      container.innerHTML = '<div class="empty-placeholder">No stories match current filters.</div>';
+      document.getElementById('stories-count').textContent = '0 stories total';
+      return;
+    }
+    const f = window._filters || { region: 'all', watch: 'all', sources: 'any', search: '' };
+    let filtered = all.filter(s => {
+      if (f.region !== 'all' && (s.region || '').toLowerCase() !== f.region) return false;
+      if (f.watch !== 'all') {
+        const t = (s.threat_level || s.watch_level || 'routine').toLowerCase();
+        if (t !== f.watch) return false;
+      }
+      if (f.sources && f.sources !== 'any') {
+        const n = Array.isArray(s.sources) ? s.sources.length : (typeof s.source === 'string' ? s.source.split(',').filter(x=>x.trim()).length : 0);
+        const minSrc = parseInt(f.sources, 10) || 1;
+        if (n < minSrc) return false;
+      }
+      if (f.search) {
+        const q = f.search.toLowerCase();
+        const hay = ((s.headline || '') + ' ' + (s.summary || '') + ' ' + (s.location || '')).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    filtered.sort((a, b) => {
       const da = new Date(a.updated || a.published || a.date || 0).getTime();
       const db = new Date(b.updated || b.published || b.date || 0).getTime();
       return db - da;
     });
-    const filtered = sorted.filter(s => {
-      if (f.region && f.region !== 'all' && s.region !== f.region) return false;
-      if (f.watch && f.watch !== 'all') {
-        const sw = watchMap[(s.threat_level || s.watch_level || '').toLowerCase()] || (s.threat_level || '').toLowerCase();
-        if (sw !== f.watch) return false;
-      }
-      if (f.sources && f.sources !== 'any') {
-        const c = Array.isArray(s.sources) ? s.sources.length : (s.source_count || 0);
-        if (c < parseInt(f.sources)) return false;
-      }
-      if (f.search) {
-        const blob = ((s.headline || s.title || '') + ' ' + (s.summary || s.brief || s.description || '') + ' ' + (s.paragraph_1_situation || '')).toLowerCase();
-        if (!blob.includes(f.search)) return false;
-      }
-      return true;
-    });
-    const countEl = document.getElementById('stories-count');
-    if (countEl) countEl.textContent = filtered.length + ' of ' + stories.length + ' stories';
-    const metaEl = document.getElementById('filter-meta');
-    if (metaEl) {
-      const hasFilters = (f.region !== 'all') || (f.watch !== 'all') || (f.sources !== 'any') || f.search;
-      metaEl.innerHTML = hasFilters ? 'Showing ' + filtered.length + ' of ' + stories.length + ' · <span class="clear-filters" onclick="clearFilters()">Clear all</span>' : filtered.length + ' stories total';
-    }
+    document.getElementById('stories-count').textContent = filtered.length + ' ' + (filtered.length === 1 ? 'story' : 'stories') + ' total';
     if (!filtered.length) {
-      document.getElementById('stories-content').innerHTML = '<div class="placeholder">No stories match current filters.</div>';
+      container.innerHTML = '<div class="empty-placeholder">No stories match current filters.</div>';
       return;
     }
-    let html = '';
-    filtered.forEach((s, i) => {
-      html += renderStoryCardV2(s, 'stories-' + i);
+    let html = window._renderGlobalOverview(filtered);
+    const grouped = window._groupByRegion(filtered);
+    grouped.forEach(([region, stories]) => {
+      html += window._renderRegionGroup(region, stories, { showDelta: true, defaultExpanded: true });
     });
-    document.getElementById('stories-content').innerHTML = html;
+    container.innerHTML = html;
   }
+  
+  /* v36 helpers: region ordering, threat computation */
+  window._REGION_ORDER = ['middle-east','russia-fsu','europe','east-asia','asia-pacific','africa','americas','china','global'];
+  window._REGION_LABEL = {
+    'middle-east': 'Middle East',
+    'russia-fsu': 'Russia / FSU',
+    'europe': 'Europe',
+    'east-asia': 'East Asia',
+    'asia-pacific': 'Asia Pacific',
+    'africa': 'Africa',
+    'americas': 'Americas',
+    'china': 'China',
+    'global': 'Global'
+  };
+  window._groupByRegion = function(stories) {
+    const groups = {};
+    stories.forEach(s => {
+      const r = (s.region || 'global').toLowerCase();
+      if (!groups[r]) groups[r] = [];
+      groups[r].push(s);
+    });
+    const ordered = [];
+    window._REGION_ORDER.forEach(r => { if (groups[r]) ordered.push([r, groups[r]]); delete groups[r]; });
+    Object.keys(groups).sort().forEach(r => ordered.push([r, groups[r]]));
+    return ordered;
+  };
+  window._regionThreat = function(stories) {
+    const order = ['routine','elevated','active','urgent'];
+    let best = 'routine';
+    stories.forEach(s => {
+      const t = (s.threat_level || s.watch_level || 'routine').toLowerCase();
+      if (order.indexOf(t) > order.indexOf(best)) best = t;
+    });
+    return best;
+  };
+  window._regionDelta = function(region, stories) {
+    /* Compare current story count to 24h ago; localStorage-free approach uses window._prevRegionCounts */
+    if (!window._prevRegionCounts) window._prevRegionCounts = {};
+    const prev = window._prevRegionCounts[region] || 0;
+    const curr = stories.length;
+    const delta = curr - prev;
+    if (delta > 0) return { label: '↑ +' + delta, cls: 'up' };
+    if (delta < 0) return { label: '↓ ' + delta, cls: 'down' };
+    return { label: '↔ flat', cls: 'flat' };
+  };
+  window._renderRegionGroup = function(region, stories, opts) {
+    opts = opts || {};
+    const label = window._REGION_LABEL[region] || region.toUpperCase();
+    const threat = window._regionThreat(stories);
+    const threatLabel = threat.toUpperCase();
+    const delta = opts.showDelta !== false ? window._regionDelta(region, stories) : null;
+    const expanded = opts.defaultExpanded !== false;
+    let html = '<div class="region-group' + (expanded ? ' expanded' : '') + '" onclick="if(event.target.closest(\'.story-card-v2\')===null&&event.target.closest(\'.region-body\')===null)this.classList.toggle(\'expanded\')">';
+    html += '<div class="region-header">';
+    html += '<span class="region-chevron">▶</span>';
+    html += '<span class="region-name">' + escapeHtml(label) + '</span>';
+    html += '<span class="region-count">' + stories.length + ' ' + (stories.length === 1 ? 'story' : 'stories') + '</span>';
+    if (delta) html += '<span class="region-delta ' + delta.cls + '">' + delta.label + '</span>';
+    html += '<div class="region-threat">';
+    html += '<div class="threat-bar"><div class="threat-fill ' + threat + '"></div></div>';
+    html += '<span class="threat-label ' + threat + '">' + threatLabel + '</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="region-body">';
+    stories.forEach((s, i) => { html += renderStoryCardV2(s, region + '-' + i); });
+    html += '</div>';
+    html += '</div>';
+    return html;
+  };
+  window._renderGlobalOverview = function(stories) {
+    if (!stories || !stories.length) return '';
+    const regions = window._groupByRegion(stories);
+    const topThreat = window._regionThreat(stories).toUpperCase();
+    const verifiedCount = stories.filter(s => {
+      const n = Array.isArray(s.sources) ? s.sources.length : (typeof s.source === 'string' ? s.source.split(',').filter(x=>x.trim()).length : 0);
+      return n >= 5;
+    }).length;
+    let html = '<div class="global-overview">';
+    html += '<div class="overview-stat"><span class="overview-label">Stories</span><span class="overview-total">' + stories.length + '</span></div>';
+    html += '<div class="overview-divider"></div>';
+    html += '<div class="overview-stat"><span class="overview-label">Regions</span><span class="overview-total">' + regions.length + '</span></div>';
+    html += '<div class="overview-divider"></div>';
+    html += '<div class="overview-stat"><span class="overview-label">Verified</span><span class="overview-total">' + verifiedCount + '</span></div>';
+    html += '<div class="overview-divider"></div>';
+    html += '<div class="overview-stat"><span class="overview-label">Top Watch</span><span class="overview-total" style="font-size: 14px; letter-spacing: 0.1em;">' + topThreat + '</span></div>';
+    html += '</div>';
+    return html;
+  };
+  
   function renderStoryCardV2(s, key) {
     const title = s.headline || s.title || '(untitled)';
     const summary = s.summary || s.brief || s.description || s.paragraph_1_situation || '';
-    const summaryPreview = summary.length > 240 ? summary.slice(0, 240) + '…' : summary;
     const srcCount = Array.isArray(s.sources) ? s.sources.length : (typeof s.source === 'string' && s.source ? s.source.split(',').filter(x => x.trim()).length : (s.source_count || 0));
     const region = s.region || 'global';
-    // Topic: prefer explicit category, fall back to region
     const category = (s.category || '').toLowerCase();
     const topicRaw = category || region;
     const topicLabel = topicRaw === 'middle-east' ? 'Middle East' :
@@ -839,7 +1098,6 @@
     else if (category === 'technology') tpClass = 'tp-technology';
     else if (category === 'disinformation') tpClass = 'tp-disinformation';
     else {
-      // fall back to region coloring
       tpClass = region === 'middle-east' ? 'tp-mideast' :
         region === 'east-asia' || region === 'asia-pacific' ? 'tp-asia' :
         region === 'europe' ? 'tp-europe' :
@@ -848,26 +1106,23 @@
         region === 'russia-fsu' || region === 'russia' ? 'tp-mideast' :
         'tp-global';
     }
-    // Confidence from data or derived
     let confBadge = 'b-unverified', confLabel = 'UNVERIFIED';
     if (srcCount >= 5) { confBadge = 'b-verified'; confLabel = 'VERIFIED'; }
     else if (srcCount >= 3) { confBadge = 'b-corroborated'; confLabel = 'CORROBORATED'; }
     else if (srcCount >= 2) { confBadge = 'b-single'; confLabel = 'MULTI-SOURCE'; }
     else if (srcCount >= 1) { confBadge = 'b-single'; confLabel = 'SINGLE SOURCE'; }
-    const aiConf = (s.confidence || '').toLowerCase();
-    const confHint = aiConf ? 'AI: ' + aiConf.toUpperCase() : '';
     const dateStr = (() => {
       const d = s.updated || s.published || s.date;
       if (!d) return '';
       try {
         const dt = new Date(d);
         if (isNaN(dt)) return '';
-        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase();
       } catch(e) { return ''; }
     })();
     const flags = [];
     if (s.has_econ) flags.push('ECON');
-    if (s.has_prediction) flags.push('PREDICTION');
+    if (s.has_prediction) flags.push('PRED');
     if (s.has_psyop) flags.push('PSYOP');
     const location = s.location && s.location !== 'Global' ? s.location : '';
     // Expanded content
@@ -878,10 +1133,10 @@
     const sig = s.significance || '';
     const groundTruth = s.ground_truth || '';
     const whoBenefits = s.who_benefits || null;
-    const sourcesList = Array.isArray(s.sources) ? s.sources.join(' \u00b7 ') : (typeof s.source === 'string' ? s.source.split(',').map(x => x.trim()).filter(x => x).join(' \u00b7 ') : '');
+    const sourcesList = Array.isArray(s.sources) ? s.sources.join(' · ') : (typeof s.source === 'string' ? s.source.split(',').map(x => x.trim()).filter(x => x).join(' · ') : '');
     const cascade = Array.isArray(s.story_card_ids) ? s.story_card_ids : (Array.isArray(s.cascade_ids) ? s.cascade_ids : []);
     let expandHtml = '';
-    if (summary && summary.length > 240) expandHtml += '<div class="sc-section"><div class="sc-section-label">Situation</div><p>' + escapeHtml(summary) + '</p></div>';
+    if (summary) expandHtml += '<div class="sc-section"><div class="sc-section-label">Situation</div><p>' + escapeHtml(summary) + '</p></div>';
     if (connections) expandHtml += '<div class="sc-section"><div class="sc-section-label">Connections</div><p>' + escapeHtml(connections) + '</p></div>';
     if (watch) expandHtml += '<div class="sc-section"><div class="sc-section-label">Cascading effects</div><p>' + escapeHtml(watch) + '</p></div>';
     if (buried) expandHtml += '<div class="sc-section"><div class="sc-section-label">Narrative shift</div><p>' + escapeHtml(buried) + '</p></div>';
@@ -891,20 +1146,19 @@
     if (sig) expandHtml += '<div class="sc-section"><div class="sc-section-label">Significance</div><p>' + escapeHtml(sig) + '</p></div>';
     if (cascade.length) expandHtml += '<div class="sc-section"><div class="sc-section-label">Cascade</div><div class="sc-cascade">' + cascade.map(c => '<span class="sc-cascade-link">' + escapeHtml(c) + '</span>').join('') + '</div></div>';
     if (sourcesList) expandHtml += '<div class="sc-section"><div class="sc-section-label">Sources</div><div class="sc-sources-list">' + escapeHtml(sourcesList) + '</div></div>';
-    let html = '<div class="story-card-v2" onclick="this.classList.toggle(\'expanded\')">';
+    let html = '<div class="story-card-v2 compact" onclick="this.classList.toggle(\'expanded\')">';
     html += '<div class="sc-left">';
     html += '<div class="sc-meta-row">';
     html += '<span class="sc-topic ' + tpClass + '">' + escapeHtml(topicLabel) + '</span>';
     if (location) html += '<span class="sc-location">' + escapeHtml(location) + '</span>';
     if (dateStr) html += '<span class="sc-pill">' + dateStr + '</span>';
-    html += '<span class="sc-pill sc-sources">' + srcCount + ' SOURCES</span>';
+    html += '<span class="sc-pill sc-sources">' + srcCount + ' SRC</span>';
     html += '</div>';
     html += '<div class="sc-headline">' + escapeHtml(title) + '</div>';
-    if (summaryPreview) html += '<div class="sc-summary">' + escapeHtml(summaryPreview) + '</div>';
+    if (summary) html += '<div class="sc-summary">' + escapeHtml(summary) + '</div>';
     html += '</div>';
     html += '<div class="sc-right">';
     html += '<span class="sc-badge ' + confBadge + '">' + confLabel + '</span>';
-    if (confHint) html += '<span class="sc-conf-hint">' + confHint + '</span>';
     if (flags.length) html += '<div class="sc-flags">' + flags.map(f => '<span class="sc-flag">' + f + '</span>').join('') + '</div>';
     html += '</div>';
     if (expandHtml) html += '<div class="sc-expand" onclick="event.stopPropagation()">' + expandHtml + '</div>';
