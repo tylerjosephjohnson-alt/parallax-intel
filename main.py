@@ -59,12 +59,18 @@ except ImportError:
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 SCRAPE_INTERVAL_MINUTES = 720
 BRIEF_HOUR_UTC       = 5   # Generate daily brief at 05:00 UTC
-BRIEF_FILE           = "brief.json"
+# v35: Persistent data directory — use /data volume on Railway, cwd locally
+DATA_DIR = os.environ.get("DATA_DIR") or ("/data" if os.path.isdir("/data") else ".")
+try:
+    os.makedirs(DATA_DIR, exist_ok=True)
+except Exception as _e:
+    pass
+BRIEF_FILE           = os.path.join(DATA_DIR, "brief.json")
 MAX_STORIES = 20
 HOURS_LOOKBACK = 48
 CLUSTER_MIN_SOURCES = 2
 MODEL = "claude-sonnet-4-6"
-DATA_FILE = "stories.json"
+DATA_FILE            = os.path.join(DATA_DIR, "stories.json")
 
 # FRED economic data series — real indicators for overlay context
 # Free data from Federal Reserve Economic Data. Each key is a display name,
@@ -1763,9 +1769,9 @@ def call_claude(prompt, max_tokens=4000):
 # SIGNAL VELOCITY & NARRATIVE DRIFT
 # ─────────────────────────────────────────────
 
-VELOCITY_FILE = "velocity_history.json"
-NARRATIVE_FILE = "narrative_history.json"
-STORY_HISTORY_FILE       = "story_history.json"
+VELOCITY_FILE = os.path.join(DATA_DIR, "velocity_history.json")
+NARRATIVE_FILE = os.path.join(DATA_DIR, "narrative_history.json")
+STORY_HISTORY_FILE = os.path.join(DATA_DIR, "story_history.json")
 
 def load_json_file(path, default=None):
     try:
