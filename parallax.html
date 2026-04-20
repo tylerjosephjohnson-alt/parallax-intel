@@ -772,6 +772,8 @@
       <button class="nav-btn active" data-view="brief" onclick="setView('brief')"><span class="dot"></span>Daily brief</button>
       <button class="nav-btn" data-view="stories" onclick="setView('stories')"><span class="dot"></span>All stories</button>
       <button class="nav-btn" data-view="map" onclick="setView('map')"><span class="dot"></span>Map</button>
+      <button class="nav-btn" data-view="mystories" onclick="setView('mystories')"><span class="dot"></span>My stories</button>
+      <button class="nav-btn" data-view="watchlists" onclick="setView('watchlists')"><span class="dot"></span>Watchlists</button>
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Analysis</div>
@@ -879,6 +881,33 @@
           </div>
           <div style="margin-top:32px;padding:20px 24px;background:var(--bg-card);border:1px dashed var(--border-strong);border-radius:8px;font-family:Georgia,serif;font-size:14px;color:var(--text-dim);line-height:1.65;font-style:italic">Country detail pages with indicators, scenarios, stories, and signals are in progress. This v1 shows region-level drill-in only. Data shown is framework demo — live indicator data loads from backend in v1.1.</div>
         </div>
+      </div>
+    </div>
+    <div id="view-mystories" class="view">
+      <div class="view-header"><div class="view-title">My stories</div><div class="view-meta">Saved · Custom · Recent</div></div>
+      <div style="max-width:960px">
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);font-style:italic;margin-bottom:24px">Stories you've saved or created. Saved stories stay in your library; custom stories let you define topics for Vantage to track on your behalf.</p>
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px">
+          <button class="mystory-tab active" onclick="mystoriesTab(this,'saved')" style="padding:10px 18px;background:transparent;border:none;border-bottom:2px solid var(--steel);color:var(--text);cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:400">Saved <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--text-faint);padding:1px 6px;border:1px solid var(--border);background:var(--bg-card);border-radius:2px;margin-left:6px">0</span></button>
+          <button class="mystory-tab" onclick="mystoriesTab(this,'custom')" style="padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:400">Custom stories <span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--text-faint);padding:1px 6px;border:1px solid var(--border);background:var(--bg-card);border-radius:2px;margin-left:6px">0</span></button>
+          <button class="mystory-tab" onclick="mystoriesTab(this,'recent')" style="padding:10px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim);cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:400">Recently viewed</button>
+        </div>
+        <div id="mystories-body">
+          <div style="padding:40px;text-align:center;color:var(--text-faint);border:1px dashed var(--border-strong);border-radius:8px;font-family:Georgia,serif;font-style:italic">Your saved stories appear here. Click the bookmark icon on any story card to save it.</div>
+        </div>
+      </div>
+    </div>
+    <div id="view-watchlists" class="view">
+      <div class="view-header"><div class="view-title">Watchlists</div><div class="view-meta">Custom tracking sets</div></div>
+      <div style="max-width:960px">
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);font-style:italic;margin-bottom:24px">Groups of indicators, regions, or topics you want to monitor. Watchlists trigger notifications when their conditions change.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">
+          <div style="background:var(--bg-card);border:1px dashed var(--border-strong);border-radius:8px;padding:24px;text-align:center;color:var(--text-dim);cursor:pointer;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-family:Georgia,serif;font-size:32px;color:var(--text-faint);line-height:1;margin-bottom:6px">+</div>
+            <span style="font-family:Georgia,serif;font-size:14px">Create new watchlist</span>
+          </div>
+        </div>
+        <div style="margin-top:32px;padding:20px 24px;background:var(--bg-card);border:1px dashed var(--border-strong);border-radius:8px;font-family:Georgia,serif;font-size:14px;color:var(--text-dim);line-height:1.65;font-style:italic">Watchlist builder — pick indicators from Atlas, define threshold conditions, choose notification channels — arrives in v1.1.</div>
       </div>
     </div>
     <div id="view-predictions" class="view">
@@ -1122,6 +1151,12 @@
     if (s == null) return '';
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   }
+  function mystoriesTab(btn, which) {
+    btn.parentElement.querySelectorAll('.mystory-tab').forEach(b => { b.style.borderBottomColor = 'transparent'; b.style.color = 'var(--text-dim)'; });
+    btn.style.borderBottomColor = 'var(--steel)';
+    btn.style.color = 'var(--text)';
+  }
+  window.mystoriesTab = mystoriesTab;
   function atlasShowRegion(region) {
     const labels = {'middle-east':'Middle East','east-asia':'East Asia','europe':'Europe','russia-fsu':'Russia / FSU','africa':'Africa','americas':'Americas','south-asia':'South Asia','global':'Global'};
     const container = document.getElementById('atlas-content');
