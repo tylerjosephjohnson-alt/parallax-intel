@@ -1760,7 +1760,22 @@ def call_claude(prompt, max_tokens=2000):
                  "anthropic-version":"2023-06-01"}, method="POST")
     try:
         with urlopen(req, timeout=30) as r:
-            return json.loads(r.read())["content"][0]["text"]
+            _body_bytes = r.read()
+            try:
+                _resp = json.loads(_body_bytes)
+            except Exception as _e_parse:
+                globals()['_LAST_CLAUDE_ERROR'] = f"JSONParseFail: {str(_e_parse)[:150]} | body_prefix: {_body_bytes[:200]!r}"
+                return None
+            # v50: diagnose empty-content silent failure (spend cap signature)
+            _content = _resp.get("content", [])
+            if not _content:
+                globals()['_LAST_CLAUDE_ERROR'] = f"EmptyContentArray | resp_type: {_resp.get('type','?')} | stop_reason: {_resp.get('stop_reason','?')} | full_resp: {json.dumps(_resp)[:600]}"
+                return None
+            _text = _content[0].get("text", "")
+            if not _text:
+                globals()['_LAST_CLAUDE_ERROR'] = f"EmptyTextField | stop_reason: {_resp.get('stop_reason','?')} | usage: {_resp.get('usage',{})} | block_type: {_content[0].get('type','?')} | full_resp: {json.dumps(_resp)[:600]}"
+                return None
+            return _text
     except Exception as e:
         print(f"  Claude error: {e}"); return None
         globals()['_LAST_CLAUDE_ERROR'] = f"{type(e).__name__}: {str(e)[:250]}"
