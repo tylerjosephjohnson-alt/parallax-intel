@@ -1023,6 +1023,29 @@
 .v6-settings-card h3{font-family:Georgia,serif;font-size:16px;font-weight:400;color:var(--text,#f5efe0);margin:0}
 .v6-settings-card p{font-family:'Inter',sans-serif;font-size:13px;color:var(--text-dim,#a8a294);line-height:1.5;margin:0 0 10px}
 .v6-settings-card .v6-sc-foot{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text-faint,#6b685f);letter-spacing:.06em}
+  
+
+  
+/* == v60-fe SOURCE VELOCITY GRAPH CSS == */
+.v6-velocity{background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c);border-radius:4px;padding:20px 22px 16px;margin-top:12px}
+.v6-velocity-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.v6-velocity-title{font-family:'Roboto Mono',monospace;font-size:10.5px;letter-spacing:.15em;color:var(--text-faint,#6b685f);text-transform:uppercase}
+.v6-velocity-legend{display:flex;gap:16px;align-items:center}
+.v6-velocity-legend-item{display:flex;align-items:center;gap:6px;font-family:'Roboto Mono',monospace;font-size:9.5px;letter-spacing:.08em;color:var(--text-faint,#6b685f);text-transform:uppercase}
+.v6-velocity-legend-swatch{width:16px;height:3px;border-radius:2px}
+.v6-velocity-chart{position:relative;width:100%;height:120px;margin-bottom:12px}
+.v6-velocity-chart svg{width:100%;height:100%;display:block}
+.v6-velocity-yaxis{position:absolute;left:0;top:0;bottom:0;width:36px;display:flex;flex-direction:column;justify-content:space-between;padding:2px 0}
+.v6-velocity-yaxis span{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--text-faint,#6b685f);letter-spacing:.06em;text-align:right}
+.v6-velocity-xaxis{display:flex;justify-content:space-between;padding:0 36px;margin-bottom:14px}
+.v6-velocity-xaxis span{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--text-faint,#6b685f);letter-spacing:.06em}
+.v6-velocity-annotations{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--border,#1e242c)}
+.v6-velocity-annotation{display:grid;grid-template-columns:8px 1fr;gap:10px;align-items:center;font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--text-dim,#a8a294)}
+.v6-ann-dot{width:8px;height:8px;border-radius:50%;background:#c97a3b}
+.v6-ann-dot.v6-ann-green{background:#4ea86a}
+.v6-ann-dot.v6-ann-blue{background:#6b9bc9}
+.v6-ann-dot.v6-ann-red{background:#c94a3b}
+.v6-velocity-empty{height:120px;display:flex;align-items:center;justify-content:center;color:var(--text-faint,#6b685f);font-style:italic;font-family:'Inter',sans-serif;font-size:13px;border:1px dashed var(--border-strong,#2a323c);border-radius:4px;margin-bottom:12px}
   </style>
 
   <!-- v39: Leaflet for map view -->
@@ -2697,6 +2720,72 @@ function v6_renderSettings() {
     return result;
   };
 })();
+  
+
+  
+// == v60-fe SOURCE VELOCITY GRAPH RENDERER ==
+function v6_renderVelocityGraph(data) {
+  if (!data || !data.points || !data.points.length) {
+    return '<div class="v6-velocity"><div class="v6-velocity-header">' +
+      '<span class="v6-velocity-title">Sources reporting this cluster (hourly since launch)</span>' +
+      '<div class="v6-velocity-legend">' +
+      '<div class="v6-velocity-legend-item"><span class="v6-velocity-legend-swatch" style="background:var(--text-dim)"></span>Sources</div>' +
+      '<div class="v6-velocity-legend-item"><span class="v6-velocity-legend-swatch" style="background:#4ea86a"></span>Activity</div>' +
+      '<div class="v6-velocity-legend-item"><span class="v6-velocity-legend-swatch" style="background:#6b9bc9;opacity:.5"></span>Acceleration</div>' +
+      '</div></div>' +
+      '<div class="v6-velocity-empty">Source velocity data will appear when article ingestion logging is active.</div></div>';
+  }
+  const pts = data.points;
+  const maxSrc = Math.max(...pts.map(p => p.sources || 0), 1);
+  const maxAct = Math.max(...pts.map(p => p.activity || 0), 1);
+  const maxAcc = Math.max(...pts.map(p => p.acceleration || 0), 1);
+  const w = 760, h = 120, pad = 40;
+  const xStep = w / Math.max(pts.length - 1, 1);
+  const toY = (val, max) => h - (val / max) * (h - 10) - 5;
+  const srcLine = pts.map((p, i) => (i * xStep) + ',' + toY(p.sources || 0, maxSrc)).join(' ');
+  const actLine = pts.map((p, i) => (i * xStep) + ',' + toY(p.activity || 0, maxAct)).join(' ');
+  const accLine = pts.map((p, i) => (i * xStep) + ',' + toY(p.acceleration || 0, maxAcc)).join(' ');
+  let svg = '<svg viewBox="0 0 800 120" preserveAspectRatio="none" style="padding-left:40px">';
+  for (let g = 0; g <= 4; g++) svg += '<line x1="0" y1="' + (g * 30) + '" x2="760" y2="' + (g * 30) + '" stroke="#1e242c" stroke-width="0.5"/>';
+  svg += '<polyline fill="none" stroke="rgba(107,155,201,.35)" stroke-width="1.5" stroke-dasharray="4,3" points="' + accLine + '"/>';
+  svg += '<polyline fill="none" stroke="#4ea86a" stroke-width="1.5" stroke-opacity="0.7" points="' + actLine + '"/>';
+  svg += '<polyline fill="none" stroke="#a8a294" stroke-width="2" points="' + srcLine + '"/>';
+  if (data.markers) {
+    data.markers.forEach(m => {
+      const mx = (m.index || 0) * xStep;
+      const my = toY(m.value || 0, maxSrc);
+      const color = m.color || '#c97a3b';
+      svg += '<circle cx="' + mx + '" cy="' + my + '" r="5" fill="' + color + '" stroke="#0b0d10" stroke-width="2"/>';
+    });
+  }
+  svg += '</svg>';
+  const yLabels = [maxSrc, Math.round(maxSrc * 0.75), Math.round(maxSrc * 0.5), Math.round(maxSrc * 0.25), 0];
+  let html = '<div class="v6-velocity"><div class="v6-velocity-header">';
+  html += '<span class="v6-velocity-title">' + v6_esc(data.title || 'Sources reporting this cluster (hourly since launch)') + '</span>';
+  html += '<div class="v6-velocity-legend">';
+  html += '<div class="v6-velocity-legend-item"><span class="v6-velocity-legend-swatch" style="background:var(--text-dim)"></span>Sources</div>';
+  html += '<div class="v6-velocity-legend-item"><span class="v6-velocity-legend-swatch" style="background:#4ea86a"></span>Activity</div>';
+  html += '<div class="v6-velocity-legend-item"><span class="v6-velocity-legend-swatch" style="background:#6b9bc9;opacity:.5"></span>Acceleration</div>';
+  html += '</div></div>';
+  html += '<div class="v6-velocity-chart"><div class="v6-velocity-yaxis">';
+  yLabels.forEach(l => { html += '<span>' + l + '</span>'; });
+  html += '</div>' + svg + '</div>';
+  if (data.x_labels) {
+    html += '<div class="v6-velocity-xaxis">';
+    data.x_labels.forEach(l => { html += '<span>' + v6_esc(l) + '</span>'; });
+    html += '</div>';
+  }
+  if (data.annotations && data.annotations.length) {
+    html += '<div class="v6-velocity-annotations">';
+    data.annotations.forEach(a => {
+      const dotClass = a.type === 'green' ? 'v6-ann-green' : a.type === 'blue' ? 'v6-ann-blue' : a.type === 'red' ? 'v6-ann-red' : '';
+      html += '<div class="v6-velocity-annotation"><span class="v6-ann-dot ' + dotClass + '"></span>' + v6_esc(a.text) + '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
   </script>
 </body>
 </html>
