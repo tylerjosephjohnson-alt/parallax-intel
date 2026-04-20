@@ -824,15 +824,17 @@
       <div class="nav-group-label">Analysis</div>
       <button class="nav-btn" data-view="atlas" onclick="setView('atlas')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></span>Atlas</button>
       <button class="nav-btn" data-view="predictions" onclick="setView('predictions')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18l6-6 4 4 8-10"/><path d="M14 6h7v7"/></svg></span>Predictions</button>
+      <button class="nav-btn" data-view="scenarios" onclick="setView('scenarios')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="6" cy="18" r="2"/><path d="M8 6h8M6 8v8M18 8v8"/></svg></span>Scenarios</button>
       <button class="nav-btn" data-view="psyops" onclick="setView('psyops')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="6.5" stroke-dasharray="2,2.5"/><path d="M4 4l3.5 3.5M20 4l-3.5 3.5M4 20l3.5-3.5M20 20l-3.5-3.5"/></svg></span>Psyops</button>
-      <button class="nav-btn" data-view="map" onclick="setView('map')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg></span>Map</button>
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Reference</div>
+      <button class="nav-btn" data-view="map" onclick="setView('map')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3L3 6v15l6-3 6 3 6-3V3l-6 3-6-3z"/><path d="M9 3v15M15 6v15"/></svg></span>Map</button>
       <button class="nav-btn" data-view="sources" onclick="setView('sources')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.657 3.582 3 8 3s8-1.343 8-3V5M4 11v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"/></svg></span>Source registry</button>
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Account</div>
+      <button class="nav-btn" data-view="notifications" onclick="setView('notifications')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 004 0"/></svg></span>Notifications</button>
       <button class="nav-btn" data-view="settings" onclick="setView('settings')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></span>Settings</button>
       <button class="nav-btn" data-view="about" onclick="setView('about')"><span class="emblem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></span>About</button>
     </div>
@@ -1088,6 +1090,14 @@
     <div id="view-psyops" class="view">
       <div class="view-header"><div class="view-title">Psyops</div></div>
       <div class="placeholder">Source silence detection and narrative-divergence tracking arrive in Phase 2.</div>
+    </div>
+      <div id="view-scenarios" class="view">
+      <div class="view-header"><div class="view-title">Scenarios</div></div>
+      <div class="placeholder">Cross-Atlas / cross-Predictions scenario aggregation arrives in Phase 5.</div>
+    </div>
+      <div id="view-notifications" class="view">
+      <div class="view-header"><div class="view-title">Notifications</div></div>
+      <div class="placeholder">Notification rules and history arrive with the user-account layer.</div>
     </div>
       <div id="view-settings" class="view">
       <div class="view-header"><div class="view-title">Settings</div></div>
