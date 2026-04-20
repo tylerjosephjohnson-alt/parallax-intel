@@ -794,6 +794,66 @@
   .map-satdate-group button {
     padding: 4px 10px; font-size: 10px;
   }
+  
+
+  /* == v54-fe STORY CARD v6.3 CSS == */
+/* ══ v54-fe STORY CARD v6.3 CSS ══ */
+.v6-card{background:var(--bg-card,#12161b);border:1px solid var(--border,#1e242c);border-radius:4px;margin-bottom:18px;overflow:hidden;color:var(--text,#f5efe0);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5}
+.v6-topstrip{display:flex;justify-content:space-between;align-items:center;padding:10px 22px;background:rgba(201,122,59,.08);border-bottom:1px solid rgba(201,122,59,.3);font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.v6-topstrip.v6-w-routine{background:rgba(78,168,106,.08);border-bottom-color:rgba(78,168,106,.3)}
+.v6-topstrip.v6-w-elevated{background:rgba(201,166,59,.08);border-bottom-color:rgba(201,166,59,.3)}
+.v6-topstrip.v6-w-active{background:rgba(201,122,59,.08);border-bottom-color:rgba(201,122,59,.3)}
+.v6-topstrip.v6-w-urgent{background:rgba(201,74,59,.08);border-bottom-color:rgba(201,74,59,.3)}
+.v6-topstrip .v6-watch{display:flex;align-items:center;gap:10px;font-weight:500;color:#c97a3b}
+.v6-topstrip.v6-w-routine .v6-watch{color:#4ea86a}
+.v6-topstrip.v6-w-elevated .v6-watch{color:#c9a63b}
+.v6-topstrip.v6-w-urgent .v6-watch{color:#c94a3b}
+.v6-topstrip .v6-watch .v6-emblem{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center}
+.v6-topstrip .v6-watch .v6-emblem svg{width:18px;height:18px;display:block}
+.v6-topstrip .v6-updated{color:var(--text-faint,#5a6068);font-size:10px;letter-spacing:.1em}
+.v6-card-head{padding:18px 22px 16px;cursor:pointer}
+.v6-card-head:hover{background:rgba(255,255,255,.015)}
+.v6-meta-row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim,#a8a294);margin-bottom:12px}
+.v6-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.1em;background:rgba(201,122,59,.1);color:#e0a27d;border:1px solid rgba(201,122,59,.3)}
+.v6-pill .v6-dot{width:5px;height:5px;border-radius:50%;background:#e0a27d}
+.v6-meta-row .v6-loc::before{content:"\25C6 ";color:var(--text-faint,#6b685f);margin-right:4px}
+.v6-meta-row .v6-src{color:#4ea86a}
+.v6-meta-row .v6-mon{color:#c9a63b}
+.v6-headline{font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;line-height:1.32;color:var(--text,#f5efe0);margin:0 0 10px}
+.v6-hook{font-family:Georgia,'Times New Roman',serif;font-size:14.5px;line-height:1.5;color:var(--text-dim,#a8a294);margin:0 0 14px;font-style:italic}
+.v6-quick-stack{display:grid;gap:8px;padding-top:12px;border-top:1px dashed var(--border-strong,#2a323c)}
+.v6-sw-line{display:grid;grid-template-columns:70px 1fr;gap:14px;align-items:baseline;font-size:13px;line-height:1.5}
+.v6-sw-line .v6-sw-label{font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#c9a63b}
+.v6-sw-line .v6-sw-body{color:var(--text,#f5efe0);font-family:'Inter',system-ui,sans-serif}
+.v6-pred-line{display:grid;grid-template-columns:70px 1fr auto;gap:14px;align-items:baseline;font-size:13px;line-height:1.5}
+.v6-pred-line .v6-pred-label{font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#4ea86a}
+.v6-pred-line .v6-pred-body{color:var(--text,#f5efe0);font-family:'Inter',system-ui,sans-serif}
+.v6-pred-line .v6-pred-rate{font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.04em;color:#4ea86a;white-space:nowrap}
+.v6-empty{color:var(--text-faint,#5a6068);font-style:italic;font-family:'Inter',system-ui,sans-serif}
+.v6-empty-mono{color:var(--text-faint,#5a6068);font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.v6-card-body{display:none;border-top:1px solid var(--border,#1e242c);padding:0}
+.v6-card.v6-is-open .v6-card-body{display:block}
+.v6-tab-bar{display:flex;flex-wrap:wrap;gap:6px;padding:14px 20px;background:var(--bg-sink,#080a0d);border-bottom:1px solid var(--border,#1e242c)}
+.v6-tab{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;background:var(--bg-card,#12161b);border:1px solid var(--border-strong,#2a323c);border-radius:4px;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim,#a8a294);cursor:pointer;transition:border-color .15s ease,color .15s ease,background .15s ease;white-space:nowrap}
+.v6-tab:hover{border-color:#5a6a77;color:var(--text,#f5efe0);background:rgba(122,138,151,.06)}
+.v6-tab.v6-active{border-color:#7a8a97;color:var(--text,#f5efe0);background:rgba(122,138,151,.12);box-shadow:inset 0 0 0 1px #3d4955}
+.v6-tab .v6-count{font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.04em;color:var(--text-faint,#6b685f);padding:1px 6px;border-radius:3px;background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c)}
+.v6-tab.v6-active .v6-count{color:var(--text-dim,#a8a294);background:var(--bg,#0b0d10);border-color:var(--border-strong,#2a323c)}
+.v6-tab.v6-alert{border-color:rgba(201,74,59,.4);color:#e38879}
+.v6-tab.v6-alert:hover{border-color:#c94a3b;background:rgba(201,74,59,.08)}
+.v6-tab.v6-alert.v6-active{border-color:#c94a3b;color:#c94a3b;background:rgba(201,74,59,.08);box-shadow:inset 0 0 0 1px rgba(201,74,59,.5)}
+.v6-tab.v6-alert .v6-count{color:#e38879;background:rgba(201,74,59,.08);border-color:rgba(201,74,59,.35)}
+.v6-pane{display:none;padding:24px 26px 28px}
+.v6-pane.v6-active{display:block}
+.v6-pane .v6-prose p{font-family:Georgia,'Times New Roman',serif;font-size:15.5px;line-height:1.7;color:var(--text,#f5efe0);margin:0 0 14px}
+.v6-pane .v6-prose p:last-child{margin-bottom:0}
+.v6-pane .v6-prose em{color:var(--text-dim,#a8a294);font-style:italic}
+.v6-section-label{font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.15em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin:26px 0 12px}
+.v6-section-label.v6-first{margin-top:0}
+.v6-foot{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-top:1px solid var(--border,#1e242c);background:var(--bg-sink,#080a0d);font-family:'Roboto Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint,#6b685f)}
+.v6-foot .v6-go{color:var(--text-dim,#a8a294)}
+.v6-card:hover .v6-foot .v6-go{color:var(--text,#f5efe0)}
+@media(max-width:720px){.v6-meta-row{flex-direction:column;gap:6px}.v6-sw-line,.v6-pred-line{grid-template-columns:1fr}}
   </style>
 
   <!-- v39: Leaflet for map view -->
@@ -1504,7 +1564,7 @@
     html += '</div>';
     html += '</div>';
     html += '<div class="region-body">';
-    stories.forEach((s, i) => { html += renderStoryCardV2(s, region + '-' + i); });
+    stories.forEach((s, i) => { html += v6_renderStoryCard(s, region + '-' + i); });
     html += '</div>';
     html += '</div>';
     return html;
@@ -1912,6 +1972,181 @@
       return r;
     };
   })();
+  
+
+  // == v54-fe STORY CARD v6.3 RENDERER ==
+
+function v6_watchEmblem(level) {
+  const emblems = {
+    routine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>',
+    elevated: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L21 20H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/></svg>',
+    active: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><path d="M12 12L19 7"/></svg>',
+    urgent: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c-1 4-5 6-5 11a5 5 0 0010 0c0-3-2-4-2.5-6-.5 1.5-1.5 2.5-2.5 2.5 0-3 1-5 0-7.5z"/></svg>'
+  };
+  return emblems[level] || emblems.routine;
+}
+function v6_watchLabel(level) {
+  return ({routine:'Routine \u00b7 monitored',elevated:'Elevated \u00b7 watch',active:'Active \u00b7 situation developing',urgent:'Urgent \u00b7 active conflict'})[level] || 'Routine \u00b7 monitored';
+}
+function v6_esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function v6_or(value, fallback) {
+  if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+    return '<span class="v6-empty">' + v6_esc(fallback) + '</span>';
+  }
+  return v6_esc(value);
+}
+function v6_renderTopStrip(story) {
+  const level = story.watch_level || story.watchLevel || 'routine';
+  const updated = story.updated || story.updatedAt || story.timestamp;
+  const updatedTxt = updated ? ('Updated ' + v6_esc(updated)) : '<span class="v6-empty-mono">No update timestamp</span>';
+  return '<div class="v6-topstrip v6-w-' + v6_esc(level) + '">' +
+    '<span class="v6-watch"><span class="v6-emblem">' + v6_watchEmblem(level) + '</span>' + v6_esc(v6_watchLabel(level)) + '</span>' +
+    '<span class="v6-updated">' + updatedTxt + '</span></div>';
+}
+function v6_renderMetaRow(story) {
+  const cat = story.category || story.cat;
+  const loc = story.location || story.loc;
+  const srcCount = (story.sources && story.sources.length) || story.source_count || 0;
+  const monCount = (story.monitors && story.monitors.length) || (story.live_signals && story.live_signals.length) || 0;
+  const parts = [];
+  parts.push('<span class="v6-pill"><span class="v6-dot"></span>' + (cat ? v6_esc(cat) : '<span class="v6-empty">Uncategorized</span>') + '</span>');
+  parts.push('<span class="v6-loc">' + v6_or(loc, 'Location not yet identified') + '</span>');
+  parts.push('<span class="v6-src">' + (srcCount > 0 ? srcCount + ' SOURCE' + (srcCount === 1 ? '' : 'S') : '<span class="v6-empty-mono">No sources yet</span>') + '</span>');
+  if (monCount > 0) parts.push('<span class="v6-mon">' + monCount + ' MONITOR' + (monCount === 1 ? '' : 'S') + '</span>');
+  return '<div class="v6-meta-row">' + parts.join('') + '</div>';
+}
+function v6_renderQuickStack(story) {
+  const soWhat = story.so_what_short || story.soWhat || story.so_what;
+  const topCall = story.top_call || story.topCall || story.expected;
+  let html = '<div class="v6-quick-stack">';
+  html += '<div class="v6-sw-line"><span class="v6-sw-label">So what</span>';
+  html += '<span class="v6-sw-body">' + v6_or(soWhat, 'So-what analysis pending.') + '</span></div>';
+  if (topCall && typeof topCall === 'object') {
+    const text = topCall.text || topCall.body || topCall.prediction;
+    const num = topCall.rate_numerator || topCall.numerator;
+    const denom = topCall.rate_denominator || topCall.denominator;
+    const rateStr = (num && denom) ? (num + '/' + denom + ' \u00b7 ' + Math.round(100 * num / denom) + '%') : null;
+    html += '<div class="v6-pred-line"><span class="v6-pred-label">Expected</span>';
+    html += '<span class="v6-pred-body">' + v6_or(text, 'No top prediction recorded') + '</span>';
+    html += '<span class="v6-pred-rate">' + (rateStr || '<span class="v6-empty-mono">No base rate</span>') + '</span></div>';
+  } else if (typeof topCall === 'string' && topCall) {
+    html += '<div class="v6-pred-line"><span class="v6-pred-label">Expected</span>';
+    html += '<span class="v6-pred-body">' + v6_esc(topCall) + '</span>';
+    html += '<span class="v6-pred-rate"><span class="v6-empty-mono">No base rate</span></span></div>';
+  } else {
+    html += '<div class="v6-pred-line"><span class="v6-pred-label">Expected</span>';
+    html += '<span class="v6-pred-body"><span class="v6-empty">No prediction logged yet.</span></span>';
+    html += '<span class="v6-pred-rate"></span></div>';
+  }
+  html += '</div>';
+  return html;
+}
+function v6_renderTabBar(story) {
+  const srcCount = (story.sources && story.sources.length) || story.source_count || 0;
+  const shiftCount = (story.narrative_shifts && story.narrative_shifts.length) || (story.shifts && story.shifts.length) || 0;
+  const psyopsCount = (story.psyops_findings && story.psyops_findings.length) || (story.psyops_signals && story.psyops_signals.length) || 0;
+  const confidenceScore = story.confidence_score;
+  const tabs = [
+    {id:'overview',label:'Overview',count:null,alert:false},
+    {id:'analysis',label:'Analysis',count:null,alert:false},
+    {id:'connecting',label:'Connecting Events',count:null,alert:false},
+    {id:'sowhat',label:'So What',count:null,alert:false},
+    {id:'sources',label:'Sources',count:srcCount,alert:false},
+    {id:'shifts',label:'Narrative Shifts',count:shiftCount,alert:false},
+    {id:'psyops',label:'Psyops Signal',count:psyopsCount,alert:psyopsCount>0},
+    {id:'confidence',label:'Confidence',count:confidenceScore,alert:false}
+  ];
+  const tabHtml = tabs.map((t,i) => {
+    const cls = ['v6-tab'];
+    if (i === 0) cls.push('v6-active');
+    if (t.alert) cls.push('v6-alert');
+    const countSpan = (t.count !== null && t.count !== undefined && t.count !== 0) ? ' <span class="v6-count">' + v6_esc(t.count) + '</span>' : '';
+    return '<div class="' + cls.join(' ') + '" data-pane="' + t.id + '" onclick="v6_switchTab(this)">' + v6_esc(t.label) + countSpan + '</div>';
+  }).join('');
+  return '<nav class="v6-tab-bar" role="tablist">' + tabHtml + '</nav>';
+}
+function v6_renderSourcesPane(story) {
+  const sources = story.sources || [];
+  if (!sources.length) return '<p class="v6-empty">No sources attached to this story yet.</p>';
+  let html = '<div class="v6-section-label v6-first">' + sources.length + ' source' + (sources.length === 1 ? '' : 's') + '</div>';
+  html += '<ul style="list-style:none;padding:0;margin:0">';
+  sources.forEach(s => {
+    const name = (typeof s === 'string') ? s : (s.name || s.source || 'Unknown');
+    const role = (typeof s === 'object' && s.role) ? s.role : '';
+    html += '<li style="padding:8px 0;border-bottom:1px solid var(--border,#1e242c);font-size:13px">' +
+      '<span style="color:var(--text,#f5efe0)">' + v6_esc(name) + '</span>' +
+      (role ? ' <span style="color:var(--text-faint,#6b685f);font-family:monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-left:8px">' + v6_esc(role) + '</span>' : '') + '</li>';
+  });
+  html += '</ul>';
+  return html;
+}
+function v6_renderPanes(story) {
+  const stub = function(label) {
+    return '<p class="v6-empty">' + v6_esc(label) + ' content arrives when backend produces this data.</p>';
+  };
+  let overview = '';
+  const body = story.body || story.overview_prose || story.overview;
+  if (body) {
+    const paras = String(body).split(/\n\n+/).filter(p => p.trim());
+    overview = '<div class="v6-prose">' + paras.map(p => '<p>' + v6_esc(p) + '</p>').join('') + '</div>';
+  } else { overview = stub('Overview'); }
+  return [
+    '<section class="v6-pane v6-active" id="v6-pane-overview">' + overview + '</section>',
+    '<section class="v6-pane" id="v6-pane-analysis">' + stub('Analysis') + '</section>',
+    '<section class="v6-pane" id="v6-pane-connecting">' + stub('Connecting Events') + '</section>',
+    '<section class="v6-pane" id="v6-pane-sowhat">' + stub('So What') + '</section>',
+    '<section class="v6-pane" id="v6-pane-sources">' + v6_renderSourcesPane(story) + '</section>',
+    '<section class="v6-pane" id="v6-pane-shifts">' + stub('Narrative Shifts') + '</section>',
+    '<section class="v6-pane" id="v6-pane-psyops">' + stub('Psyops Signal') + '</section>',
+    '<section class="v6-pane" id="v6-pane-confidence">' + stub('Confidence') + '</section>'
+  ].join('');
+}
+function v6_renderFoot(story) {
+  const predCount = (story.predictions && story.predictions.length) || 0;
+  const psyopsCount = (story.psyops_findings && story.psyops_findings.length) || 0;
+  const parts = ['8 tabs'];
+  if (predCount > 0) parts.push(predCount + ' prediction' + (predCount === 1 ? '' : 's'));
+  if (psyopsCount > 0) parts.push(psyopsCount + ' psyops signal' + (psyopsCount === 1 ? '' : 's'));
+  return '<div class="v6-foot"><span>' + parts.join(' \u00b7 ') + '</span><span class="v6-go">CLICK TO <span data-toggle-label>EXPAND</span> \u2192</span></div>';
+}
+function v6_renderStoryCard(story, idx) {
+  const isOpen = false;
+  const cardId = 'v6-card-' + (story.id || idx || Math.random().toString(36).slice(2, 8));
+  return '<article class="v6-card' + (isOpen ? ' v6-is-open' : '') + '" id="' + cardId + '">' +
+    v6_renderTopStrip(story) +
+    '<header class="v6-card-head" onclick="v6_toggleCard(this)">' +
+      v6_renderMetaRow(story) +
+      '<h2 class="v6-headline">' + v6_or(story.headline || story.title, 'Headline pending') + '</h2>' +
+      '<p class="v6-hook">' + v6_or(story.hook || story.subline, 'Hook line pending.') + '</p>' +
+      v6_renderQuickStack(story) +
+    '</header>' +
+    '<div class="v6-card-body">' +
+      v6_renderTabBar(story) +
+      v6_renderPanes(story) +
+    '</div>' +
+    v6_renderFoot(story) +
+  '</article>';
+}
+function v6_toggleCard(headEl) {
+  const card = headEl.closest('.v6-card');
+  if (!card) return;
+  card.classList.toggle('v6-is-open');
+  const lbl = card.querySelector('[data-toggle-label]');
+  if (lbl) lbl.textContent = card.classList.contains('v6-is-open') ? 'COLLAPSE' : 'EXPAND';
+}
+function v6_switchTab(tabEl) {
+  const card = tabEl.closest('.v6-card');
+  if (!card) return;
+  card.querySelectorAll('.v6-tab').forEach(t => t.classList.remove('v6-active'));
+  card.querySelectorAll('.v6-pane').forEach(p => p.classList.remove('v6-active'));
+  tabEl.classList.add('v6-active');
+  const paneId = tabEl.dataset.pane;
+  const pane = card.querySelector('#v6-pane-' + paneId);
+  if (pane) pane.classList.add('v6-active');
+}
   </script>
 </body>
 </html>
