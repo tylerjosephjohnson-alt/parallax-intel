@@ -781,6 +781,7 @@
       <div class="nav-group">
       <div class="nav-group-label">Account</div>
       <button class="nav-btn" data-view="settings" onclick="setView('settings')"><span class="dot"></span>Settings</button>
+      <button class="nav-btn" data-view="about" onclick="setView('about')"><span class="dot"></span>About</button>
     </div>
       <div class="nav-group">
       <div class="nav-group-label">Reference</div>
@@ -858,7 +859,44 @@
         </div>
       </div>
     </div>
-        <div id="view-sources" class="view">
+        <div id="view-about" class="view">
+      <div class="view-header"><div class="view-title">About Vantage</div></div>
+      <div style="max-width:720px">
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);font-style:italic;margin-bottom:24px">Vantage is an automated geopolitical intelligence product. Stories are generated without human writers. This page explains the editorial standards we hold ourselves to, so you can judge our work against them.</p>
+
+        <h2 style="font-family:Georgia,serif;font-size:22px;color:var(--text);font-weight:400;margin:28px 0 10px;line-height:1.3">Seven principles</h2>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">1</span>No sides. What is.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">Vantage reports what happened, what is known, and what follows. We do not characterize actors as heroic, villainous, justified, or illegitimate. If you can tell which side Vantage is on from reading a story, we have failed. <strong style="color:var(--text)">This applies symmetrically</strong> — every nationality, ethnicity, religious group, political faction, and state actor is written about in the same tone using the same standards.</p>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">2</span>Sourced or silent.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">Every factual claim comes from a named source or is explicitly labeled as analysis. We do not say "experts believe," "reports suggest," or "it is understood that." If we cannot attribute a claim, we do not publish it. When sources disagree, we say so and name which source says what.</p>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">3</span>Numbers are numbers.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">When actors disagree on a quantifiable claim — casualties, damage, economic figures, military losses — we report all stated figures with their sources. We do not use comparative qualifiers like "higher," "lower," "much," "far," or "dramatically" to characterize one side's figure relative to another's.</p>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">4</span>Uncertainty is a feature, not a flaw.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">When we don't know something, we say we don't know. When a claim is contested, we say it is contested. When confidence is low, we label it low. Calibrated confidence is itself a product — when Vantage says "moderate confidence," we commit to a track record against which that label can be measured.</p>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">5</span>Base rates over narratives.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">Predictions and analytical claims are grounded in historical comparables with explicit sample sizes. "This has happened 4 of 5 times before in similar circumstances" is the kind of claim we make. "Analysts fear X" is not. Where base rates don't exist, we say "insufficient comparables" and decline to assign probability.</p>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">6</span>Plain language.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">We write for an intelligent reader who is not a specialist in the specific region or topic. Acronyms are expanded on first mention. Historical references are contextualized. Technical terms explain themselves.</p>
+
+        <h3 style="font-family:Georgia,serif;font-size:17px;color:var(--text);font-weight:400;margin:22px 0 8px;line-height:1.3"><span style="display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.12em;padding:2px 8px;border:1px solid var(--border-strong);border-radius:3px;margin-right:8px;vertical-align:middle">7</span>One event, every perspective.</h3>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">Every story explicitly surfaces how the event is being reported by at least three named sources, including ideologically or geographically distinct ones. We do not present a single framing as the framing.</p>
+
+        <h2 style="font-family:Georgia,serif;font-size:22px;color:var(--text);font-weight:400;margin:32px 0 10px;line-height:1.3">How we handle mistakes</h2>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">Different kinds of errors need different responses. Vantage uses four tiers: <strong style="color:var(--text)">Update</strong> (new information appended above original), <strong style="color:var(--text)">Correction</strong> (specific error struck through and corrected in place), <strong style="color:var(--text)">Retraction</strong> (story pulled, URL serves retraction notice), and <strong style="color:var(--text)">Systemic Issue Notice</strong> (pattern-level failure acknowledged publicly). We never make silent edits.</p>
+
+        <h2 style="font-family:Georgia,serif;font-size:22px;color:var(--text);font-weight:400;margin:32px 0 10px;line-height:1.3">Accuracy track record</h2>
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);margin:0 0 14px">Predictions and confidence-labeled claims are logged and scored against a published accuracy page. When we say "moderate confidence" across 100 predictions, what percentage were right? That number is public. If the track record diverges from the label's intended meaning, we recalibrate and say so openly.</p>
+
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.06em;color:var(--watch-routine);margin-top:24px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:4px">● Last updated: 20 April 2026 — This document changes slowly and visibly when it moves.</div>
+      </div>
+    </div>
+    <div id="view-sources" class="view">
       <div class="view-header"><div class="view-title">Source registry</div></div>
       <div class="sources-intro">Vantage aggregates reporting from the sources below. Every story cites its origin. We show you where we looked — the rest is analysis.</div>
       <div id="sources-content"><div class="loading">Loading sources…</div></div>
@@ -894,6 +932,7 @@
     if (name === 'brief' && !briefLoaded) loadBrief();
     if (name === 'stories' && !storiesLoaded) loadStories();
     if (name === 'sources') loadSources();
+    if (name === 'about') { /* static content, no loader needed */ }
   }
   function toggleTheme() {
     const h = document.documentElement;
