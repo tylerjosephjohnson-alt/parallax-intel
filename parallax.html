@@ -854,6 +854,41 @@
 .v6-foot .v6-go{color:var(--text-dim,#a8a294)}
 .v6-card:hover .v6-foot .v6-go{color:var(--text,#f5efe0)}
 @media(max-width:720px){.v6-meta-row{flex-direction:column;gap:6px}.v6-sw-line,.v6-pred-line{grid-template-columns:1fr}}
+  
+
+  
+/* == v55-fe DAILY BRIEF v1.6 CSS == */
+.v6-region-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border,#1e242c)}
+.v6-region-chip{padding:7px 14px;border:1px solid var(--border-strong,#2a323c);border-radius:3px;background:var(--bg-card,#12161b);color:var(--text-dim,#a8a294);font-family:'Roboto Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.v6-region-chip:hover{color:var(--text,#f5efe0);border-color:#5a6a77}
+.v6-region-chip.v6-active{background:var(--bg-sink,#080a0d);border-color:#7a8a97;color:var(--text,#f5efe0);box-shadow:inset 0 0 0 1px #3d4955}
+.v6-region-chip .v6-w{display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:8px;vertical-align:middle}
+.v6-w.v6-w-urgent{background:#c94a3b}.v6-w.v6-w-active{background:#c97a3b}.v6-w.v6-w-elevated{background:#c9a63b}.v6-w.v6-w-routine{background:#4ea86a}
+.v6-brief-head{display:grid;grid-template-columns:1fr 340px;gap:28px;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--border,#1e242c)}
+@media(max-width:900px){.v6-brief-head{grid-template-columns:1fr}}
+.v6-brief-head .v6-eyebrow{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:14px}
+.v6-brief-head .v6-pulse{width:6px;height:6px;border-radius:50%;background:#c97a3b;animation:v6pulse 2s ease-in-out infinite}
+@keyframes v6pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.v6-brief-head h1{font-family:Georgia,serif;font-size:32px;font-weight:400;margin:0 0 10px;color:var(--text,#f5efe0);line-height:1.1}
+.v6-brief-head .v6-subline{font-family:Georgia,serif;font-size:15px;line-height:1.55;color:var(--text-dim,#a8a294);font-style:italic;margin:0 0 16px;max-width:620px}
+.v6-brief-head .v6-timestamps{display:flex;gap:20px;flex-wrap:wrap;font-family:'Roboto Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--text-faint,#6b685f);text-transform:uppercase}
+.v6-brief-head .v6-live{color:#4ea86a}
+.v6-brief-head .v6-live::before{content:"\25CF ";color:#4ea86a}
+.v6-summary-24h{background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c);border-radius:4px;padding:16px 18px;position:relative}
+.v6-summary-24h::before{content:"LAST 24 HOURS";position:absolute;top:-9px;left:14px;font-family:'Roboto Mono',monospace;font-size:9.5px;letter-spacing:.18em;color:var(--text-faint,#6b685f);background:var(--bg,#0b0d10);padding:0 8px}
+.v6-s-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 18px;margin-bottom:14px}
+.v6-s-item{display:grid;grid-template-columns:auto auto 1fr;gap:10px;align-items:center;padding:2px}
+.v6-s-item .v6-n{font-family:Georgia,serif;font-size:22px;color:var(--text,#f5efe0);font-weight:400;line-height:1}
+.v6-s-item .v6-n.v6-bad{color:#c94a3b}.v6-s-item .v6-n.v6-active{color:#c97a3b}.v6-s-item .v6-n.v6-ok{color:#4ea86a}
+.v6-s-item .v6-k{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-faint,#6b685f);text-transform:uppercase}
+.v6-summary-24h .v6-cap{font-family:Georgia,serif;font-size:13px;color:var(--text-dim,#a8a294);line-height:1.55;padding-top:12px;border-top:1px solid var(--border,#1e242c);margin-top:0;font-style:italic}
+.v6-brief-tabs{display:flex;gap:4px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border,#1e242c);flex-wrap:wrap}
+.v6-brief-tab{padding:8px 16px;border:1px solid var(--border-strong,#2a323c);border-radius:3px;background:transparent;color:var(--text-dim,#a8a294);font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.v6-brief-tab:hover{color:var(--text,#f5efe0);border-color:#5a6a77}
+.v6-brief-tab.v6-active{background:rgba(122,138,151,.12);border-color:#7a8a97;color:var(--text,#f5efe0)}
+.v6-brief-tab .v6-tc{font-size:10px;color:var(--text-faint,#6b685f);margin-left:6px}
+.v6-brief-panel{display:none}
+.v6-brief-panel.v6-active{display:block}
   </style>
 
   <!-- v39: Leaflet for map view -->
@@ -2147,6 +2182,91 @@ function v6_switchTab(tabEl) {
   const pane = card.querySelector('#v6-pane-' + paneId);
   if (pane) pane.classList.add('v6-active');
 }
+  
+
+  
+// == v55-fe DAILY BRIEF v1.6 RENDERER ==
+function v6_renderBriefHeader(brief) {
+  if (!brief) brief = {};
+  const region = brief.region || 'Global';
+  const date = brief.date || new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const subline = brief.subline || brief.summary || '';
+  const published = brief.published || '';
+  const updated = brief.updated || brief.last_updated || '';
+  let html = '<nav class="v6-region-bar">';
+  [{id:'na',label:'North America',w:'elevated'},{id:'eu',label:'Europe',w:'routine'},{id:'me',label:'Middle East',w:'urgent'},{id:'ea',label:'East Asia',w:'active'},{id:'sa',label:'South Asia',w:'elevated'},{id:'af',label:'Africa',w:'routine'},{id:'la',label:'Latin America',w:'routine'},{id:'ru',label:'Russia \u00b7 Eurasia',w:'active'},{id:'gl',label:'Global \u00b7 Transnational',w:'elevated'}].forEach(r => {
+    const active = (region.toLowerCase().includes(r.label.toLowerCase().split(' ')[0])) ? ' v6-active' : '';
+    html += '<button class="v6-region-chip' + active + '" onclick="v6_switchBriefRegion(this)">' + v6_esc(r.label) + ' <span class="v6-w v6-w-' + r.w + '"></span></button>';
+  });
+  html += '</nav>';
+  html += '<header class="v6-brief-head"><div>';
+  html += '<div class="v6-eyebrow"><span class="v6-pulse"></span>DAILY BRIEF \u00b7 ' + v6_esc(region.toUpperCase()) + '</div>';
+  html += '<h1>' + v6_esc(region) + ' \u2014 ' + v6_esc(date) + '</h1>';
+  if (subline) html += '<p class="v6-subline">' + v6_esc(subline) + '</p>';
+  html += '<div class="v6-timestamps">';
+  if (published) html += '<span>' + v6_esc(published) + '</span>';
+  if (updated) html += '<span class="v6-live">' + v6_esc(updated) + '</span>';
+  html += '</div></div>';
+  const u = brief.urgent_count||0, a = brief.active_count||0, v = brief.verdicts_correct||0, p = brief.psyops_count||0;
+  html += '<aside class="v6-summary-24h"><div class="v6-s-grid">';
+  html += '<div class="v6-s-item"><span></span><span class="v6-n v6-bad">'+u+'</span><span class="v6-k">New urgent</span></div>';
+  html += '<div class="v6-s-item"><span></span><span class="v6-n v6-active">'+a+'</span><span class="v6-k">Active developing</span></div>';
+  html += '<div class="v6-s-item"><span></span><span class="v6-n v6-ok">'+v+'</span><span class="v6-k">Verdicts correct</span></div>';
+  html += '<div class="v6-s-item"><span></span><span class="v6-n">'+p+'</span><span class="v6-k">Psyops signal</span></div>';
+  html += '</div>';
+  if (brief.watch_caption) html += '<p class="v6-cap">' + v6_esc(brief.watch_caption) + '</p>';
+  html += '</aside></header>';
+  return html;
+}
+function v6_renderBriefTabs(brief) {
+  if (!brief) brief = {};
+  const sc = (brief.stories&&brief.stories.length)||0, ec = (brief.expected_today&&brief.expected_today.length)||0;
+  const tabs = [{id:'overview',label:'Overview',c:null},{id:'analysis',label:'Analysis',c:null},{id:'expected',label:'Expected today',c:ec},{id:'stories',label:'Top stories',c:sc},{id:'signals',label:'Signals',c:0}];
+  let html = '<div class="v6-brief-tabs">';
+  tabs.forEach((t,i) => {
+    html += '<button class="v6-brief-tab'+(i===0?' v6-active':'')+'" data-panel="v6-bp-'+t.id+'" onclick="v6_switchBriefTab(this)">'+v6_esc(t.label);
+    if (t.c) html += '<span class="v6-tc">'+t.c+'</span>';
+    html += '</button>';
+  });
+  html += '</div>';
+  html += '<div class="v6-brief-panel v6-active" id="v6-bp-overview">';
+  html += brief.overview_prose ? '<div class="v6-prose">'+String(brief.overview_prose).split(/\n\n+/).filter(p=>p.trim()).map(p=>'<p>'+v6_esc(p)+'</p>').join('')+'</div>' : '<p class="v6-empty">Overview will appear when the brief is generated.</p>';
+  html += '</div>';
+  html += '<div class="v6-brief-panel" id="v6-bp-analysis"><p class="v6-empty">Analysis will appear when the brief is generated.</p></div>';
+  html += '<div class="v6-brief-panel" id="v6-bp-expected"><p class="v6-empty">Expected-today predictions will appear when the brief is generated.</p></div>';
+  html += '<div class="v6-brief-panel" id="v6-bp-stories"><p class="v6-empty">Top stories will appear here when stories are generated.</p></div>';
+  html += '<div class="v6-brief-panel" id="v6-bp-signals"><p class="v6-empty">Signals panel will appear when the synthesis pipeline is active.</p></div>';
+  return html;
+}
+function v6_switchBriefTab(btn) {
+  const c = btn.closest('#view-brief')||btn.parentElement.parentElement;
+  c.querySelectorAll('.v6-brief-tab').forEach(t=>t.classList.remove('v6-active'));
+  c.querySelectorAll('.v6-brief-panel').forEach(p=>p.classList.remove('v6-active'));
+  btn.classList.add('v6-active');
+  const p = c.querySelector('#'+btn.dataset.panel);
+  if (p) p.classList.add('v6-active');
+}
+function v6_switchBriefRegion(chip) {
+  document.querySelectorAll('.v6-region-chip').forEach(c=>c.classList.remove('v6-active'));
+  chip.classList.add('v6-active');
+}
+// Bootstrap: inject brief v1.6 header before existing brief content
+(function() {
+  const orig = window.loadBrief;
+  if (!orig) return;
+  window.loadBrief = function() {
+    const result = orig.apply(this, arguments);
+    // After original loadBrief populates, prepend v6 header
+    setTimeout(function() {
+      const briefEl = document.getElementById('view-brief');
+      if (!briefEl || briefEl.querySelector('.v6-region-bar')) return;
+      const existing = briefEl.innerHTML;
+      const briefData = window._lastBriefData || {};
+      briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy" style="margin-top:24px;padding-top:20px;border-top:1px dashed var(--border-strong,#2a323c)">' + existing + '</div>';
+    }, 500);
+    return result;
+  };
+})();
   </script>
 </body>
 </html>
