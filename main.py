@@ -1777,8 +1777,18 @@ def call_claude(prompt, max_tokens=2000):
                 return None
             return _text
     except Exception as e:
-        print(f"  Claude error: {e}"); return None
-        globals()['_LAST_CLAUDE_ERROR'] = f"{type(e).__name__}: {str(e)[:250]}"
+        # v51: swap order so globals() set BEFORE return (was dead code)
+        _err_type = type(e).__name__
+        _err_body = ""
+        try:
+            if hasattr(e, 'read'):
+                _err_body = e.read().decode('utf-8', errors='replace')[:500]
+        except Exception:
+            pass
+        _err_code = getattr(e, 'code', '')
+        globals()['_LAST_CLAUDE_ERROR'] = f"{_err_type}[{_err_code}]: {str(e)[:200]} | body: {_err_body[:400]!r}"
+        print(f"  Claude error: {_err_type}: {e}")
+        return None
 
 
 # ─────────────────────────────────────────────
