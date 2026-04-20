@@ -1759,7 +1759,7 @@ def call_claude(prompt, max_tokens=2000):
         headers={"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,
                  "anthropic-version":"2023-06-01"}, method="POST")
     try:
-        with urlopen(req, timeout=30) as r:
+        with urlopen(req, timeout=120) as r:
             _body_bytes = r.read()
             try:
                 _resp = json.loads(_body_bytes)
@@ -3438,7 +3438,7 @@ Return ONLY a JSON object (no markdown, no preamble):
                 method="POST"
             )
 
-            with urlopen(req, timeout=45) as r:
+            with urlopen(req, timeout=120) as r:
                 data = json.loads(r.read())
 
             # Extract text blocks (web search responses include tool_use blocks)
