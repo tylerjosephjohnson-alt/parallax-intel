@@ -77,6 +77,51 @@
     background: var(--text-faint); flex-shrink: 0;
   }
   .nav-btn.active .dot { background: var(--steel); }
+  /* Emblems */
+  .nav-btn .emblem {
+    width: 18px; height: 18px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-faint); transition: color .12s ease;
+  }
+  .nav-btn .emblem svg { width: 16px; height: 16px; display: block; }
+  .nav-btn:hover .emblem { color: var(--text-dim); }
+  .nav-btn.active .emblem { color: var(--text); }
+  /* Collapse toggle + collapsed state */
+  .collapse-toggle {
+    padding: 0 12px 12px; display: flex; justify-content: flex-end;
+  }
+  .collapse-btn {
+    width: 26px; height: 26px; border-radius: 3px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-faint); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: color .15s, border-color .15s;
+    font-family: inherit;
+  }
+  .collapse-btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .collapse-btn svg { width: 13px; height: 13px; transition: transform .2s; }
+  .app.sidebar-collapsed { grid-template-columns: 64px 1fr; }
+  .app.sidebar-collapsed .collapse-btn svg { transform: rotate(180deg); }
+  .app.sidebar-collapsed .brand-name,
+  .app.sidebar-collapsed .brand-tag,
+  .app.sidebar-collapsed .nav-group-label { opacity: 0; pointer-events: none; height: 0; overflow: hidden; margin: 0; padding: 0; }
+  .app.sidebar-collapsed aside { padding: 16px 8px; }
+  .app.sidebar-collapsed .brand { justify-content: center; padding: 0 0 14px; }
+  .app.sidebar-collapsed .nav-btn { justify-content: center; padding: 9px 8px; position: relative; }
+  .app.sidebar-collapsed .nav-btn span:not(.emblem):not(.dot) { display: none; }
+  .app.sidebar-collapsed .nav-btn .dot { display: none; }
+  .app.sidebar-collapsed .nav-group { margin-bottom: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+  .app.sidebar-collapsed .nav-group:first-of-type { border-top: none; padding-top: 0; }
+  /* Tooltip on collapsed hover */
+  .app.sidebar-collapsed .nav-btn::after {
+    content: attr(data-label); position: absolute; left: calc(100% + 8px); top: 50%;
+    transform: translateY(-50%); padding: 4px 9px;
+    background: var(--bg-card); border: 1px solid var(--border-strong);
+    border-radius: 3px; font-size: 12px; color: var(--text);
+    white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity .12s; z-index: 50;
+  }
+  .app.sidebar-collapsed .nav-btn:hover::after { opacity: 1; }
   main { padding: 32px 40px; max-width: 960px; }
   .view { display: none; }
   .view.active { display: block; }
@@ -757,6 +802,7 @@
 <body>
 <div class="app">
   <aside>
+    <div class="collapse-toggle"><button class="collapse-btn" onclick="toggleSidebarCollapse()" aria-label="Toggle sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button></div>
     <div class="brand">
       <svg class="brand-mark" viewBox="-40 -40 80 80" xmlns="http://www.w3.org/2000/svg">
         <g transform="rotate(15)">
@@ -1128,7 +1174,18 @@
 </div>
 <script>
   let briefLoaded = false, storiesLoaded = false;
-  function setView(name) {
+  function toggleSidebarCollapse() {
+    document.querySelector('.app').classList.toggle('sidebar-collapsed');
+  }
+  window.toggleSidebarCollapse = toggleSidebarCollapse;
+  // Set data-label on each nav button for collapsed tooltip (once on load)
+  (function setNavLabels() {
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      const txt = b.textContent.trim();
+      if (!b.getAttribute('data-label')) b.setAttribute('data-label', txt);
+    });
+  })();
+    function setView(name) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const v = document.getElementById('view-' + name);
