@@ -775,6 +775,7 @@
     </div>
     <div class="nav-group">
       <div class="nav-group-label">Analysis</div>
+      <button class="nav-btn" data-view="atlas" onclick="setView('atlas')"><span class="dot"></span>Atlas</button>
       <button class="nav-btn" data-view="predictions" onclick="setView('predictions')"><span class="dot"></span>Predictions</button>
       <button class="nav-btn" data-view="psyops" onclick="setView('psyops')"><span class="dot"></span>Psyops</button>
     </div>
@@ -828,6 +829,57 @@
         <div class="filter-row-meta" id="filter-meta"></div>
       </div>
       <div id="stories-content"><div class="loading">Loading stories…</div></div>
+    </div>
+    <div id="view-atlas" class="view">
+      <div class="view-header"><div class="view-title">Atlas</div><div class="view-meta">Regions → countries → indicators</div></div>
+      <div style="max-width:960px">
+        <p style="font-family:Georgia,serif;font-size:15px;line-height:1.65;color:var(--text-dim);font-style:italic;margin-bottom:24px">Geopolitical indicators organized by region and country. Click a region to drill into its countries. Click a country to see its indicators, scenarios, and stories.</p>
+        <div id="atlas-content">
+          <div class="atlas-regions" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+            <div class="atlas-region-card" onclick="atlasShowRegion('middle-east')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">Middle East</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>7 countries</span><span style="color:var(--watch-urgent)">● Urgent</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('east-asia')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">East Asia</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>6 countries</span><span style="color:var(--watch-active)">● Active</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('europe')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">Europe</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>12 countries</span><span style="color:var(--watch-elevated)">● Elevated</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('russia-fsu')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">Russia / FSU</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>15 countries</span><span style="color:var(--watch-active)">● Active</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('africa')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">Africa</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>54 countries</span><span style="color:var(--watch-elevated)">● Elevated</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('americas')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">Americas</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>35 countries</span><span style="color:var(--watch-routine)">● Routine</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('south-asia')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">South Asia</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>8 countries</span><span style="color:var(--watch-elevated)">● Elevated</span></div>
+            </div>
+            <div class="atlas-region-card" onclick="atlasShowRegion('global')" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:18px 20px;cursor:pointer;transition:all .15s ease">
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;margin-bottom:6px">Region</div>
+              <h3 style="font-family:Georgia,serif;font-size:20px;color:var(--text);font-weight:400;margin:0 0 8px">Global</h3>
+              <div style="display:flex;gap:14px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text-dim)"><span>Cross-regional</span><span style="color:var(--watch-elevated)">● Elevated</span></div>
+            </div>
+          </div>
+          <div style="margin-top:32px;padding:20px 24px;background:var(--bg-card);border:1px dashed var(--border-strong);border-radius:8px;font-family:Georgia,serif;font-size:14px;color:var(--text-dim);line-height:1.65;font-style:italic">Country detail pages with indicators, scenarios, stories, and signals are in progress. This v1 shows region-level drill-in only. Data shown is framework demo — live indicator data loads from backend in v1.1.</div>
+        </div>
+      </div>
     </div>
     <div id="view-predictions" class="view">
       <div class="view-header"><div class="view-title">Predictions</div></div>
@@ -945,7 +997,19 @@
     if (s == null) return '';
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   }
-  async function loadBrief() {
+  function atlasShowRegion(region) {
+    const labels = {'middle-east':'Middle East','east-asia':'East Asia','europe':'Europe','russia-fsu':'Russia / FSU','africa':'Africa','americas':'Americas','south-asia':'South Asia','global':'Global'};
+    const container = document.getElementById('atlas-content');
+    if (!container) return;
+    container.innerHTML = '<div style="margin-bottom:20px"><button onclick="atlasBackToRegions()" style="background:transparent;border:1px solid var(--border-strong);color:var(--text-dim);padding:6px 12px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px">\u2190 Back to regions</button></div>' +
+      '<h2 style="font-family:Georgia,serif;font-size:26px;color:var(--text);font-weight:400;margin:0 0 8px">' + escapeHtml(labels[region] || region) + '</h2>' +
+      '<p style="font-family:Georgia,serif;font-size:14px;color:var(--text-dim);font-style:italic;margin:0 0 20px">Country-level drill-in with indicators, scenarios, stories, and signals arrives in v1.1.</p>' +
+      '<div style="padding:40px;text-align:center;color:var(--text-faint);border:1px dashed var(--border-strong);border-radius:8px;font-family:Georgia,serif;font-style:italic">Country list for ' + escapeHtml(labels[region] || region) + ' loads here.</div>';
+  }
+  function atlasBackToRegions() { setView('atlas'); location.reload(); }
+  window.atlasShowRegion = atlasShowRegion;
+  window.atlasBackToRegions = atlasBackToRegions;
+    async function loadBrief() {
     const container = document.getElementById('brief-content');
     if (!container) return;
     container.innerHTML = '<div class="loading">Loading daily brief...</div>';
