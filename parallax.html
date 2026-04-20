@@ -892,6 +892,66 @@
   
   /* v56-fe: kill tier labels — lenses not tiers */
   .source-tier { display: none !important; }
+  
+
+  
+/* == v57-fe ATLAS COUNTRY PAGE v1.4 CSS == */
+.v6-atlas-breadcrumb{display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--border,#1e242c);flex-wrap:wrap;font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.v6-atlas-breadcrumb a{color:var(--text-dim,#a8a294);text-decoration:none;cursor:pointer;transition:color .15s}
+.v6-atlas-breadcrumb a:hover{color:var(--text,#f5efe0)}
+.v6-atlas-sep{color:var(--text-faint,#6b685f)}
+.v6-atlas-current{color:var(--text,#f5efe0)}
+.v6-atlas-head{display:grid;grid-template-columns:1fr 340px;gap:28px;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--border,#1e242c)}
+@media(max-width:900px){.v6-atlas-head{grid-template-columns:1fr}}
+.v6-atlas-eyebrow{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin-bottom:8px}
+.v6-atlas-h1{font-family:Georgia,serif;font-size:32px;font-weight:400;margin:0 0 10px;color:var(--text,#f5efe0);line-height:1.1}
+.v6-atlas-subline{font-family:Georgia,serif;font-size:15px;line-height:1.55;color:var(--text-dim,#a8a294);font-style:italic;margin:0 0 16px;max-width:620px}
+.v6-atlas-timestamps{display:flex;gap:24px;flex-wrap:wrap;font-family:'Roboto Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:var(--text-faint,#6b685f);text-transform:uppercase}
+.v6-atlas-live{color:#4ea86a}
+.v6-atlas-live::before{content:"\25CF ";color:#4ea86a}
+.v6-atlas-summary{background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c);border-radius:4px;padding:16px 18px;position:relative}
+.v6-atlas-summary::before{content:"COUNTRY SUMMARY";position:absolute;top:-9px;left:14px;font-family:'Roboto Mono',monospace;font-size:9.5px;letter-spacing:.18em;color:var(--text-faint,#6b685f);background:var(--bg,#0b0d10);padding:0 8px}
+.v6-atlas-sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 18px;margin-bottom:14px}
+.v6-atlas-sitem{display:flex;align-items:baseline;gap:10px}
+.v6-atlas-sn{font-family:Georgia,serif;font-size:22px;color:var(--text,#f5efe0);font-weight:400;line-height:1}
+.v6-atlas-sn.v6-bad{color:#c94a3b}
+.v6-atlas-sn.v6-active{color:#c97a3b}
+.v6-atlas-sn.v6-ok{color:#4ea86a}
+.v6-atlas-sk{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--text-faint,#6b685f);text-transform:uppercase}
+.v6-atlas-cap{font-family:Georgia,serif;font-size:13px;color:var(--text-dim,#a8a294);line-height:1.55;padding-top:12px;border-top:1px solid var(--border,#1e242c);margin:0;font-style:italic}
+.v6-atlas-tabs{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border,#1e242c);margin-bottom:16px}
+.v6-atlas-tab{display:flex;align-items:center;gap:10px;padding:12px 20px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim,#a8a294);cursor:pointer;transition:color .15s,border-color .15s;font-family:Georgia,serif}
+.v6-atlas-tab:hover{color:var(--text,#f5efe0)}
+.v6-atlas-tab.v6-active{color:var(--text,#f5efe0);border-bottom-color:#7a8a97}
+.v6-atlas-tab-label{font-size:18px;font-weight:400}
+.v6-atlas-tab-count{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-faint,#6b685f);padding:2px 7px;border-radius:3px;background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c)}
+.v6-atlas-tab.v6-active .v6-atlas-tab-count{color:var(--text-dim,#a8a294);border-color:var(--border-strong,#2a323c)}
+.v6-atlas-panel{display:none}
+.v6-atlas-panel.v6-active{display:block}
+.v6-atlas-intro{font-family:'Roboto Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin:0 0 14px}
+.v6-atlas-cat-head{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin:22px 0 10px}
+.v6-atlas-strip{display:grid;grid-template-columns:28px 1fr auto;gap:14px;align-items:center;padding:10px 16px;border-radius:4px;cursor:pointer;font-size:14px;transition:background .15s,transform .15s;border:1px solid;margin-bottom:8px}
+.v6-atlas-strip:hover{transform:translateX(2px)}
+.v6-atlas-strip-dot{width:10px;height:10px;border-radius:50%;justify-self:center}
+.v6-atlas-strip-title{color:var(--text,#f5efe0);line-height:1.4}
+.v6-atlas-strip-title strong{font-weight:500}
+.v6-atlas-strip-title em{color:var(--text-dim,#a8a294);font-style:normal;font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.04em;margin-left:8px}
+.v6-atlas-strip-delta{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.04em;white-space:nowrap;justify-self:end}
+.v6-atlas-strip-urgent{background:rgba(201,74,59,.08);border-color:rgba(201,74,59,.35)}
+.v6-atlas-strip-urgent .v6-atlas-strip-dot{background:#c94a3b}
+.v6-atlas-strip-urgent .v6-atlas-strip-delta{color:#c94a3b}
+.v6-atlas-strip-active{background:rgba(201,122,59,.08);border-color:rgba(201,122,59,.3)}
+.v6-atlas-strip-active .v6-atlas-strip-dot{background:#c97a3b}
+.v6-atlas-strip-active .v6-atlas-strip-delta{color:#c97a3b}
+.v6-atlas-strip-elevated{background:rgba(201,166,59,.08);border-color:rgba(201,166,59,.35)}
+.v6-atlas-strip-elevated .v6-atlas-strip-dot{background:#c9a63b}
+.v6-atlas-strip-elevated .v6-atlas-strip-delta{color:#c9a63b}
+.v6-atlas-strip-routine{background:rgba(78,168,106,.1);border-color:rgba(78,168,106,.35)}
+.v6-atlas-strip-routine .v6-atlas-strip-dot{background:#4ea86a}
+.v6-atlas-strip-routine .v6-atlas-strip-delta{color:#4ea86a}
+.v6-atlas-strip-unknown{background:rgba(107,155,201,.09);border-color:rgba(107,155,201,.35)}
+.v6-atlas-strip-unknown .v6-atlas-strip-dot{background:#6b9bc9}
+.v6-atlas-strip-unknown .v6-atlas-strip-delta{color:#6b9bc9}
   </style>
 
   <!-- v39: Leaflet for map view -->
@@ -2270,6 +2330,94 @@ function v6_switchBriefRegion(chip) {
     return result;
   };
 })();
+  
+
+  
+// == v57-fe ATLAS COUNTRY PAGE v1.4 RENDERER ==
+function v6_renderAtlasCountryPage(country) {
+  if (!country) country = {};
+  const name = country.name || 'Country';
+  const region = country.region || 'Region';
+  const date = country.date || new Date().toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'});
+  const subline = country.subline || '';
+  let html = '';
+  html += '<div class="v6-atlas-breadcrumb"><a onclick="v6_atlasBack()">Atlas</a><span class="v6-atlas-sep"> / </span><a onclick="v6_atlasBack()">' + v6_esc(region) + '</a><span class="v6-atlas-sep"> / </span><span class="v6-atlas-current">' + v6_esc(name) + '</span></div>';
+  html += '<header class="v6-atlas-head"><div>';
+  html += '<div class="v6-atlas-eyebrow">ATLAS \u00b7 COUNTRY \u00b7 ' + v6_esc(name.toUpperCase()) + '</div>';
+  html += '<h1 class="v6-atlas-h1">' + v6_esc(name) + ' \u2014 ' + v6_esc(date) + '</h1>';
+  if (subline) html += '<p class="v6-atlas-subline">' + v6_esc(subline) + '</p>';
+  html += '<div class="v6-atlas-timestamps"><span>Indicators refreshed ' + v6_esc(country.refreshed||'pending') + '</span>';
+  html += '<span class="v6-atlas-live">Next refresh ' + v6_esc(country.next_refresh||'pending') + '</span></div></div>';
+  const cr=country.critical_count||0, el=country.elevated_count||0, ba=country.baseline_count||0, un=country.unknown_count||0;
+  html += '<aside class="v6-atlas-summary"><div class="v6-atlas-sgrid">';
+  html += '<div class="v6-atlas-sitem"><span class="v6-atlas-sn v6-bad">'+cr+'</span><span class="v6-atlas-sk">Critical indicators</span></div>';
+  html += '<div class="v6-atlas-sitem"><span class="v6-atlas-sn v6-active">'+el+'</span><span class="v6-atlas-sk">Elevated</span></div>';
+  html += '<div class="v6-atlas-sitem"><span class="v6-atlas-sn v6-ok">'+ba+'</span><span class="v6-atlas-sk">Baseline</span></div>';
+  html += '<div class="v6-atlas-sitem"><span class="v6-atlas-sn">'+un+'</span><span class="v6-atlas-sk">Contested / unknown</span></div>';
+  html += '</div>';
+  if (country.summary_caption) html += '<p class="v6-atlas-cap">' + v6_esc(country.summary_caption) + '</p>';
+  html += '</aside></header>';
+  html += '<nav class="v6-atlas-tabs">';
+  [{id:'status',label:'Status',count:country.status_count},{id:'indicators',label:'Indicators',count:null},{id:'scenarios',label:'Scenarios',count:country.scenario_count},{id:'stories',label:'Stories',count:country.story_count},{id:'signals',label:'Signals',count:country.signal_count}].forEach((t,i) => {
+    html += '<button class="v6-atlas-tab'+(i===0?' v6-active':'')+'" data-panel="v6-ap-'+t.id+'" onclick="v6_switchAtlasTab(this)"><span class="v6-atlas-tab-label">'+v6_esc(t.label)+'</span>';
+    if (t.count) html += '<span class="v6-atlas-tab-count">'+t.count+'</span>';
+    html += '</button>';
+  });
+  html += '</nav>';
+  html += '<div class="v6-atlas-panel v6-active" id="v6-ap-status">';
+  if (country.indicators && country.indicators.length) {
+    html += '<p class="v6-atlas-intro">'+country.indicators.length+' indicator movements \u00b7 last 7 days</p>';
+    let lastCat = '';
+    country.indicators.forEach(ind => {
+      if (ind.category && ind.category !== lastCat) { html += '<div class="v6-atlas-cat-head">'+v6_esc(ind.category)+'</div>'; lastCat = ind.category; }
+      html += '<div class="v6-atlas-strip v6-atlas-strip-'+v6_esc(ind.state||'unknown')+'">';
+      html += '<span class="v6-atlas-strip-dot"></span><span class="v6-atlas-strip-title"><strong>'+v6_esc(ind.title||'')+'</strong>';
+      if (ind.detail) html += '<em>'+v6_esc(ind.detail)+'</em>';
+      html += '</span><span class="v6-atlas-strip-delta">'+v6_esc(ind.delta||'')+'</span></div>';
+    });
+  } else { html += '<p class="v6-empty">Indicator data will appear when backend produces country-level readings.</p>'; }
+  html += '</div>';
+  html += '<div class="v6-atlas-panel" id="v6-ap-indicators"><p class="v6-empty">Full indicator grid with sparklines will appear when backend produces indicator data.</p></div>';
+  html += '<div class="v6-atlas-panel" id="v6-ap-scenarios"><p class="v6-empty">Scenario trigger blocks with conditional path trees will appear when backend produces scenario data.</p></div>';
+  html += '<div class="v6-atlas-panel" id="v6-ap-stories">';
+  if (country.stories && country.stories.length) {
+    html += '<p class="v6-atlas-intro">'+country.stories.length+' active stories tagged to '+v6_esc(name)+'</p>';
+    country.stories.forEach((s,i) => { html += v6_renderStoryCard(s, name+'-'+i); });
+  } else { html += '<p class="v6-empty">Stories tagged to this country will appear when stories are generated.</p>'; }
+  html += '</div>';
+  html += '<div class="v6-atlas-panel" id="v6-ap-signals"><p class="v6-empty">Signals scoped to this country will appear when the synthesis pipeline is active.</p></div>';
+  return html;
+}
+function v6_switchAtlasTab(btn) {
+  const c = btn.closest('#view-atlas') || btn.parentElement.parentElement;
+  c.querySelectorAll('.v6-atlas-tab').forEach(t=>t.classList.remove('v6-active'));
+  c.querySelectorAll('.v6-atlas-panel').forEach(p=>p.classList.remove('v6-active'));
+  btn.classList.add('v6-active');
+  const p = c.querySelector('#'+btn.dataset.panel);
+  if (p) p.classList.add('v6-active');
+}
+function v6_atlasBack() {
+  const atlas = document.getElementById('view-atlas');
+  if (!atlas) return;
+  const cp = atlas.querySelector('.v6-atlas-country-page');
+  const rg = atlas.querySelector('.atlas-grid');
+  const hd = atlas.querySelector('.view-header');
+  if (cp) cp.style.display = 'none';
+  if (rg) rg.style.display = '';
+  if (hd) hd.style.display = '';
+}
+function v6_openCountry(countryData) {
+  const atlas = document.getElementById('view-atlas');
+  if (!atlas) return;
+  const rg = atlas.querySelector('.atlas-grid');
+  const hd = atlas.querySelector('.view-header');
+  if (rg) rg.style.display = 'none';
+  if (hd) hd.style.display = 'none';
+  let cp = atlas.querySelector('.v6-atlas-country-page');
+  if (!cp) { cp = document.createElement('div'); cp.className = 'v6-atlas-country-page'; atlas.appendChild(cp); }
+  cp.style.display = '';
+  cp.innerHTML = v6_renderAtlasCountryPage(countryData);
+}
   </script>
 </body>
 </html>
