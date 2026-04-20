@@ -952,6 +952,38 @@
 .v6-atlas-strip-unknown{background:rgba(107,155,201,.09);border-color:rgba(107,155,201,.35)}
 .v6-atlas-strip-unknown .v6-atlas-strip-dot{background:#6b9bc9}
 .v6-atlas-strip-unknown .v6-atlas-strip-delta{color:#6b9bc9}
+  
+
+  
+/* == v58-fe PREDICTIONS DETAIL PAGE v1.2 CSS == */
+.v6-pred-detail-head{display:grid;grid-template-columns:1fr auto;gap:28px;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--border,#1e242c);align-items:start}
+@media(max-width:900px){.v6-pred-detail-head{grid-template-columns:1fr}}
+.v6-pred-detail-head .v6-pd-eyebrow{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin-bottom:8px}
+.v6-pred-detail-head h1{font-family:Georgia,serif;font-size:26px;font-weight:400;margin:0 0 12px;color:var(--text,#f5efe0);line-height:1.25}
+.v6-pred-state-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.v6-pred-state-tag{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid var(--border-strong,#2a323c);background:var(--bg-sink,#080a0d);color:var(--text-dim,#a8a294)}
+.v6-pred-big-value{text-align:right}
+.v6-pred-big-value .v6-pd-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint,#6b685f);text-transform:uppercase;margin-bottom:4px}
+.v6-pred-big-value .v6-pd-pct{font-family:Georgia,serif;font-size:48px;color:var(--text,#f5efe0);font-weight:400;line-height:1}
+.v6-pred-big-value .v6-pd-range{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-dim,#a8a294);letter-spacing:.04em;margin-top:4px}
+.v6-pred-big-value .v6-pd-delta{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.04em;margin-top:4px}
+.v6-pd-delta.v6-up{color:#c94a3b}
+.v6-pd-delta.v6-down{color:#4ea86a}
+.v6-pd-delta.v6-flat{color:var(--text-faint,#6b685f)}
+.v6-cascade-tabs{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border,#1e242c);margin-bottom:16px}
+.v6-cascade-tab{display:flex;align-items:center;gap:10px;padding:12px 20px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-dim,#a8a294);cursor:pointer;transition:color .15s,border-color .15s;font-family:Georgia,serif;font-size:18px;font-weight:400}
+.v6-cascade-tab:hover{color:var(--text,#f5efe0)}
+.v6-cascade-tab.v6-active{color:var(--text,#f5efe0);border-bottom-color:#7a8a97}
+.v6-cascade-panel{display:none}
+.v6-cascade-panel.v6-active{display:block}
+.v6-pd-note{font-family:Georgia,serif;font-size:14.5px;line-height:1.65;color:var(--text-dim,#a8a294);font-style:italic;margin:0 0 22px;padding:16px 18px;background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c);border-radius:4px}
+.v6-pd-note strong{color:var(--text,#f5efe0);font-style:normal}
+.v6-pd-linked-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+@media(max-width:720px){.v6-pd-linked-grid{grid-template-columns:repeat(2,1fr)}}
+.v6-pd-linked-card{background:var(--bg-sink,#080a0d);border:1px solid var(--border,#1e242c);border-radius:4px;padding:12px 14px;cursor:pointer;transition:border-color .15s}
+.v6-pd-linked-card:hover{border-color:var(--border-strong,#2a323c)}
+.v6-pd-linked-card .v6-pd-lname{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-dim,#a8a294);text-transform:uppercase;margin-bottom:4px}
+.v6-pd-linked-card .v6-pd-lval{font-family:Georgia,serif;font-size:18px;color:var(--text,#f5efe0)}
   </style>
 
   <!-- v39: Leaflet for map view -->
@@ -2417,6 +2449,106 @@ function v6_openCountry(countryData) {
   if (!cp) { cp = document.createElement('div'); cp.className = 'v6-atlas-country-page'; atlas.appendChild(cp); }
   cp.style.display = '';
   cp.innerHTML = v6_renderAtlasCountryPage(countryData);
+}
+  
+
+  
+// == v58-fe PREDICTIONS DETAIL PAGE v1.2 RENDERER ==
+function v6_renderPredictionDetail(pred) {
+  if (!pred) pred = {};
+  const question = pred.question || pred.title || 'Prediction question';
+  const topic = pred.topic || 'CONFLICT';
+  const region = pred.region || 'GLOBAL';
+  const horizon = pred.horizon || '24 MONTHS';
+  const pct = pred.probability || pred.pct || '—';
+  const range = pred.range || '';
+  const trend = pred.trend || 'stable';
+  const delta = pred.delta || '';
+  const stateLabel = pred.state_label || ('Stable');
+  const lastComputed = pred.last_computed || '';
+
+  let html = '';
+  // Breadcrumb
+  html += '<div class="v6-atlas-breadcrumb"><a onclick="v6_predBack()">Predictions</a><span class="v6-atlas-sep"> / </span><span class="v6-atlas-current">' + v6_esc(question).substring(0,60) + '...</span></div>';
+
+  // Header
+  html += '<header class="v6-pred-detail-head"><div>';
+  html += '<div class="v6-pd-eyebrow">PREDICTION \u00b7 ' + v6_esc(topic) + ' \u00b7 ' + v6_esc(region) + ' \u00b7 ' + v6_esc(horizon) + ' HORIZON</div>';
+  html += '<h1>' + v6_esc(question) + '</h1>';
+  html += '<div class="v6-pred-state-row"><span class="v6-pred-state-tag">' + v6_esc(stateLabel) + '</span>';
+  if (lastComputed) html += '<span style="font-family:monospace;font-size:10.5px;letter-spacing:.1em;color:var(--text-faint)">' + v6_esc(lastComputed) + '</span>';
+  html += '</div></div>';
+
+  // Big probability value
+  const deltaClass = trend === 'up' ? 'v6-up' : (trend === 'down' ? 'v6-down' : 'v6-flat');
+  html += '<div class="v6-pred-big-value"><div class="v6-pd-label">Current probability</div>';
+  html += '<div class="v6-pd-pct">' + v6_esc(String(pct)) + (String(pct).includes('%') ? '' : '%') + '</div>';
+  if (range) html += '<div class="v6-pd-range">' + v6_esc(range) + '</div>';
+  if (delta) html += '<div class="v6-pd-delta ' + deltaClass + '">' + v6_esc(delta) + '</div>';
+  html += '</div></header>';
+
+  // 4 cascade tabs
+  html += '<nav class="v6-cascade-tabs">';
+  [{id:'current',label:'Current state'},{id:'history',label:'How we got here'},{id:'forecast',label:"Where it\u2019s going"},{id:'signals',label:'Signals'}].forEach((t,i) => {
+    html += '<button class="v6-cascade-tab'+(i===0?' v6-active':'')+'" data-panel="v6-cp-'+t.id+'" onclick="v6_switchCascadeTab(this)">'+v6_esc(t.label)+'</button>';
+  });
+  html += '</nav>';
+
+  // Current state panel
+  html += '<div class="v6-cascade-panel v6-active" id="v6-cp-current">';
+  if (pred.current_note) {
+    html += '<div class="v6-pd-note"><strong>Read this as:</strong> ' + v6_esc(pred.current_note) + '</div>';
+  }
+  if (pred.linked_indicators && pred.linked_indicators.length) {
+    html += '<div class="v6-section-label">Linked Atlas indicators</div>';
+    html += '<div class="v6-pd-linked-grid">';
+    pred.linked_indicators.forEach(li => {
+      html += '<div class="v6-pd-linked-card"><div class="v6-pd-lname">' + v6_esc(li.name||'') + '</div><div class="v6-pd-lval">' + v6_esc(li.value||'—') + '</div></div>';
+    });
+    html += '</div>';
+  }
+  if (!pred.current_note && !(pred.linked_indicators && pred.linked_indicators.length)) {
+    html += '<p class="v6-empty">Current-state analysis will appear when the prediction is fully computed.</p>';
+  }
+  html += '</div>';
+
+  // How we got here
+  html += '<div class="v6-cascade-panel" id="v6-cp-history"><p class="v6-empty">Probability movement history with triggering events will appear when prediction tracking is active.</p></div>';
+
+  // Where it\u2019s going
+  html += '<div class="v6-cascade-panel" id="v6-cp-forecast"><p class="v6-empty">Scenario blocks with conditional paths and base rates will appear when the prediction engine is active.</p></div>';
+
+  // Signals
+  html += '<div class="v6-cascade-panel" id="v6-cp-signals"><p class="v6-empty">Narrative shifts, prediction verdicts, and quiet zones scoped to this prediction will appear when the synthesis pipeline is active.</p></div>';
+
+  return html;
+}
+function v6_switchCascadeTab(btn) {
+  const c = btn.closest('#view-predictions') || btn.closest('.v6-pred-detail-page') || btn.parentElement.parentElement;
+  c.querySelectorAll('.v6-cascade-tab').forEach(t=>t.classList.remove('v6-active'));
+  c.querySelectorAll('.v6-cascade-panel').forEach(p=>p.classList.remove('v6-active'));
+  btn.classList.add('v6-active');
+  const p = c.querySelector('#'+btn.dataset.panel);
+  if (p) p.classList.add('v6-active');
+}
+function v6_predBack() {
+  const pv = document.getElementById('view-predictions');
+  if (!pv) return;
+  const dp = pv.querySelector('.v6-pred-detail-page');
+  const grid = pv.querySelector('.pred-grid, .predictions-grid, .view-header');
+  if (dp) dp.style.display = 'none';
+  // Show everything else
+  Array.from(pv.children).forEach(ch => { if (!ch.classList.contains('v6-pred-detail-page')) ch.style.display = ''; });
+}
+function v6_openPrediction(predData) {
+  const pv = document.getElementById('view-predictions');
+  if (!pv) return;
+  // Hide all existing children
+  Array.from(pv.children).forEach(ch => { if (!ch.classList.contains('v6-pred-detail-page')) ch.style.display = 'none'; });
+  let dp = pv.querySelector('.v6-pred-detail-page');
+  if (!dp) { dp = document.createElement('div'); dp.className = 'v6-pred-detail-page'; pv.appendChild(dp); }
+  dp.style.display = '';
+  dp.innerHTML = v6_renderPredictionDetail(predData);
 }
   </script>
 </body>
