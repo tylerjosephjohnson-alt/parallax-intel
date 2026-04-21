@@ -1046,6 +1046,11 @@
 .v6-ann-dot.v6-ann-blue{background:#6b9bc9}
 .v6-ann-dot.v6-ann-red{background:#c94a3b}
 .v6-velocity-empty{height:120px;display:flex;align-items:center;justify-content:center;color:var(--text-faint,#6b685f);font-style:italic;font-family:'Inter',sans-serif;font-size:13px;border:1px dashed var(--border-strong,#2a323c);border-radius:4px;margin-bottom:12px}
+  
+  /* v61-fix: hide old brief content, fix summary box height */
+  .v6-brief-legacy { display: none !important; }
+  .v6-summary-24h, .v6-atlas-summary { align-self: start; }
+  .v6-brief-head { align-items: start; }
   </style>
 
   <!-- v39: Leaflet for map view -->
