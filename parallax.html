@@ -2799,22 +2799,31 @@ function v6_renderVelocityGraph(data) {
       card.style.cursor = 'pointer';
       card.addEventListener('click', function() {
         var h3 = card.querySelector('h3');
-        var meta = card.querySelector('div');
-        var metaText = meta ? meta.textContent.trim() : '';
-        var parts = metaText.split('\u00b7').map(function(s){return s.trim();});
-        var pctEl = card.querySelectorAll('div');
-        var pct = '';
-        for (var i = 0; i < pctEl.length; i++) {
-          var t = pctEl[i].textContent.trim();
-          if (t.match(/^\d+%$/)) { pct = t; break; }
+        var question = h3 ? h3.textContent.trim() : 'Prediction';
+        var pctMatch = card.textContent.match(/(\d+)%/);
+        var pct = pctMatch ? parseInt(pctMatch[1]) : 0;
+        // Get meta line: first nested div text before h3
+        var metaDivs = card.querySelectorAll('div div');
+        var metaText = '';
+        for (var j = 0; j < metaDivs.length; j++) {
+          var t = metaDivs[j].textContent.trim();
+          if (t.includes('\u00b7') && !t.includes('%')) { metaText = t; break; }
         }
+        var parts = metaText.split('\u00b7').map(function(s){return s.trim();});
+        var region = parts[0] || 'GLOBAL';
+        var horizon = parts[1] || '';
+        // Get trend
+        var trendSpan = card.querySelector('span');
+        var trendText = trendSpan ? trendSpan.textContent.trim().toLowerCase() : '';
+        var trend = trendText.includes('rising') ? 'up' : trendText.includes('falling') ? 'down' : 'flat';
         v6_openPrediction({
-          question: h3 ? h3.textContent.trim() : 'Prediction',
-          region: parts[0] || 'GLOBAL',
-          horizon: parts[1] || '',
-          probability: parseInt(pct) || 0,
-          state_label: 'View detail',
-          trend: 'flat'
+          question: question,
+          topic: 'PREDICTION',
+          region: region.toUpperCase(),
+          horizon: horizon.toUpperCase(),
+          probability: pct,
+          state_label: trendText.replace(/[^a-zA-Z ]/g, '').trim() || 'View detail',
+          trend: trend
         });
       });
     });
