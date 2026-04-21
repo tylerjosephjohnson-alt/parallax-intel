@@ -1051,6 +1051,11 @@
   .v6-brief-legacy { display: none !important; }
   .v6-summary-24h, .v6-atlas-summary { align-self: start; }
   .v6-brief-head { align-items: start; }
+  
+  /* v64-fix: LAST 24 HOURS label clipped + summary box stretching */
+  .v6-brief-head { overflow: visible !important; padding-top: 12px; }
+  .v6-summary-24h { align-self: start !important; max-height: fit-content; }
+  .v6-atlas-head { overflow: visible !important; padding-top: 12px; }
   </style>
 
   <!-- v39: Leaflet for map view -->
