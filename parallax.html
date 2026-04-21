@@ -2848,6 +2848,39 @@ function v6_renderVelocityGraph(data) {
     };
   }
 })();
+  
+
+  // v66-fix: reliable secondary pages bootstrap via MutationObserver
+(function() {
+  function injectV6(viewId) {
+    var el = document.getElementById('view-' + viewId);
+    if (!el || el.querySelector('.v6-page-head')) return;
+    var hdr = el.querySelector('.view-header');
+    if (hdr) hdr.style.display = 'none';
+    Array.from(el.children).forEach(function(c) { if (!c.classList.contains('view-header')) c.style.display = 'none'; });
+    var wrap = document.createElement('div');
+    if (viewId === 'mystories') wrap.innerHTML = v6_renderMyStories();
+    else if (viewId === 'watchlists') wrap.innerHTML = v6_renderWatchlists();
+    else if (viewId === 'settings') wrap.innerHTML = v6_renderSettings();
+    else return;
+    el.appendChild(wrap);
+  }
+  // Check on every view switch via class change observation
+  var main = document.querySelector('main') || document.querySelector('.app');
+  if (main) {
+    var obs = new MutationObserver(function() {
+      ['mystories','watchlists','settings'].forEach(function(id) {
+        var el = document.getElementById('view-' + id);
+        if (el && el.classList.contains('active')) injectV6(id);
+      });
+    });
+    obs.observe(main, {attributes: true, subtree: true, attributeFilter: ['class']});
+  }
+  // Also run on page load in case a secondary view is already active
+  setTimeout(function() {
+    ['mystories','watchlists','settings'].forEach(injectV6);
+  }, 1000);
+})();
   </script>
 </body>
 </html>
