@@ -2484,13 +2484,7 @@ def generate_story(cluster_articles):
 
     accuracy_block = "\n".join(accuracy_context) if accuracy_context else "No conflicts detected across sources."
 
-    # ── Wikipedia entity background for obscure actors ────────────
-    # Only run if cluster has entities we might not recognise
-    entity_context = ""
-    try:
-        entity_context = enrich_cluster_with_context(cluster_articles)
-    except Exception as e:
-        print(f"  Entity context error: {e}")
+    # ── Wikipedia enrichment REMOVED in v65-be ──
 
     # ── Entity connection analysis ────────────────────────────────
     # Extract all named entities across the cluster and find co-occurrences
@@ -2574,9 +2568,7 @@ def generate_story(cluster_articles):
 
 ACCURACY SIGNALS (read these before writing anything):
 {accuracy_block}
-{history_context}
-{entity_context}
-CRITICAL RULES:
+{history_context}CRITICAL RULES:
 1. Every factual claim must trace to a specific named source in the articles below. No exceptions.
 2. You may use background knowledge ONLY to identify who an actor is or what an organisation does — never to assert new facts about this specific event.
 3. If sources conflict, the conflict IS the story. Surface it prominently — do not average it away.
@@ -2701,6 +2693,11 @@ Respond with ONLY a JSON object (no markdown):
   "signal_score": 50,
   "velocity_score": 50,
   "contradiction_flags": [],
+  "watch_level": "routine|elevated|active|urgent",
+  "hook": "One sentence max 15 words — the so-what under the headline",
+  "so_what_short": "One sentence thesis: why this matters to an analyst",
+  "top_call": {{"text": "Most likely next development in 48h", "rate_numerator": 3, "rate_denominator": 5}},
+  "overview_prose": "2-3 paragraph readable narrative for analysts",
   "provisional": false
 }}"""
     result = call_claude(prompt)
@@ -2721,6 +2718,9 @@ Respond with ONLY a JSON object (no markdown):
     # (3) Collapse any stray unescaped newlines inside string literals conservatively
     #     (only a safety net — don't modify if already valid)
     try:
+        # v66-be: Strip markdown fences if Claude wraps JSON
+        if result and result.strip().startswith("```"):
+            result = result.strip().split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         data = json.loads(result)
         data["id"] = story_id(data.get("headline","") + cluster_articles[0]["published"])
         data["published"] = cluster_articles[0]["published"]
@@ -3472,159 +3472,8 @@ Return ONLY a JSON object (no markdown, no preamble):
 # SUPPLEMENTARY DATA SOURCES
 # ─────────────────────────────────────────────
 
-def fetch_wikipedia_context(entity_name, max_chars=400):
-    """
-    Fetch Wikipedia summary for a named entity.
-    Used to give Claude background on actors it may not recognise.
-    Rate-limited: Wikipedia API allows ~200 req/sec, we use <1/sec.
-    """
-    if not entity_name or len(entity_name) < 3:
-        return None
-    try:
-        params = {
-            "action": "query",
-            "format": "json",
-            "titles": entity_name,
-            "prop": "extracts",
-            "exintro": True,
-            "explaintext": True,
-            "exsentences": 3,
-        }
-        url = "https://en.wikipedia.org/w/api.php?" + urlencode(params)
-        data = fetch_url(url, timeout=8)
-        if not data: return None
-        pages = json.loads(data).get("query",{}).get("pages",{})
-        for page in pages.values():
-            extract = page.get("extract","").strip()
-            if extract and not extract.startswith("REDIRECT"):
-                return extract[:max_chars]
-        return None
-    except Exception:
-        return None
-
-def fetch_wikidata_links(entity_name):
-    """
-    Get Wikidata ID and key properties for a named entity.
-    Returns: {"qid": "Q123", "description": "...", "instance_of": "..."}
-    Useful for disambiguating people/orgs with similar names.
-    """
-    if not entity_name: return {}
-    try:
-        params = {
-            "action": "wbsearchentities",
-            "search": entity_name,
-            "language": "en",
-            "format": "json",
-            "limit": 1,
-        }
-        url = "https://www.wikidata.org/w/api.php?" + urlencode(params)
-        data = fetch_url(url, timeout=8)
-        if not data: return {}
-        results = json.loads(data).get("search",[])
-        if results:
-            r = results[0]
-            return {
-                "qid": r.get("id",""),
-                "description": r.get("description",""),
-                "label": r.get("label",""),
-            }
-        return {}
-    except Exception:
-        return {}
-
-def fetch_acled_events(country=None, days_back=7):
-    """
-    Fetch recent conflict events from ACLED API.
-    Requires ACLED_API_KEY and ACLED_EMAIL in environment.
-    Returns structured conflict event data with fatality counts.
-    """
-    api_key = os.environ.get("ACLED_API_KEY")
-    email   = os.environ.get("ACLED_EMAIL")
-    if not api_key or not email:
-        return []
-
-    from datetime import date
-    end_date   = date.today().isoformat()
-    start_date = (date.today() - timedelta(days=days_back)).isoformat()
-
-    params = {
-        "key":          api_key,
-        "email":        email,
-        "event_date":   f"{start_date}|{end_date}",
-        "event_date_where": "BETWEEN",
-        "limit":        50,
-        "fields":       "event_date|event_type|country|location|fatalities|actor1|actor2|notes|source",
-        "format":       "json",
-    }
-    if country:
-        params["country"] = country
-
-    data = fetch_url("https://api.acleddata.com/acled/read?" + urlencode(params), timeout=20)
-    if not data: return []
-    try:
-        events = json.loads(data).get("data", [])
-        # Convert to article format for clustering
-        articles = []
-        for e in events:
-            fat = int(e.get("fatalities",0) or 0)
-            title = f"ACLED: {e.get('event_type','')} in {e.get('location','')}, {e.get('country','')} — {fat} fatalities"
-            notes = e.get("notes","")[:300]
-            articles.append({
-                "title":     title,
-                "summary":   notes,
-                "url":       "",
-                "source":    "ACLED",
-                "lean":      "primary-document",
-                "published": e.get("event_date", utc_now().isoformat()),
-                "text":      f"{title}. {notes}",
-                "body":      notes,
-                "entities":  f"People: {e.get('actor1','')}, {e.get('actor2','')} | Locations: {e.get('location','')}, {e.get('country','')}",
-                "platform":  "acled-api",
-                "fatalities": fat,
-                "event_type": e.get("event_type",""),
-                "country":    e.get("country",""),
-                "location":   e.get("location",""),
-            })
-        return articles
-    except Exception as e:
-        print(f"  ACLED API error: {e}")
-        return []
-
-def enrich_cluster_with_context(cluster_articles):
-    """
-    For a cluster about to be sent to Claude:
-    1. Identify key named entities from article titles
-    2. Fetch Wikipedia summaries for unknown/obscure actors
-    3. Return a context block to inject into the prompt
-
-    This helps Claude understand: who is IRGC? what is SIPRI?
-    what happened in Manipur? — without relying on training data alone.
-    """
-    # Extract key named entities from all titles
-    all_titles = " ".join(a.get("title","") for a in cluster_articles)
-    # Proper nouns: capitalised, 3+ chars, not at sentence start
-    candidates = set(re.findall(r'(?<=[\w\s])([A-Z][a-z]{2,}(?:\s[A-Z][a-z]{2,})*)', all_titles))
-    # Filter obvious common words
-    skip = {"The", "This", "That", "These", "Those", "When", "Where", "Which",
-            "What", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-            "Saturday", "Sunday", "January", "February", "March", "April",
-            "May", "June", "July", "August", "September", "October", "November",
-            "December", "United", "States", "State", "New", "War", "News"}
-    candidates = {c for c in candidates if c not in skip and len(c) > 4}
-
-    context_parts = []
-    for entity in list(candidates)[:5]:  # max 5 lookups per cluster
-        wiki = fetch_wikipedia_context(entity, max_chars=200)
-        if wiki:
-            context_parts.append(f"  {entity}: {wiki}")
-        time.sleep(0.3)  # polite rate limiting
-
-    if context_parts:
-        return "ENTITY BACKGROUND (Wikipedia):\n" + "\n".join(context_parts)
-    return ""
-
-
-
+# ── Wikipedia/Wikidata functions REMOVED in v65-be ──
+# Replaced by reference data sources (World Bank, V-Dem, Freedom House, RSF)
 
 if __name__ == "__main__":
     print("Parallax starting...")
