@@ -3477,8 +3477,6 @@ Return ONLY a JSON object (no markdown, no preamble):
 # SUPPLEMENTARY DATA SOURCES
 # ─────────────────────────────────────────────
 
-undefined
-
 
 def fetch_acled_events(country=None, days_back=7):
     """
