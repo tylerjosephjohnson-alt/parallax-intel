@@ -3550,9 +3550,10 @@ if __name__ == "__main__":
         raise SystemExit("ERROR: Flask not installed. Add 'flask' to requirements.txt")
 
     # Start scraper in background thread
-    scraper_thread = threading.Thread(target=scheduler, daemon=True)
-    scraper_thread.start()
-    print("Background scraper started")
+    # v71: AUTO-SCRAPER DISABLED — manual trigger only via /trigger
+    # scraper_thread = threading.Thread(target=scheduler, daemon=True)
+    # scraper_thread.start()
+    print("Background scraper DISABLED — use /trigger for manual scrapes")
 
     # Start web server
     port = int(os.environ.get("PORT", 8080))
