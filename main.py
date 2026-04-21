@@ -3477,6 +3477,68 @@ Return ONLY a JSON object (no markdown, no preamble):
 # SUPPLEMENTARY DATA SOURCES
 # ─────────────────────────────────────────────
 
+undefined
+
+
+def fetch_acled_events(country=None, days_back=7):
+    """
+    Fetch recent conflict events from ACLED API.
+    Requires ACLED_API_KEY and ACLED_EMAIL in environment.
+    Returns structured conflict event data with fatality counts.
+    """
+    api_key = os.environ.get("ACLED_API_KEY")
+    email   = os.environ.get("ACLED_EMAIL")
+    if not api_key or not email:
+        return []
+
+    from datetime import date
+    end_date   = date.today().isoformat()
+    start_date = (date.today() - timedelta(days=days_back)).isoformat()
+
+    params = {
+        "key":          api_key,
+        "email":        email,
+        "event_date":   f"{start_date}|{end_date}",
+        "event_date_where": "BETWEEN",
+        "limit":        50,
+        "fields":       "event_date|event_type|country|location|fatalities|actor1|actor2|notes|source",
+        "format":       "json",
+    }
+    if country:
+        params["country"] = country
+
+    data = fetch_url("https://api.acleddata.com/acled/read?" + urlencode(params), timeout=20)
+    if not data: return []
+    try:
+        events = json.loads(data).get("data", [])
+        # Convert to article format for clustering
+        articles = []
+        for e in events:
+            fat = int(e.get("fatalities",0) or 0)
+            title = f"ACLED: {e.get('event_type','')} in {e.get('location','')}, {e.get('country','')} — {fat} fatalities"
+            notes = e.get("notes","")[:300]
+            articles.append({
+                "title":     title,
+                "summary":   notes,
+                "url":       "",
+                "source":    "ACLED",
+                "lean":      "primary-document",
+                "published": e.get("event_date", utc_now().isoformat()),
+                "text":      f"{title}. {notes}",
+                "body":      notes,
+                "entities":  f"People: {e.get('actor1','')}, {e.get('actor2','')} | Locations: {e.get('location','')}, {e.get('country','')}",
+                "platform":  "acled-api",
+                "fatalities": fat,
+                "event_type": e.get("event_type",""),
+                "country":    e.get("country",""),
+                "location":   e.get("location",""),
+            })
+        return articles
+    except Exception as e:
+        print(f"  ACLED API error: {e}")
+        return []
+
+
 # ── Wikipedia/Wikidata functions REMOVED in v65-be ──
 # Replaced by reference data sources (World Bank, V-Dem, Freedom House, RSF)
 
