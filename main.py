@@ -2720,6 +2720,10 @@ Respond with ONLY a JSON object (no markdown):
     # (2) Remove trailing commas before } or ]
     import re as _re_repair
     result = _re_repair.sub(r',(\s*[}\]])', r'\1', result)
+    # v72: Insert missing commas between JSON properties
+    # Handles: "value"\n  "next_key" and }\n  "next_key"
+    result = _re_repair.sub(r'("|\.\d+|true|false|null)(\s*\n\s*")', r'\1,\2', result)
+    result = _re_repair.sub(r'(}|])(\s*\n\s*")', r'\1,\2', result)
     # (3) Collapse any stray unescaped newlines inside string literals conservatively
     #     (only a safety net — don't modify if already valid)
     try:
