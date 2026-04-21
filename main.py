@@ -2625,87 +2625,31 @@ WRITING STYLE:
 - A Reddit post with 5,000 upvotes is not a primary source — it may link to or discuss a primary source. Cite the underlying source where possible, note the Reddit discussion as corroborating community interest
 - Telegram military bloggers (e.g. Rybar, Intel Slava) represent a specific geopolitical perspective — label them clearly: "Russian military blogger Rybar claimed" not just "reported"
 
-Respond with ONLY a JSON object (no markdown):
+Respond with ONLY a JSON object (no markdown). Keep the response compact — this is a CORE story card, not a full analysis.
 {{
   "headline": "Factual headline max 15 words — specific not generic",
   "location": "City, Country or Global",
   "region": "europe|middle-east|africa|asia-pacific|americas|russia-fsu|china|global",
   "category": "conflict-war|politics|economics|human-rights|environment|technology|disinformation",
   "confidence": "low|medium|high",
-  "summary": "THREE paragraphs, 250-300 words total — a 90-second read. Lead with what happened. Every factual claim must be attributed to a named source (e.g. 'Reuters reported', 'according to Al Jazeera'). Paragraph 1: the news — what happened, who is involved, what is confirmed vs alleged, specific details from the articles. Paragraph 2: the context — what background explains this event, who the key actors are and what they want, what pattern this fits into. Use your knowledge here to explain who actors are but only assert new facts if sourced. Paragraph 3: the significance — who benefits, what changes if this is true, what to watch in the next 48-72 hours. Plain English throughout. Flag where sources disagree.",
-  "what_is_known": ["Full sentence stating a verified fact with source", "Full sentence stating another verified fact", "Full sentence stating a third verified fact — add more if available"],
-  "what_is_disputed": "Full paragraph explaining what remains unconfirmed, what the competing claims are, and why independent verification is difficult. 2-3 sentences.",
-  "contested_numbers": [
-    {{
-      "metric": "What is being counted/measured — be specific (e.g. 'civilian deaths', 'troops deployed', 'economic damage')",
-      "unit": "The unit of measurement (people, USD, km², tonnes, etc.)",
-      "claims": [
-        {{
-          "reporter": "Who is reporting this number — specific actor/source",
-          "value": "The exact number or range they report (e.g. '2,300', '$4.7 billion', '15,000–18,000')",
-          "value_numeric": 2300,
-          "methodology": "How they count or what they include — briefly",
-          "incentive": "Why this actor may report higher/lower — their structural interest in this number"
-        }}
-      ],
-      "spread": "The gap between highest and lowest claim — e.g. '13,700-person gap'",
-      "ground_truth": "What primary document evidence (IAEA, ACLED, ICC, satellite) says — or null if no primary source exists",
-      "why_it_matters": "Why this number discrepancy is strategically important — who benefits from each version being believed"
-    }}
-  ],
-  "who_benefits": {{
-    "narrative_a": {{"actor": "Name", "benefit": "Why they benefit from this being true", "level": "high|medium|low"}},
-    "narrative_b": {{"actor": "Name", "benefit": "Why they benefit from an alternative framing", "level": "high|medium|low"}},
-    "narrative_c": {{"actor": "Name or null", "benefit": "Third party beneficiary if any", "level": "high|medium|low"}},
-    "civilian_impact": "How ordinary people — not governments or corporations — are concretely affected."
-  }},
-  "narrative_analysis": {{
-    "competing_narratives": [
-      {{
-        "source_actor": "Who is pushing this narrative (state, faction, corporation)",
-        "narrative": "What they are claiming in one sentence",
-        "structural_interest": "What structural interest this claim serves for them",
-        "evidence_for": "Primary document or OSINT evidence supporting this claim",
-        "evidence_against": "Primary document or OSINT evidence contradicting this claim",
-        "verdict": "supported|disputed|unverifiable|state-claim-only"
-      }}
-    ],
-    "narrative_gaps": "What no actor is saying but primary evidence suggests — the silence that is itself a signal",
-    "narrative_convergence": "Where competing actors agree — convergence across hostile sources can indicate truth",
-    "disinfo_indicators": "Specific features that suggest coordinated narrative management rather than organic reporting"
-  }},
-  "money_flow": {{
-    "financial_interests": "Named entities with documented financial interests in this outcome — be specific.",
-    "arms_industry": "Which defence contractors benefit and how — name them",
-    "energy_interests": "Which energy companies/states benefit from this outcome",
-    "known_flows": ["Specific documented financial flow with source"],
-    "data_gaps": "What financial flows are opaque from public data — name the specific gap"
-  }},
-  "actor_statements": [
-    {{
-      "actor": "Named actor (state, official, organisation)",
-      "claim": "What they specifically said or did",
-      "structural_reason": "Why their structural interests lead them to say this",
-      "credibility": "high|medium|low|state-claim",
-      "contradicted_by": "Primary source or OSINT that contradicts this claim, or null"
-    }}
-  ],
+  "watch_level": "routine|elevated|active|urgent",
+  "hook": "One sentence max 15 words — the so-what context bridge",
+  "so_what_short": "One sentence thesis: why this matters to an analyst",
+  "summary": "TWO paragraphs max 150 words total. Lead with what happened. Attribute every claim to a named source.",
+  "what_is_known": "One paragraph of confirmed facts only, each attributed.",
+  "what_is_disputed": "One paragraph on contested claims, naming who disputes what.",
+  "why_it_matters": "One paragraph: implications, second-order effects, what to watch next.",
+  "overview_prose": "2-3 paragraph readable narrative combining the above for analysts.",
+  "top_call": {{"text": "Most likely next development in 48h", "rate_numerator": 3, "rate_denominator": 5}},
   "confidence_reason": "One sentence explaining this confidence level.",
   "source_citations": [
-    {{"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "their lean", "url": "article url", "claim": "what this source specifically reported"}}
+    {{"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "their lean", "url": "article url", "claim": "what this source reported in one sentence"}}
   ],
-  "source_diversity": "brief note on whether sources represent multiple perspectives or are predominantly from one viewpoint",
   "signal_score": 50,
   "velocity_score": 50,
-  "contradiction_flags": [],
-  "watch_level": "routine|elevated|active|urgent",
-  "hook": "One sentence max 15 words — the so-what under the headline",
-  "so_what_short": "One sentence thesis: why this matters to an analyst",
-  "top_call": {{"text": "Most likely next development in 48h", "rate_numerator": 3, "rate_denominator": 5}},
-  "overview_prose": "2-3 paragraph readable narrative for analysts",
   "provisional": false
-}}"""
-    result = call_claude(prompt, max_tokens=6000)
+}}""""
+    result = call_claude(prompt, max_tokens=3000)
     if not result:
             _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
             print(f"  Story gen: Claude returned empty")
