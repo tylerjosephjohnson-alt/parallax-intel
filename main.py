@@ -99,116 +99,121 @@ last_run = {
 }
 
 RSS_FEEDS = [
-    # ── Tier 1: Wire services ──────────────────────────────────────
-    {"url": "https://feeds.reuters.com/reuters/topNews",          "source": "Reuters",        "lean": "centre"},
-    {"url": "https://apnews.com/rss",                             "source": "AP",             "lean": "centre"},
-    {"url": "https://www.afp.com/en/rss",                         "source": "AFP",            "lean": "centre"},
+    # ── Wire services ──────────────────────────────────────
+    {"url": "https://feeds.reuters.com/reuters/topNews",          "source": "Reuters",        "lean": "centre", "role": "wire"},
+    {"url": "https://apnews.com/rss",                             "source": "AP",             "lean": "centre", "role": "wire"},
+    {"url": "https://www.afp.com/en/rss",                         "source": "AFP",            "lean": "centre", "role": "wire"},
 
-    # ── Tier 2: Western broadcast / quality press ──────────────────
-    {"url": "https://www.bbc.com/news/world/rss.xml",             "source": "BBC",            "lean": "centre"},
-    {"url": "https://rss.dw.com/rdf/rss-en-world",                "source": "DW",             "lean": "centre"},
-    {"url": "https://www.theguardian.com/world/rss",              "source": "The Guardian",   "lean": "centre-left"},
-    {"url": "https://feeds.bloomberg.com/politics/news.rss",      "source": "Bloomberg",      "lean": "financial-centre"},
-    {"url": "https://www.ft.com/world?format=rss",                "source": "FT",             "lean": "financial-centre"},
+    # ── Broadcast / quality press ──────────────────
+    {"url": "https://www.bbc.com/news/world/rss.xml",             "source": "BBC",            "lean": "centre", "role": "broadcast"},
+    {"url": "https://rss.dw.com/rdf/rss-en-world",                "source": "DW",             "lean": "centre", "role": "broadcast"},
+    {"url": "https://www.theguardian.com/world/rss",              "source": "The Guardian",   "lean": "centre-left", "role": "broadcast"},
+    {"url": "https://feeds.bloomberg.com/politics/news.rss",      "source": "Bloomberg",      "lean": "financial-centre", "role": "broadcast"},
+    {"url": "https://www.ft.com/world?format=rss",                "source": "FT",             "lean": "financial-centre", "role": "broadcast"},
 
     # ── Global South / non-Western ─────────────────────────────────
-    {"url": "https://www.aljazeera.com/xml/rss/all.xml",          "source": "Al Jazeera",     "lean": "centre-left"},
-    {"url": "https://www.scmp.com/rss/91/feed",                   "source": "SCMP",           "lean": "china-hk"},
-    {"url": "https://timesofindia.indiatimes.com/rss.cms",        "source": "Times of India", "lean": "indian-nationalist"},
-    {"url": "https://www.theafricareport.com/feed/",              "source": "Africa Report",  "lean": "pan-african"},
-    {"url": "https://www.dawn.com/feeds/home",                    "source": "Dawn",           "lean": "pakistan-press"},
-    {"url": "https://english.alarabiya.net/rss.xml",              "source": "Al Arabiya",     "lean": "saudi-aligned"},
-    {"url": "https://www.haaretz.com/cmlink/1.628765",            "source": "Haaretz",        "lean": "israel-left"},
-    {"url": "https://www.middleeasteye.net/rss",                  "source": "Middle East Eye","lean": "centre-left"},
+    {"url": "https://www.aljazeera.com/xml/rss/all.xml",          "source": "Al Jazeera",     "lean": "centre-left", "role": "regional"},
+    {"url": "https://www.scmp.com/rss/91/feed",                   "source": "SCMP",           "lean": "china-hk", "role": "regional"},
+    {"url": "https://timesofindia.indiatimes.com/rss.cms",        "source": "Times of India", "lean": "indian-nationalist", "role": "regional"},
+    {"url": "https://www.theafricareport.com/feed/",              "source": "Africa Report",  "lean": "pan-african", "role": "regional"},
+    {"url": "https://www.dawn.com/feeds/home",                    "source": "Dawn",           "lean": "pakistan-press", "role": "regional"},
+    {"url": "https://english.alarabiya.net/rss.xml",              "source": "Al Arabiya",     "lean": "saudi-aligned", "role": "regional"},
+    {"url": "https://www.haaretz.com/cmlink/1.628765",            "source": "Haaretz",        "lean": "israel-left", "role": "regional"},
+    {"url": "https://www.middleeasteye.net/rss",                  "source": "Middle East Eye","lean": "centre-left", "role": "regional"},
 
     # ── State-aligned (labelled) ───────────────────────────────────
-    {"url": "https://tass.com/rss/v2.xml",                        "source": "TASS",           "lean": "russian-state"},
-    {"url": "https://www.globaltimes.cn/rss/outbrain.xml",        "source": "Global Times",   "lean": "chinese-state"},
-    {"url": "https://www.irna.ir/en/rss.xml",                     "source": "IRNA",           "lean": "iran-state"},
-    {"url": "https://www.presstv.ir/RSS",                         "source": "PressTV",        "lean": "iran-state"},
+    {"url": "https://tass.com/rss/v2.xml",                        "source": "TASS",           "lean": "russian-state", "role": "state-affiliated"},
+    {"url": "https://www.globaltimes.cn/rss/outbrain.xml",        "source": "Global Times",   "lean": "chinese-state", "role": "state-affiliated"},
+    {"url": "https://www.irna.ir/en/rss.xml",                     "source": "IRNA",           "lean": "iran-state", "role": "state-affiliated"},
+    {"url": "https://www.presstv.ir/RSS",                         "source": "PressTV",        "lean": "iran-state", "role": "state-affiliated"},
 
     # ── Investigative / accountability ─────────────────────────────
-    {"url": "https://bellingcat.com/feed",                        "source": "Bellingcat",     "lean": "investigative-osint"},
-    {"url": "https://www.occrp.org/en/rss",                       "source": "OCCRP",          "lean": "investigative"},
-    {"url": "https://theintercept.com/feed/?rss",                 "source": "The Intercept",  "lean": "left-investigative"},
-    {"url": "https://www.propublica.org/feeds/propublica/main",   "source": "ProPublica",     "lean": "investigative"},
-    {"url": "https://tbij.com/feed/",                             "source": "TBIJ",           "lean": "investigative"},  # Bureau of Investigative Journalism
-    {"url": "https://www.correctiv.org/en/feed/",                 "source": "Correctiv",      "lean": "investigative"},  # German investigative
-    {"url": "https://www.icij.org/feed/",                         "source": "ICIJ",           "lean": "investigative"},  # Panama Papers org
-    {"url": "https://meduza.io/en/rss/all",                       "source": "Meduza",         "lean": "russia-critical"},
+    {"url": "https://bellingcat.com/feed",                        "source": "Bellingcat",     "lean": "investigative-osint", "role": "investigative-osint"},
+    {"url": "https://www.occrp.org/en/rss",                       "source": "OCCRP",          "lean": "investigative", "role": "investigative-osint"},
+    {"url": "https://theintercept.com/feed/?rss",                 "source": "The Intercept",  "lean": "left-investigative", "role": "investigative-osint"},
+    {"url": "https://www.propublica.org/feeds/propublica/main",   "source": "ProPublica",     "lean": "investigative", "role": "investigative-osint"},
+    {"url": "https://tbij.com/feed/",                             "source": "TBIJ",           "lean": "investigative", "role": "investigative-osint"},  # Bureau of Investigative Journalism
+    {"url": "https://www.correctiv.org/en/feed/",                 "source": "Correctiv",      "lean": "investigative", "role": "investigative-osint"},  # German investigative
+    {"url": "https://www.icij.org/feed/",                         "source": "ICIJ",           "lean": "investigative", "role": "investigative-osint"},  # Panama Papers org
+    {"url": "https://meduza.io/en/rss/all",                       "source": "Meduza",         "lean": "russia-critical", "role": "investigative-osint"},
 
     # ── Specialist / think tanks ───────────────────────────────────
-    {"url": "https://www.understandingwar.org/rss.xml",           "source": "ISW",            "lean": "nato-aligned"},
-    {"url": "https://foreignpolicy.com/feed/",                    "source": "Foreign Policy", "lean": "us-foreign-policy"},
-    {"url": "https://www.crisisgroup.org/rss.xml",                "source": "ICG",            "lean": "conflict-analysis"},  # International Crisis Group
-    {"url": "https://www.stimson.org/feed/",                      "source": "Stimson Center", "lean": "analytical"},
-    {"url": "https://carnegieendowment.org/rss/solr?query=*",     "source": "Carnegie",       "lean": "analytical"},
-    {"url": "https://www.iiss.org/en/rss/",                       "source": "IISS",           "lean": "defence-analytical"},
-    {"url": "https://www.chathamhouse.org/rss.xml",               "source": "Chatham House",  "lean": "uk-analytical"},
-    {"url": "https://www.sipri.org/rss.xml",                      "source": "SIPRI",          "lean": "arms-research"},  # Stockholm peace research
+    {"url": "https://www.understandingwar.org/rss.xml",           "source": "ISW",            "lean": "nato-aligned", "role": "specialist"},
+    {"url": "https://foreignpolicy.com/feed/",                    "source": "Foreign Policy", "lean": "us-foreign-policy", "role": "specialist"},
+    {"url": "https://www.crisisgroup.org/rss.xml",                "source": "ICG",            "lean": "conflict-analysis", "role": "specialist"},  # International Crisis Group
+    {"url": "https://www.stimson.org/feed/",                      "source": "Stimson Center", "lean": "analytical", "role": "specialist"},
+    {"url": "https://carnegieendowment.org/rss/solr?query=*",     "source": "Carnegie",       "lean": "analytical", "role": "specialist"},
+    {"url": "https://www.iiss.org/en/rss/",                       "source": "IISS",           "lean": "defence-analytical", "role": "specialist"},
+    {"url": "https://www.chathamhouse.org/rss.xml",               "source": "Chatham House",  "lean": "uk-analytical", "role": "specialist"},
+    {"url": "https://www.sipri.org/rss.xml",                      "source": "SIPRI",          "lean": "arms-research", "role": "specialist"},  # Stockholm peace research
 
     # ── Regional specialists ───────────────────────────────────────
-    {"url": "https://sudanwarmonitor.com/feed/",                  "source": "Sudan War Monitor",      "lean": "conflict-data"},
-    {"url": "https://www.ethiopia-insight.com/feed/",             "source": "Ethiopia Insight",       "lean": "regional-specialist"},
-    {"url": "https://www.afghanistan-analysts.org/en/feed/",      "source": "Afghanistan Analysts",   "lean": "analytical"},
-    {"url": "https://syriadirect.org/feed/",                      "source": "Syria Direct",           "lean": "regional-specialist"},
-    {"url": "https://www.irannewswire.org/rss",                   "source": "Iran News Wire",         "lean": "iran-opposition"},
-    {"url": "https://iranwire.com/en/feed/",                      "source": "IranWire",               "lean": "iran-independent"},
-    {"url": "https://www.jpost.com/Rss/RssFeedsHeadlines.aspx",   "source": "Jerusalem Post",         "lean": "israel-centre"},
-    {"url": "https://balkaninsight.com/feed/",                    "source": "BIRN",                   "lean": "investigative"},  # Balkan Investigative Reporting
+    {"url": "https://sudanwarmonitor.com/feed/",                  "source": "Sudan War Monitor",      "lean": "conflict-data", "role": "regional"},
+    {"url": "https://www.ethiopia-insight.com/feed/",             "source": "Ethiopia Insight",       "lean": "regional-specialist", "role": "regional"},
+    {"url": "https://www.afghanistan-analysts.org/en/feed/",      "source": "Afghanistan Analysts",   "lean": "analytical", "role": "regional"},
+    {"url": "https://syriadirect.org/feed/",                      "source": "Syria Direct",           "lean": "regional-specialist", "role": "regional"},
+    {"url": "https://www.irannewswire.org/rss",                   "source": "Iran News Wire",         "lean": "iran-opposition", "role": "regional"},
+    {"url": "https://iranwire.com/en/feed/",                      "source": "IranWire",               "lean": "iran-independent", "role": "regional"},
+    {"url": "https://www.jpost.com/Rss/RssFeedsHeadlines.aspx",   "source": "Jerusalem Post",         "lean": "israel-centre", "role": "regional"},
+    {"url": "https://balkaninsight.com/feed/",                    "source": "BIRN",                   "lean": "investigative", "role": "regional"},  # Balkan Investigative Reporting
 
     # ── Financial intelligence ─────────────────────────────────────
-    {"url": "https://home.treasury.gov/system/files/126/ofac.xml","source": "OFAC",           "lean": "us-government"},  # Sanctions
-    {"url": "https://www.worldbank.org/en/news/all?format=rss",   "source": "World Bank",     "lean": "multilateral"},
-    {"url": "https://www.imf.org/en/News/Rss?language=eng",       "source": "IMF",            "lean": "multilateral"},
+    {"url": "https://home.treasury.gov/system/files/126/ofac.xml","source": "OFAC",           "lean": "us-government", "role": "specialist"},  # Sanctions
+    {"url": "https://www.worldbank.org/en/news/all?format=rss",   "source": "World Bank",     "lean": "multilateral", "role": "specialist"},
+    {"url": "https://www.imf.org/en/News/Rss?language=eng",       "source": "IMF",            "lean": "multilateral", "role": "specialist"},
 
-    # ── Tier 0: Primary documents / official data (facts not narratives) ──
-    {"url": "https://press.un.org/en/rss.xml",                          "source": "UN Press",         "lean": "primary-document"},
-    {"url": "https://www.icc-cpi.int/rss/press-releases",               "source": "ICC",              "lean": "primary-document"},
-    {"url": "https://www.iaea.org/newscenter/pressreleases/rss",        "source": "IAEA",             "lean": "primary-document"},
-    {"url": "https://www.ohchr.org/EN/NewsEvents/Pages/RSSFeeds.aspx",  "source": "OHCHR",            "lean": "primary-document"},
-    {"url": "https://home.treasury.gov/system/files/126/ofac.xml",      "source": "OFAC",             "lean": "primary-document"},  # sanctions
-    {"url": "https://www.sipri.org/rss.xml",                            "source": "SIPRI",            "lean": "primary-document"},  # arms data
-    {"url": "https://www.opensanctions.org/feed.rss",                   "source": "OpenSanctions",    "lean": "primary-document"},
-    {"url": "https://sanctionsmap.eu/api/v1/rss",                       "source": "EU Sanctions Map", "lean": "primary-document"},
-    {"url": "https://www.fatf-gafi.org/en/publications/rss.xml",        "source": "FATF",             "lean": "primary-document"},  # financial crime
-    {"url": "https://www.icij.org/feed/",                               "source": "ICIJ",             "lean": "primary-document"},  # document leaks
-    {"url": "https://acleddata.com/feed/",                              "source": "ACLED",            "lean": "primary-document"},  # conflict events
-    {"url": "https://reliefweb.int/updates/rss.xml",                    "source": "ReliefWeb",        "lean": "primary-document"},
+    # ── Government / official data ──
+    {"url": "https://press.un.org/en/rss.xml",                          "source": "UN Press",         "lean": "primary-document", "role": "government-official"},
+    {"url": "https://www.icc-cpi.int/rss/press-releases",               "source": "ICC",              "lean": "primary-document", "role": "government-official"},
+    {"url": "https://www.iaea.org/newscenter/pressreleases/rss",        "source": "IAEA",             "lean": "primary-document", "role": "government-official"},
+    {"url": "https://www.ohchr.org/EN/NewsEvents/Pages/RSSFeeds.aspx",  "source": "OHCHR",            "lean": "primary-document", "role": "government-official"},
+    {"url": "https://home.treasury.gov/system/files/126/ofac.xml",      "source": "OFAC",             "lean": "primary-document", "role": "government-official"},  # sanctions
+    {"url": "https://www.sipri.org/rss.xml",                            "source": "SIPRI",            "lean": "primary-document", "role": "government-official"},  # arms data
+    {"url": "https://www.opensanctions.org/feed.rss",                   "source": "OpenSanctions",    "lean": "primary-document", "role": "government-official"},
+    {"url": "https://sanctionsmap.eu/api/v1/rss",                       "source": "EU Sanctions Map", "lean": "primary-document", "role": "government-official"},
+    {"url": "https://www.fatf-gafi.org/en/publications/rss.xml",        "source": "FATF",             "lean": "primary-document", "role": "government-official"},  # financial crime
+    {"url": "https://www.icij.org/feed/",                               "source": "ICIJ",             "lean": "primary-document", "role": "government-official"},  # document leaks
+    {"url": "https://acleddata.com/feed/",                              "source": "ACLED",            "lean": "primary-document", "role": "government-official"},  # conflict events
+    {"url": "https://reliefweb.int/updates/rss.xml",                    "source": "ReliefWeb",        "lean": "primary-document", "role": "government-official"},
 
-    # ── B-grade independent journalists (checked vs intel/primary only) ──
+    # ── Independent / regional journalists ──
     # US national security / intelligence
-    {"url": "https://seymourhersh.substack.com/feed",             "source": "Seymour Hersh",   "lean": "independent"},
-    {"url": "https://www.emptywheel.net/feed/",                   "source": "Emptywheel",      "lean": "independent"},   # Marcy Wheeler — legal/intel
-    {"url": "https://kenklippenstein.substack.com/feed",          "source": "Ken Klippenstein","lean": "independent"},   # leaked US gov docs
-    {"url": "https://leefang.substack.com/feed",                  "source": "Lee Fang",        "lean": "independent"},   # corporate/lobbying
-    {"url": "https://thedeadhand.substack.com/feed",              "source": "The Dead Hand",   "lean": "independent"},   # nuclear/arms control
+    {"url": "https://seymourhersh.substack.com/feed",             "source": "Seymour Hersh",   "lean": "independent", "role": "regional"},
+    {"url": "https://www.emptywheel.net/feed/",                   "source": "Emptywheel",      "lean": "independent", "role": "regional"},   # Marcy Wheeler — legal/intel
+    {"url": "https://kenklippenstein.substack.com/feed",          "source": "Ken Klippenstein","lean": "independent", "role": "regional"},   # leaked US gov docs
+    {"url": "https://leefang.substack.com/feed",                  "source": "Lee Fang",        "lean": "independent", "role": "regional"},   # corporate/lobbying
+    {"url": "https://thedeadhand.substack.com/feed",              "source": "The Dead Hand",   "lean": "independent", "role": "regional"},   # nuclear/arms control
     # Russia / Eastern Europe
-    {"url": "https://johnhelmer.net/feed/",                       "source": "John Helmer",     "lean": "independent"},   # Russia oligarchs
-    {"url": "https://www.craigmurray.org.uk/feed/",               "source": "Craig Murray",    "lean": "independent"},   # former UK ambassador
-    {"url": "https://consortiumnews.com/feed/",                   "source": "Consortium News", "lean": "independent"},   # ex-CIA/intel writers
+    {"url": "https://johnhelmer.net/feed/",                       "source": "John Helmer",     "lean": "independent", "role": "regional"},   # Russia oligarchs
+    {"url": "https://www.craigmurray.org.uk/feed/",               "source": "Craig Murray",    "lean": "independent", "role": "regional"},   # former UK ambassador
+    {"url": "https://consortiumnews.com/feed/",                   "source": "Consortium News", "lean": "independent", "role": "regional"},   # ex-CIA/intel writers
     # Middle East / conflict fieldwork
-    {"url": "https://lindsey-snell.ghost.io/rss/",                "source": "Lindsey Snell",   "lean": "independent"},   # Syria/Iran field
-    {"url": "https://richardmedhurst.substack.com/feed",          "source": "Richard Medhurst","lean": "independent"},   # UK/Middle East
-    {"url": "https://electronicintifada.net/rss.xml",             "source": "Electronic Intifada","lean": "independent"}, # Palestine primary source
+    {"url": "https://lindsey-snell.ghost.io/rss/",                "source": "Lindsey Snell",   "lean": "independent", "role": "regional"},   # Syria/Iran field
+    {"url": "https://richardmedhurst.substack.com/feed",          "source": "Richard Medhurst","lean": "independent", "role": "regional"},   # UK/Middle East
+    {"url": "https://electronicintifada.net/rss.xml",             "source": "Electronic Intifada","lean": "independent", "role": "regional"}, # Palestine primary source
     # OSINT specialists (individual accounts)
-    {"url": "https://blackbirdgroup.substack.com/feed",           "source": "Black Bird Group","lean": "osint"},          # Pasi Paroinen — Baltic
-    {"url": "https://navalgazing.net/feed",                       "source": "Naval Gazing",    "lean": "osint"},          # naval / shipping OSINT
+    {"url": "https://blackbirdgroup.substack.com/feed",           "source": "Black Bird Group","lean": "osint", "role": "regional"},          # Pasi Paroinen — Baltic
+    {"url": "https://navalgazing.net/feed",                       "source": "Naval Gazing",    "lean": "osint", "role": "regional"},          # naval / shipping OSINT
     # Financial / corporate intelligence
-    {"url": "https://www.globalwitness.org/en/press-releases/rss/","source": "Global Witness", "lean": "independent"},   # resource corruption
-    {"url": "https://www.followthemoney.eu/en/rss",               "source": "Follow the Money","lean": "independent"},   # Dutch financial crime
-    {"url": "https://www.organized-crime.nl/feed/",               "source": "OCCRP Netherlands","lean": "independent"},
+    {"url": "https://www.globalwitness.org/en/press-releases/rss/","source": "Global Witness", "lean": "independent", "role": "regional"},   # resource corruption
+    {"url": "https://www.followthemoney.eu/en/rss",               "source": "Follow the Money","lean": "independent", "role": "regional"},   # Dutch financial crime
+    {"url": "https://www.organized-crime.nl/feed/",               "source": "OCCRP Netherlands","lean": "independent", "role": "regional"},
     # Humanitarian/conflict ground-truth
-    {"url": "https://www.msf.org/en/news/rss",                    "source": "MSF",             "lean": "primary-document"}, # Doctors Without Borders
-    {"url": "https://www.amnesty.org/en/latest/news/feed/",       "source": "Amnesty",         "lean": "independent"},
+    {"url": "https://www.msf.org/en/news/rss",                    "source": "MSF",             "lean": "primary-document", "role": "regional"}, # Doctors Without Borders
+    {"url": "https://www.amnesty.org/en/latest/news/feed/",       "source": "Amnesty",         "lean": "independent", "role": "regional"},
 
     # ── Humanitarian / conflict data ──────────────────────────────
-    {"url": "https://reliefweb.int/updates/rss.xml",              "source": "ReliefWeb",      "lean": "humanitarian"},
-    {"url": "https://www.hrw.org/rss",                            "source": "HRW",            "lean": "human-rights"},
-    {"url": "https://acleddata.com/feed/",                        "source": "ACLED",          "lean": "conflict-data"},
-    {"url": "https://www.amnesty.org/en/latest/news/feed/",       "source": "Amnesty",        "lean": "human-rights"},
-    {"url": "https://msf.org/en/news/rss",                        "source": "MSF",            "lean": "humanitarian"},  # Doctors Without Borders
-    {"url": "https://www.savethechildren.net/rss.xml",            "source": "Save the Children","lean": "humanitarian"},
+    {"url": "https://reliefweb.int/updates/rss.xml",              "source": "ReliefWeb",      "lean": "humanitarian", "role": "specialist"},
+    {"url": "https://www.hrw.org/rss",                            "source": "HRW",            "lean": "human-rights", "role": "specialist"},
+    {"url": "https://acleddata.com/feed/",                        "source": "ACLED",          "lean": "conflict-data", "role": "specialist"},
+    {"url": "https://www.amnesty.org/en/latest/news/feed/",       "source": "Amnesty",        "lean": "human-rights", "role": "specialist"},
+    {"url": "https://msf.org/en/news/rss",                        "source": "MSF",            "lean": "humanitarian", "role": "specialist"},  # Doctors Without Borders
+    {"url": "https://www.savethechildren.net/rss.xml",            "source": "Save the Children","lean": "humanitarian", "role": "specialist"},
+    # ── Disinfo / psyops monitoring (v68-be) ───────────────────────
+    {"url": "https://euvsdisinfo.eu/disinfo-cases/feed/",          "source": "EUvsDisinfo",    "lean": "eu-institutional", "role": "investigative-osint"},
+    {"url": "https://medium.com/feed/dfrlab",                      "source": "DFRLab",         "lean": "centre",           "role": "investigative-osint"},
+    {"url": "https://disinfowatch.org/feed/",                      "source": "DisinfoWatch",   "lean": "centre-right",     "role": "investigative-osint"},
+    {"url": "https://www.isd.org/feed/",                           "source": "ISD Global",     "lean": "centre",           "role": "investigative-osint"},
 ]
 
 GDELT_API = "https://api.gdeltproject.org/api/v2/doc/doc"
