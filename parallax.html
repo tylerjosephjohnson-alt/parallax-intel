@@ -2413,21 +2413,16 @@ function v6_switchBriefRegion(chip) {
   chip.classList.add('v6-active');
 }
 // Bootstrap: inject brief v1.6 header before existing brief content
-(function() {
-  const orig = window.loadBrief;
-  if (!orig) return;
-  window.loadBrief = function() {
-    const result = orig.apply(this, arguments);
-    // After original loadBrief populates, prepend v6 header
-    setTimeout(function() {
-      const briefEl = document.getElementById('view-brief');
-      if (!briefEl || briefEl.querySelector('.v6-region-bar')) return;
-      const existing = briefEl.innerHTML;
-      const briefData = window._lastBriefData || {};
-      briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy" style="margin-top:24px;padding-top:20px;border-top:1px dashed var(--border-strong,#2a323c)">' + existing + '</div>';
-    }, 500);
-    return result;
-  };
+// v62-fix: reliable brief bootstrap — polls until brief content exists, then injects v6 header
+(function v6_briefBoot() {
+  var briefEl = document.getElementById('view-brief');
+  if (!briefEl) { setTimeout(v6_briefBoot, 300); return; }
+  if (briefEl.querySelector('.v6-region-bar')) return; // already injected
+  var briefContent = briefEl.querySelector('#brief-content');
+  if (!briefContent) { setTimeout(v6_briefBoot, 300); return; }
+  var existing = briefEl.innerHTML;
+  var briefData = window._lastBriefData || {};
+  briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy">' + existing + '</div>';
 })();
   
 
@@ -2791,6 +2786,51 @@ function v6_renderVelocityGraph(data) {
   html += '</div>';
   return html;
 }
+  
+
+  // v62-fix: wire pred-card clicks to v6_openPrediction
+(function() {
+  function wirePredCards() {
+    var cards = document.querySelectorAll('.pred-card');
+    if (!cards.length) { setTimeout(wirePredCards, 500); return; }
+    cards.forEach(function(card) {
+      if (card.dataset.v6wired) return;
+      card.dataset.v6wired = '1';
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', function() {
+        var h3 = card.querySelector('h3');
+        var meta = card.querySelector('div');
+        var metaText = meta ? meta.textContent.trim() : '';
+        var parts = metaText.split('\u00b7').map(function(s){return s.trim();});
+        var pctEl = card.querySelectorAll('div');
+        var pct = '';
+        for (var i = 0; i < pctEl.length; i++) {
+          var t = pctEl[i].textContent.trim();
+          if (t.match(/^\d+%$/)) { pct = t; break; }
+        }
+        v6_openPrediction({
+          question: h3 ? h3.textContent.trim() : 'Prediction',
+          region: parts[0] || 'GLOBAL',
+          horizon: parts[1] || '',
+          probability: parseInt(pct) || 0,
+          state_label: 'View detail',
+          trend: 'flat'
+        });
+      });
+    });
+  }
+  wirePredCards();
+  // Also re-wire when predictions view is shown
+  var origSetView = window.setView;
+  if (origSetView && !window._v6PredWired) {
+    window._v6PredWired = true;
+    window.setView = function(id) {
+      var r = origSetView.apply(this, arguments);
+      if (id === 'predictions') setTimeout(wirePredCards, 200);
+      return r;
+    };
+  }
+})();
   </script>
 </body>
 </html>
