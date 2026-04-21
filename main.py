@@ -2705,7 +2705,7 @@ Respond with ONLY a JSON object (no markdown):
   "overview_prose": "2-3 paragraph readable narrative for analysts",
   "provisional": false
 }}"""
-    result = call_claude(prompt)
+    result = call_claude(prompt, max_tokens=6000)
     if not result:
             _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
             print(f"  Story gen: Claude returned empty")
