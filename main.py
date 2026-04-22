@@ -2710,8 +2710,7 @@ def enrich_story(story):
     summary = story.get("summary", "")
     sources_text = ""
     for sc in story.get("source_citations", []):
-        sources_text += f"- {sc.get('source','')}: {sc.get('claim','')}
-"
+        sources_text += f"- {sc.get('source','')}: {sc.get('claim','')}\n"
     
     prompt = f"""You previously wrote a story with headline: "{headline}"
 Summary: {summary}
@@ -2746,7 +2745,7 @@ Now provide ONLY the deep analysis fields as a JSON object. Keep each field conc
             result = result[_first:_last + 1]
         import re as _re_enrich
         result = _re_enrich.sub(r',(\s*[}\]])', r'\1', result)
-        result = _re_enrich.sub(r'("|\.d+|true|false|null)(\s*\n\s*")', r'\1,\2', result)
+        result = _re_enrich.sub(r'("|\.\d+|true|false|null)(\s*\n\s*")', r'\1,\2', result)
         result = _re_enrich.sub(r'(}|])(\s*\n\s*")', r'\1,\2', result)
         if result.strip().startswith("```"):
             result = result.strip().split("\n", 1)[-1].rsplit("```", 1)[0].strip()
