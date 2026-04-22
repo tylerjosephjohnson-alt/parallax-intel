@@ -1059,7 +1059,10 @@
   
   /* v65-fix: summary box overflow clips LAST 24 HOURS label */
   .v6-summary-24h, .v6-atlas-summary { overflow: visible !important; }
-  </style>
+  
+.v6-card-body { display: none !important; }
+.v6-card.v6-is-open > .v6-card-body { display: block !important; }
+</style>
 
   <!-- v39: Leaflet for map view -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" />
