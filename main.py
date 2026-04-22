@@ -2582,6 +2582,10 @@ WRITING RULES:
 - Keep it tight. No filler sentences. Every sentence should add new information
 - When sources disagree, state both positions plainly without analysing the disagreement
 - Source attribution should be natural: "Reuters reports..." or "according to The Guardian" — not every single sentence
+- NEUTRALITY IS ABSOLUTE. Present facts, not opinions. Never take sides in a conflict, dispute, or political disagreement. Report what each side says and does — do not judge who is right
+- No editorialising. Do not characterise actions as "aggressive", "justified", "provocative", "reckless" etc. Use neutral language: "deployed", "stated", "reported", "claimed"
+- Do not frame any government, faction, or actor as the good side or the bad side. Present their actions and let the reader decide
+- If a claim is disputed, present both versions with equal weight. Do not signal which you believe
 
 {accuracy_block}
 {history_context}
