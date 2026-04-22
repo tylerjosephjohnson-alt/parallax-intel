@@ -2705,6 +2705,9 @@ Now provide ONLY the deep analysis fields as a JSON object. Keep each field conc
   "narrative_convergence": "Where sources agree despite different perspectives",
   "civilian_impact": "Direct human impact in one sentence",
   "source_diversity": "Brief note on source perspective balance",
+  "connecting_events": [
+    {{"related_event": "Name of an ongoing event this connects to", "connection": "Because of [this story], [that ongoing event] is affected in [this specific way]"}}
+  ],
   "contradiction_flags": []
 }}"""
     
@@ -2729,7 +2732,7 @@ Now provide ONLY the deep analysis fields as a JSON object. Keep each field conc
         # Merge enrichment fields into story
         for key in ["narrative_analysis", "who_benefits", "competing_narratives",
                      "narrative_gaps", "narrative_convergence", "civilian_impact",
-                     "source_diversity", "contradiction_flags"]:
+                     "source_diversity", "contradiction_flags", "connecting_events"]:
             if key in enrichment:
                 story[key] = enrichment[key]
         print(f"  Enriched: {headline[:50]}")
