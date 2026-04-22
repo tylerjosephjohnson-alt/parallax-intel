@@ -5,6 +5,15 @@ Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
 The Flask server serves the app + stories.json.
 The background thread runs the scraper every 30 minutes.
 
+@app.route('/test-claude')
+def test_claude():
+    try:
+        result = call_claude('Say hello in exactly 3 words.', max_tokens=50)
+        return jsonify({'status': 'ok', 'result': result[:200] if result else 'empty', 'key_set': bool(ANTHROPIC_API_KEY)})
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e), 'key_set': bool(ANTHROPIC_API_KEY)})
+
+
 Requirements (install in Replit shell):
   pip install newspaper4k trafilatura
   pip install spacy && python -m spacy download en_core_web_sm  # optional but recommended
@@ -1792,7 +1801,12 @@ def call_claude(prompt, max_tokens=2000):
             pass
         _err_code = getattr(e, 'code', '')
         globals()['_LAST_CLAUDE_ERROR'] = f"{_err_type}[{_err_code}]: {str(e)[:200]} | body: {_err_body[:400]!r}"
+        _err_body = ""
+        try:
+            if hasattr(e, "read"): _err_body = e.read().decode("utf-8", errors="replace")[:500]
+        except: pass
         print(f"  Claude error: {_err_type}: {e}")
+        if _err_body: print(f"  Claude error body: {_err_body}")
         return None
 
 
