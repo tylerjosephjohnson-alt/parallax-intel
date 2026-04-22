@@ -2623,7 +2623,7 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
   "signal_score": 50,
   "velocity_score": 50,
   "provisional": false
-}}""""
+}}"""
     result = call_claude(prompt, max_tokens=4000)
     if not result:
             _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
