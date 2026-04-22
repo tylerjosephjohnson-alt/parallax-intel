@@ -2258,15 +2258,14 @@ function v6_renderTabBar(s) {
     ["overview", "OVERVIEW"],
     ["analysis", "ANALYSIS"],
     ["connecting", "CONNECTING EVENTS"],
-    ["sowhat", "SO WHAT"],
+    ["expect", "WHAT TO EXPECT"],
     ["sources", "SOURCES " + sc.length],
     ["narrative", "NARRATIVE SHIFTS"],
-    ["psyops", "PSYOPS SIGNAL"],
-    ["confidence", "CONFIDENCE"]
+    ["psyops", "PSYOPS SIGNAL"]
   ];
   var html = '<div class="v6-tab-row" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
   for (var i = 0; i < tabs.length; i++) {
-    html += '<button class="v6-tab-btn' + (i===0?' v6-tab-active':'') + '" data-tab="' + tabs[i][0] + '" onclick="v6_switchTab(this)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:6px 12px;font-size:11px;letter-spacing:1px;cursor:pointer">' + tabs[i][1] + '</button>';
+    html += '<button class="v6-tab-btn" data-tab="' + tabs[i][0] + '" onclick="v6_switchTab(this)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:6px 12px;font-size:11px;letter-spacing:1px;cursor:pointer">' + tabs[i][1] + '</button>';
   }
   html += '</div>';
   return html;
@@ -2287,66 +2286,62 @@ function v6_renderSourcesPane(story) {
   return html;
 }
 function v6_renderPanes(s) {
-  var na = s.narrative_analysis || '';
+  var na = s.narrative_analysis || "";
   var wb = s.who_benefits || [];
   var cn = s.competing_narratives || [];
-  var ng = s.narrative_gaps || '';
-  var nc = s.narrative_convergence || '';
-  var ci = s.civilian_impact || '';
-  var sd = s.source_diversity || '';
-  var cf = s.contradiction_flags || [];
+  var ng = s.narrative_gaps || "";
+  var nc = s.narrative_convergence || "";
+  var ci = s.civilian_impact || "";
   var sc = s.source_citations || [];
-  
-  // Analysis pane
-  var analysisHtml = '';
-  if (na) analysisHtml += '<p>' + na + '</p>';
+  var ce = s.connecting_events || [];
+
+  // ANALYSIS pane — merged: narrative analysis + who benefits + competing narratives + gaps + convergence
+  var aHtml = "";
+  if (na) aHtml += '<div style="margin:0 0 16px"><p>' + na + '</p></div>';
   if (wb.length) {
-    analysisHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">WHO BENEFITS</h4>';
+    aHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">WHO BENEFITS</h4>';
     for (var i = 0; i < wb.length; i++) {
       var b = wb[i];
-      analysisHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid var(--accent);opacity:0.9"><strong>' + (b.actor||'') + '</strong> (' + (b.level||'') + ') — ' + (b.benefit||'') + '</div>';
+      aHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid var(--accent);opacity:0.9"><strong>' + (b.actor||"") + '</strong> (' + (b.level||"") + ') \u2014 ' + (b.benefit||"") + '</div>';
     }
   }
-  if (!analysisHtml) analysisHtml = '<p style="opacity:0.4;font-style:italic">Analysis data will appear after enrichment runs.</p>';
-  
-  // Connecting Events pane
-  var connectHtml = '';
   if (cn.length) {
-    connectHtml += '<h4 style="color:var(--accent);margin:0 0 8px;font-size:11px;letter-spacing:1px">COMPETING NARRATIVES</h4>';
+    aHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">COMPETING NARRATIVES</h4>';
     for (var j = 0; j < cn.length; j++) {
       var n = cn[j];
-      connectHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid ' + (n.verdict==='supported'?'#4a7':'#c74') + '"><strong>' + (n.source_actor||'') + '</strong>: ' + (n.narrative||'') + ' <span style="opacity:0.5">(' + (n.verdict||'') + ')</span></div>';
+      aHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid ' + (n.verdict==="supported"?"#4a7":"#c74") + '"><strong>' + (n.source_actor||"") + '</strong>: ' + (n.narrative||"") + ' <span style="opacity:0.5">(' + (n.verdict||"") + ')</span></div>';
     }
   }
-  if (ng) connectHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">GAPS</h4><p>' + ng + '</p>';
-  if (nc) connectHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">CONVERGENCE</h4><p>' + nc + '</p>';
-  if (!connectHtml) connectHtml = '<p style="opacity:0.4;font-style:italic">Connecting events data will appear after enrichment runs.</p>';
-  
-  // Sources pane
-  var srcHtml = '';
-  for (var k = 0; k < sc.length; k++) {
-    var src = sc[k];
-    srcHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid var(--accent)"><strong>' + (src.source||'') + '</strong> <span style="opacity:0.5">(' + (src.lean||src.platform||'') + ')</span><br><span style="opacity:0.8">' + (src.claim||'') + '</span></div>';
+  if (ng) aHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">INFORMATION GAPS</h4><p>' + ng + '</p>';
+  if (nc) aHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">WHERE SOURCES AGREE</h4><p>' + nc + '</p>';
+  if (!aHtml) aHtml = '<p style="opacity:0.4;font-style:italic">Analysis will appear after enrichment.</p>';
+
+  // CONNECTING EVENTS pane — how this event connects to other ongoing events
+  var ceHtml = "";
+  if (ce.length) {
+    for (var k = 0; k < ce.length; k++) {
+      var ev = ce[k];
+      ceHtml += '<div style="margin:12px 0;padding:10px 14px;border-left:2px solid var(--accent)"><strong>' + (ev.related_event||"") + '</strong><p style="margin:6px 0 0;opacity:0.85">' + (ev.connection||"") + '</p></div>';
+    }
+  } else {
+    ceHtml = '<p style="opacity:0.4;font-style:italic">Cross-event connections will populate as more stories are tracked.</p>';
+  }
+
+  // SOURCES pane
+  var srcHtml = "";
+  for (var m = 0; m < sc.length; m++) {
+    var src = sc[m];
+    srcHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid var(--accent)"><strong>' + (src.source||"") + '</strong> <span style="opacity:0.5">(' + (src.lean||src.platform||"") + ')</span><br><span style="opacity:0.8">' + (src.claim||"") + '</span></div>';
   }
   if (!srcHtml) srcHtml = '<p style="opacity:0.4;font-style:italic">No sources available.</p>';
-  
-  // Confidence pane
-  var confHtml = '<p><strong>Level:</strong> ' + (s.confidence||'unknown') + '</p>';
-  confHtml += '<p>' + (s.confidence_reason||'') + '</p>';
-  if (sd) confHtml += '<p><strong>Source diversity:</strong> ' + sd + '</p>';
-  if (cf.length) {
-    confHtml += '<h4 style="color:#c74;margin:12px 0 8px;font-size:11px;letter-spacing:1px">CONTRADICTION FLAGS</h4>';
-    for (var m = 0; m < cf.length; m++) confHtml += '<p style="border-left:2px solid #c74;padding-left:10px">' + cf[m] + '</p>';
-  }
-  
-  return '<div class="v6-pane" data-tab="overview" style="display:block"><p>' + (s.overview_prose||s.summary||'No overview available.') + '</p></div>' +
-    '<div class="v6-pane" data-tab="analysis" style="display:none">' + analysisHtml + '</div>' +
-    '<div class="v6-pane" data-tab="connecting" style="display:none">' + connectHtml + '</div>' +
-    '<div class="v6-pane" data-tab="sowhat" style="display:none"><p>' + (s.why_it_matters||'') + '</p>' + (ci ? '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">CIVILIAN IMPACT</h4><p>' + ci + '</p>' : '') + '</div>' +
+
+  return '<div class="v6-pane" data-tab="overview" style="display:none"><p>' + (s.overview_prose||s.summary||"No overview available.") + '</p></div>' +
+    '<div class="v6-pane" data-tab="analysis" style="display:none">' + aHtml + '</div>' +
+    '<div class="v6-pane" data-tab="connecting" style="display:none">' + ceHtml + '</div>' +
+    '<div class="v6-pane" data-tab="expect" style="display:none"><p>' + (s.why_it_matters||"") + '</p>' + (ci ? '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">CIVILIAN IMPACT</h4><p>' + ci + '</p>' : "") + '</div>' +
     '<div class="v6-pane" data-tab="sources" style="display:none">' + srcHtml + '</div>' +
     '<div class="v6-pane" data-tab="narrative" style="display:none"><p style="opacity:0.4;font-style:italic">Narrative shift tracking will populate with multiple scrape cycles.</p></div>' +
-    '<div class="v6-pane" data-tab="psyops" style="display:none"><p style="opacity:0.4;font-style:italic">Psyops signal detection coming soon.</p></div>' +
-    '<div class="v6-pane" data-tab="confidence" style="display:none">' + confHtml + '</div>';
+    '<div class="v6-pane" data-tab="psyops" style="display:none"><p style="opacity:0.4;font-style:italic">Psyops signal detection coming soon.</p></div>';
 }
 function v6_renderFoot(story) {
   const predCount = (story.predictions && story.predictions.length) || 0;
