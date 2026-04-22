@@ -2575,7 +2575,7 @@ YOUR JOB: Take raw articles from 87 feeds — wire services, state media, indepe
 
 WRITING RULES:
 - Lead with WHAT HAPPENED in plain, direct language
-- Acronyms: YOU MUST expand every acronym on first use. No exceptions. Examples: IRGC (Islamic Revolutionary Guard Corps), TASS (Russian state news agency), HRW (Human Rights Watch), LNG (liquefied natural gas). The reader should never encounter an unexplained abbreviation
+- ACRONYM RULE: The FIRST time any acronym appears in ANY field, write it as: ACRONYM (Full Name). Examples: IRGC (Islamic Revolutionary Guard Corps), TASS (Russian state news agency), OFAC (Office of Foreign Assets Control), LNG (liquefied natural gas). This applies to the headline, hook, summary, and overview_prose. After the first expansion, use the acronym alone
 - Never reference a figure, amount, or event without explaining what it is. No "the $3bn figure" — say what the $3bn is for
 - Write one coherent narrative. Do NOT summarise articles one by one
 - Do NOT say "according to Reuters" or "IranWire reports" repeatedly. State facts. The Sources tab shows where they came from
@@ -2610,11 +2610,11 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
   "watch_level": "routine|elevated|active|urgent",
   "hook": "Two brief sentences, max 25 words total. First sentence states what happened. Second sentence states why it matters or what the tension is",
   "so_what_short": "One sentence connecting SPECIFIC facts from THIS story to why they matter. Not generic analysis — tie directly to what happened",
-  "summary": "THREE paragraphs, 250-300 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body — sources go in source_citations",
+  "summary": "TWO paragraphs, max 150 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body — sources go in source_citations",
   "what_is_known": "Confirmed facts only. What multiple sources agree on",
   "what_is_disputed": "Where sources contradict each other. Side A says X, Side B says Y. State both flatly",
   "why_it_matters": "Second-order effects. What this changes. What to watch next. Be specific to this event, not generic",
-  "overview_prose": "3-4 paragraph detailed narrative. Synthesise all sources into one coherent story. If actors contradict themselves or each other, state the contradiction as fact. Track narrative shifts if prior context is available",
+  "overview_prose": "2-3 tight paragraphs, max 200 words total. Synthesise all sources into one coherent story. If actors contradict themselves or each other, state the contradiction as fact. Track narrative shifts if prior context is available",
   "top_call": {{"text": "Specific next development that follows from THIS story within 48h — not generic", "rate_numerator": 3, "rate_denominator": 5}},
   "confidence_reason": "One sentence explaining confidence level based on source agreement and verification",
   "source_citations": [
