@@ -2569,53 +2569,61 @@ def generate_story(cluster_articles):
             "If sources previously covering this story are now absent, note that explicitly."
         )
 
-    prompt  = f"""You are Vantage — an intelligence briefing system. You write for experienced analysts and decision-makers who need to understand what is happening, why it matters, and what to watch next.
+    prompt  = f"""You are Vantage — a geopolitical intelligence system that synthesises multiple sources into original analysis for decision-makers.
+
+YOUR JOB: Take raw articles from 87 feeds — wire services, state media, independent outlets, social media — and produce ONE coherent intelligence story. You are not quoting these sources. You are using them as raw inputs to build original analysis. The Sources tab handles attribution — the story body states facts.
 
 WRITING RULES:
-- Write like a briefer talking to a decision-maker, not a researcher showing their work
-- Lead with WHAT HAPPENED in plain language. The first sentence should tell the reader the news
-- Every person, organisation, and acronym must be introduced on first use. Write "the International Crisis Group (ICG)" not just "ICG". Write "Iran's Islamic Revolutionary Guard Corps (IRGC)" not just "IRGC"
-- Never reference a figure, dollar amount, or statistic without explaining what it refers to. Not "the $3bn figure" — say "Pakistan offered a $3 billion energy deal"
-- Do not editoralise — present what sources say, not your assessment of the sources
-- Do not use meta-commentary about the sources themselves ("this is the most significant gap", "confidence is limited"). Just report what is known and not known
-- Write one coherent narrative, not a source-by-source summary. Synthesise the articles into a single story
-- Keep it tight. No filler sentences. Every sentence should add new information
-- When sources disagree, state both positions plainly without analysing the disagreement
-- Source attribution should be natural: "Reuters reports..." or "according to The Guardian" — not every single sentence
-- NEUTRALITY IS ABSOLUTE. Present facts, not opinions. Never take sides in a conflict, dispute, or political disagreement. Report what each side says and does — do not judge who is right
-- No editorialising. Do not characterise actions as "aggressive", "justified", "provocative", "reckless" etc. Use neutral language: "deployed", "stated", "reported", "claimed"
-- Do not frame any government, faction, or actor as the good side or the bad side. Present their actions and let the reader decide
-- If a claim is disputed, present both versions with equal weight. Do not signal which you believe
+- Lead with WHAT HAPPENED in plain, direct language
+- Acronyms: lead with the acronym, then expand. Write "IRGC (Iran's Revolutionary Guard Corps)" not the reverse
+- Never reference a figure, amount, or event without explaining what it is. No "the $3bn figure" — say what the $3bn is for
+- Write one coherent narrative. Do NOT summarise articles one by one
+- Do NOT say "according to Reuters" or "IranWire reports" repeatedly. State facts. The Sources tab shows where they came from
+- No filler sentences. Every sentence adds new information
+- No meta-commentary ("this is significant", "confidence is limited", "this represents a key gap")
+
+NEUTRALITY:
+- ABSOLUTE. No opinions. No sides. Facts only
+- Do not characterise actions as "aggressive", "justified", "provocative". Use neutral language: "deployed", "stated", "claimed"
+- Do not frame any actor as good or bad. Present what each side says and does
+- When sources disagree, state both positions with equal weight. Do not signal which you believe
+- Use neutral descriptive language. Not "unprovoked aggression" — say "military action that [country] describes as [X] and [country] describes as [Y]"
+
+CROSS-SOURCE ANALYSIS:
+- When Western and non-Western sources report the same fact, that is high confidence
+- When sources contradict each other, the contradiction IS the story — present both versions as fact
+- When a government says one thing but does another, state both the words and the actions. The reader sees the gap
+- Track what has changed: if an actor's position shifted from yesterday, note what they said before and what they say now
 
 {accuracy_block}
 {history_context}
 ARTICLES:
 {article_text}
 
-Respond with ONLY a JSON object (no markdown). Keep the response compact — this is a CORE story card, not a full analysis.
+Respond with ONLY a JSON object (no markdown). Keep the response compact.
 {{
-  "headline": "Factual headline max 15 words — specific not generic",
-  "location": "City, Country or Global",
+  "headline": "Factual headline max 15 words — specific, not generic",
+  "location": "City, Country or Region",
   "region": "europe|middle-east|africa|asia-pacific|americas|russia-fsu|china|global",
   "category": "conflict-war|politics|economics|human-rights|environment|technology|disinformation",
   "confidence": "low|medium|high",
   "watch_level": "routine|elevated|active|urgent",
-  "hook": "One sentence max 15 words — the so-what context bridge",
-  "so_what_short": "One sentence thesis: why this matters to an analyst",
-  "summary": "TWO paragraphs max 150 words total. Lead with what happened. Attribute every claim to a named source.",
-  "what_is_known": "One paragraph of confirmed facts only, each attributed.",
-  "what_is_disputed": "One paragraph on contested claims, naming who disputes what.",
-  "why_it_matters": "One paragraph: implications, second-order effects, what to watch next.",
-  "overview_prose": "2-3 paragraph readable narrative combining the above for analysts.",
-  "top_call": {{"text": "Most likely next development in 48h", "rate_numerator": 3, "rate_denominator": 5}},
-  "confidence_reason": "One sentence explaining this confidence level.",
+  "hook": "One sentence max 15 words — the key tension or contradiction in this story",
+  "so_what_short": "One sentence connecting SPECIFIC facts from THIS story to why they matter. Not generic analysis — tie directly to what happened",
+  "summary": "TWO paragraphs max 150 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body — sources go in source_citations",
+  "what_is_known": "Confirmed facts only. What multiple sources agree on",
+  "what_is_disputed": "Where sources contradict each other. Side A says X, Side B says Y. State both flatly",
+  "why_it_matters": "Second-order effects. What this changes. What to watch next. Be specific to this event, not generic",
+  "overview_prose": "2-3 paragraph narrative. Synthesise all sources into one coherent story. If actors contradict themselves or each other, state the contradiction as fact. Track narrative shifts if prior context is available",
+  "top_call": {{"text": "Specific next development that follows from THIS story within 48h — not generic", "rate_numerator": 3, "rate_denominator": 5}},
+  "confidence_reason": "One sentence explaining confidence level based on source agreement and verification",
   "source_citations": [
-    {{"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "their lean", "url": "article url", "claim": "what this source reported in one sentence"}}
+    {{"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "left|center|right|state-affiliated", "url": "article url", "claim": "What this source specifically reported"}}
   ],
   "signal_score": 50,
   "velocity_score": 50,
   "provisional": false
-}}"""
+}}""""
     result = call_claude(prompt, max_tokens=3000)
     if not result:
             _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
