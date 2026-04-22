@@ -2252,29 +2252,24 @@ function v6_renderQuickStack(story) {
   html += '</div>';
   return html;
 }
-function v6_renderTabBar(story) {
-  const srcCount = (story.sources && story.sources.length) || story.source_count || 0;
-  const shiftCount = (story.narrative_shifts && story.narrative_shifts.length) || (story.shifts && story.shifts.length) || 0;
-  const psyopsCount = (story.psyops_findings && story.psyops_findings.length) || (story.psyops_signals && story.psyops_signals.length) || 0;
-  const confidenceScore = story.confidence_score;
-  const tabs = [
-    {id:'overview',label:'Overview',count:null,alert:false},
-    {id:'analysis',label:'Analysis',count:null,alert:false},
-    {id:'connecting',label:'Connecting Events',count:null,alert:false},
-    {id:'sowhat',label:'So What',count:null,alert:false},
-    {id:'sources',label:'Sources',count:srcCount,alert:false},
-    {id:'shifts',label:'Narrative Shifts',count:shiftCount,alert:false},
-    {id:'psyops',label:'Psyops Signal',count:psyopsCount,alert:psyopsCount>0},
-    {id:'confidence',label:'Confidence',count:confidenceScore,alert:false}
+function v6_renderTabBar(s) {
+  var sc = s.source_citations || [];
+  var tabs = [
+    ["overview", "OVERVIEW"],
+    ["analysis", "ANALYSIS"],
+    ["connecting", "CONNECTING EVENTS"],
+    ["sowhat", "SO WHAT"],
+    ["sources", "SOURCES " + sc.length],
+    ["narrative", "NARRATIVE SHIFTS"],
+    ["psyops", "PSYOPS SIGNAL"],
+    ["confidence", "CONFIDENCE"]
   ];
-  const tabHtml = tabs.map((t,i) => {
-    const cls = ['v6-tab'];
-    if (i === 0) cls.push('v6-active');
-    if (t.alert) cls.push('v6-alert');
-    const countSpan = (t.count !== null && t.count !== undefined && t.count !== 0) ? ' <span class="v6-count">' + v6_esc(t.count) + '</span>' : '';
-    return '<div class="' + cls.join(' ') + '" data-pane="' + t.id + '" onclick="v6_switchTab(this)">' + v6_esc(t.label) + countSpan + '</div>';
-  }).join('');
-  return '<nav class="v6-tab-bar" role="tablist">' + tabHtml + '</nav>';
+  var html = '<div class="v6-tab-row" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 0">';
+  for (var i = 0; i < tabs.length; i++) {
+    html += '<button class="v6-tab-btn' + (i===0?' v6-tab-active':'') + '" data-tab="' + tabs[i][0] + '" onclick="v6_switchTab(this)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);padding:6px 12px;font-size:11px;letter-spacing:1px;cursor:pointer">' + tabs[i][1] + '</button>';
+  }
+  html += '</div>';
+  return html;
 }
 function v6_renderSourcesPane(story) {
   const sources = story.sources || [];
@@ -2362,6 +2357,7 @@ function v6_renderFoot(story) {
   return '<div class="v6-foot"><span>' + parts.join(' \u00b7 ') + '</span><span class="v6-go">CLICK TO <span data-toggle-label>EXPAND</span> \u2192</span></div>';
 }
 function v6_renderStoryCard(story, isOpen) {
+  isOpen = false;
   var sid = story.story_id || story.id || '';
   return '<div class="v6-card' + (isOpen ? ' v6-is-open' : '') + '" data-sid="' + sid + '">' +
     v6_renderTopStrip(story) +
@@ -2382,18 +2378,17 @@ function v6_toggleCard(el) {
   if (!card) return;
   card.classList.toggle('v6-is-open');
 }
-function v6_switchTab(btn, tabName) {
+function v6_switchTab(btn) {
   var card = btn.closest('.v6-card');
   if (!card) return;
-  // Expand the card if collapsed
+  var tabName = btn.getAttribute('data-tab');
+  if (!tabName) return;
   if (!card.classList.contains('v6-is-open')) {
     card.classList.add('v6-is-open');
   }
-  // Switch active tab button
   var tabs = card.querySelectorAll('.v6-tab-btn');
   for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('v6-tab-active');
   btn.classList.add('v6-tab-active');
-  // Switch active pane
   var panes = card.querySelectorAll('.v6-pane');
   for (var j = 0; j < panes.length; j++) {
     panes[j].style.display = panes[j].getAttribute('data-tab') === tabName ? 'block' : 'none';
