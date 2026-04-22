@@ -2697,6 +2697,74 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact — thi
 # ─────────────────────────────────────────────
 # FRED
 # ─────────────────────────────────────────────
+def enrich_story(story):
+    """
+    Step 2 enrichment: adds deep analysis fields to an existing core story.
+    Called after generate_story succeeds. Fills Analysis, Connecting Events,
+    and Confidence tabs. If this call fails, the core story still renders.
+    """
+    if not story or not story.get("headline"):
+        return story
+    
+    headline = story.get("headline", "")
+    summary = story.get("summary", "")
+    sources_text = ""
+    for sc in story.get("source_citations", []):
+        sources_text += f"- {sc.get('source','')}: {sc.get('claim','')}
+"
+    
+    prompt = f"""You previously wrote a story with headline: "{headline}"
+Summary: {summary}
+Sources:
+{sources_text}
+
+Now provide ONLY the deep analysis fields as a JSON object. Keep each field concise (1-2 sentences max per sub-field). No markdown.
+{{
+  "narrative_analysis": "2-3 sentences: what competing narratives exist around this event",
+  "who_benefits": [
+    {{"actor": "Name", "benefit": "Why", "level": "high|medium|low"}}
+  ],
+  "competing_narratives": [
+    {{"source_actor": "Who", "narrative": "Their framing", "verdict": "supported|disputed|unverifiable"}}
+  ],
+  "narrative_gaps": "What key information is missing from all sources",
+  "narrative_convergence": "Where sources agree despite different perspectives",
+  "civilian_impact": "Direct human impact in one sentence",
+  "source_diversity": "Brief note on source perspective balance",
+  "contradiction_flags": []
+}}"""
+    
+    try:
+        result = call_claude(prompt, max_tokens=2000)
+        if not result:
+            return story
+        
+        # Apply same JSON repair chain
+        _first = result.find('{')
+        _last = result.rfind('}')
+        if _first >= 0 and _last > _first:
+            result = result[_first:_last + 1]
+        import re as _re_enrich
+        result = _re_enrich.sub(r',(\s*[}\]])', r'\1', result)
+        result = _re_enrich.sub(r'("|\.d+|true|false|null)(\s*\n\s*")', r'\1,\2', result)
+        result = _re_enrich.sub(r'(}|])(\s*\n\s*")', r'\1,\2', result)
+        if result.strip().startswith("```"):
+            result = result.strip().split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        
+        enrichment = json.loads(result)
+        # Merge enrichment fields into story
+        for key in ["narrative_analysis", "who_benefits", "competing_narratives",
+                     "narrative_gaps", "narrative_convergence", "civilian_impact",
+                     "source_diversity", "contradiction_flags"]:
+            if key in enrichment:
+                story[key] = enrichment[key]
+        print(f"  Enriched: {headline[:50]}")
+    except Exception as e:
+        print(f"  Enrichment failed (non-fatal): {e}")
+    
+    return story
+
+
 def fetch_fred(series_id):
     data = fetch_url(f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}")
     if not data: return None
@@ -3046,6 +3114,12 @@ def run_scraper():
                             pass
 
                 stories.append(story)
+                # Step 2: enrich with deep analysis (non-fatal if fails)
+                try:
+                    enrich_story(story)
+                except Exception as e:
+                    print(f"  Enrich error (non-fatal): {e}")
+
             time.sleep(1.2)
         else:
             # Fallback without API key
