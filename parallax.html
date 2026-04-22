@@ -2288,26 +2288,67 @@ function v6_renderSourcesPane(story) {
   html += '</ul>';
   return html;
 }
-function v6_renderPanes(story) {
-  const stub = function(label) {
-    return '<p class="v6-empty">' + v6_esc(label) + ' content arrives when backend produces this data.</p>';
-  };
-  let overview = '';
-  const body = story.body || story.overview_prose || story.overview;
-  if (body) {
-    const paras = String(body).split(/\n\n+/).filter(p => p.trim());
-    overview = '<div class="v6-prose">' + paras.map(p => '<p>' + v6_esc(p) + '</p>').join('') + '</div>';
-  } else { overview = stub('Overview'); }
-  return [
-    '<section class="v6-pane v6-active" id="v6-pane-overview">' + overview + '</section>',
-    '<section class="v6-pane" id="v6-pane-analysis">' + stub('Analysis') + '</section>',
-    '<section class="v6-pane" id="v6-pane-connecting">' + stub('Connecting Events') + '</section>',
-    '<section class="v6-pane" id="v6-pane-sowhat">' + stub('So What') + '</section>',
-    '<section class="v6-pane" id="v6-pane-sources">' + v6_renderSourcesPane(story) + '</section>',
-    '<section class="v6-pane" id="v6-pane-shifts">' + stub('Narrative Shifts') + '</section>',
-    '<section class="v6-pane" id="v6-pane-psyops">' + stub('Psyops Signal') + '</section>',
-    '<section class="v6-pane" id="v6-pane-confidence">' + stub('Confidence') + '</section>'
-  ].join('');
+function v6_renderPanes(s) {
+  var na = s.narrative_analysis || '';
+  var wb = s.who_benefits || [];
+  var cn = s.competing_narratives || [];
+  var ng = s.narrative_gaps || '';
+  var nc = s.narrative_convergence || '';
+  var ci = s.civilian_impact || '';
+  var sd = s.source_diversity || '';
+  var cf = s.contradiction_flags || [];
+  var sc = s.source_citations || [];
+  
+  // Analysis pane
+  var analysisHtml = '';
+  if (na) analysisHtml += '<p>' + na + '</p>';
+  if (wb.length) {
+    analysisHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">WHO BENEFITS</h4>';
+    for (var i = 0; i < wb.length; i++) {
+      var b = wb[i];
+      analysisHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid var(--accent);opacity:0.9"><strong>' + (b.actor||'') + '</strong> (' + (b.level||'') + ') — ' + (b.benefit||'') + '</div>';
+    }
+  }
+  if (!analysisHtml) analysisHtml = '<p style="opacity:0.4;font-style:italic">Analysis data will appear after enrichment runs.</p>';
+  
+  // Connecting Events pane
+  var connectHtml = '';
+  if (cn.length) {
+    connectHtml += '<h4 style="color:var(--accent);margin:0 0 8px;font-size:11px;letter-spacing:1px">COMPETING NARRATIVES</h4>';
+    for (var j = 0; j < cn.length; j++) {
+      var n = cn[j];
+      connectHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid ' + (n.verdict==='supported'?'#4a7':'#c74') + '"><strong>' + (n.source_actor||'') + '</strong>: ' + (n.narrative||'') + ' <span style="opacity:0.5">(' + (n.verdict||'') + ')</span></div>';
+    }
+  }
+  if (ng) connectHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">GAPS</h4><p>' + ng + '</p>';
+  if (nc) connectHtml += '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">CONVERGENCE</h4><p>' + nc + '</p>';
+  if (!connectHtml) connectHtml = '<p style="opacity:0.4;font-style:italic">Connecting events data will appear after enrichment runs.</p>';
+  
+  // Sources pane
+  var srcHtml = '';
+  for (var k = 0; k < sc.length; k++) {
+    var src = sc[k];
+    srcHtml += '<div style="margin:8px 0;padding:8px 12px;border-left:2px solid var(--accent)"><strong>' + (src.source||'') + '</strong> <span style="opacity:0.5">(' + (src.lean||src.platform||'') + ')</span><br><span style="opacity:0.8">' + (src.claim||'') + '</span></div>';
+  }
+  if (!srcHtml) srcHtml = '<p style="opacity:0.4;font-style:italic">No sources available.</p>';
+  
+  // Confidence pane
+  var confHtml = '<p><strong>Level:</strong> ' + (s.confidence||'unknown') + '</p>';
+  confHtml += '<p>' + (s.confidence_reason||'') + '</p>';
+  if (sd) confHtml += '<p><strong>Source diversity:</strong> ' + sd + '</p>';
+  if (cf.length) {
+    confHtml += '<h4 style="color:#c74;margin:12px 0 8px;font-size:11px;letter-spacing:1px">CONTRADICTION FLAGS</h4>';
+    for (var m = 0; m < cf.length; m++) confHtml += '<p style="border-left:2px solid #c74;padding-left:10px">' + cf[m] + '</p>';
+  }
+  
+  return '<div class="v6-pane" data-tab="overview" style="display:block"><p>' + (s.overview_prose||s.summary||'No overview available.') + '</p></div>' +
+    '<div class="v6-pane" data-tab="analysis" style="display:none">' + analysisHtml + '</div>' +
+    '<div class="v6-pane" data-tab="connecting" style="display:none">' + connectHtml + '</div>' +
+    '<div class="v6-pane" data-tab="sowhat" style="display:none"><p>' + (s.why_it_matters||'') + '</p>' + (ci ? '<h4 style="color:var(--accent);margin:16px 0 8px;font-size:11px;letter-spacing:1px">CIVILIAN IMPACT</h4><p>' + ci + '</p>' : '') + '</div>' +
+    '<div class="v6-pane" data-tab="sources" style="display:none">' + srcHtml + '</div>' +
+    '<div class="v6-pane" data-tab="narrative" style="display:none"><p style="opacity:0.4;font-style:italic">Narrative shift tracking will populate with multiple scrape cycles.</p></div>' +
+    '<div class="v6-pane" data-tab="psyops" style="display:none"><p style="opacity:0.4;font-style:italic">Psyops signal detection coming soon.</p></div>' +
+    '<div class="v6-pane" data-tab="confidence" style="display:none">' + confHtml + '</div>';
 }
 function v6_renderFoot(story) {
   const predCount = (story.predictions && story.predictions.length) || 0;
@@ -2317,45 +2358,44 @@ function v6_renderFoot(story) {
   if (psyopsCount > 0) parts.push(psyopsCount + ' psyops signal' + (psyopsCount === 1 ? '' : 's'));
   return '<div class="v6-foot"><span>' + parts.join(' \u00b7 ') + '</span><span class="v6-go">CLICK TO <span data-toggle-label>EXPAND</span> \u2192</span></div>';
 }
-function v6_renderStoryCard(story, idx) {
-  const isOpen = false;
-  const cardId = 'v6-card-' + (story.id || idx || Math.random().toString(36).slice(2, 8));
-  return '<article class="v6-card' + (isOpen ? ' v6-is-open' : '') + '" id="' + cardId + '">' +
+function v6_renderStoryCard(story, isOpen) {
+  var sid = story.story_id || story.id || '';
+  return '<div class="v6-card' + (isOpen ? ' v6-is-open' : '') + '" data-sid="' + sid + '">' +
     v6_renderTopStrip(story) +
-    '<header class="v6-card-head" onclick="v6_toggleCard(this)">' +
-      v6_renderMetaRow(story) +
-      '<h2 class="v6-headline">' + v6_or(story.headline || story.title, 'Headline pending') + '</h2>' +
-      '<p class="v6-hook">' + v6_or(story.hook || story.subline, 'Hook line pending.') + '</p>' +
-      v6_renderQuickStack(story) +
-    '</header>' +
+    '<div class="v6-card-head" onclick="v6_toggleCard(this)">' +
+      '<h3 class="v6-headline">' + (story.headline || '') + '</h3>' +
+      '<div class="v6-hook">' + (story.hook || '') + '</div>' +
+    '</div>' +
+    v6_renderQuickStack(story) +
+    v6_renderTabBar(story) +
     '<div class="v6-card-body">' +
-      v6_renderTabBar(story) +
       v6_renderPanes(story) +
     '</div>' +
-    v6_renderFoot(story) +
-  '</article>';
+    v6_renderFoot(story, isOpen) +
+  '</div>';
 }
-function v6_toggleCard(headEl) {
-  const card = headEl.closest('.v6-card');
+function v6_toggleCard(el) {
+  var card = el.closest('.v6-card');
   if (!card) return;
   card.classList.toggle('v6-is-open');
-  const lbl = card.querySelector('[data-toggle-label]');
-  if (lbl) lbl.textContent = card.classList.contains('v6-is-open') ? 'COLLAPSE' : 'EXPAND';
 }
-function v6_switchTab(tabEl) {
-  const card = tabEl.closest('.v6-card');
+function v6_switchTab(btn, tabName) {
+  var card = btn.closest('.v6-card');
   if (!card) return;
-  card.querySelectorAll('.v6-tab').forEach(t => t.classList.remove('v6-active'));
-  card.querySelectorAll('.v6-pane').forEach(p => p.classList.remove('v6-active'));
-  tabEl.classList.add('v6-active');
-  const paneId = tabEl.dataset.pane;
-  const pane = card.querySelector('#v6-pane-' + paneId);
-  if (pane) pane.classList.add('v6-active');
+  // Expand the card if collapsed
+  if (!card.classList.contains('v6-is-open')) {
+    card.classList.add('v6-is-open');
+  }
+  // Switch active tab button
+  var tabs = card.querySelectorAll('.v6-tab-btn');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('v6-tab-active');
+  btn.classList.add('v6-tab-active');
+  // Switch active pane
+  var panes = card.querySelectorAll('.v6-pane');
+  for (var j = 0; j < panes.length; j++) {
+    panes[j].style.display = panes[j].getAttribute('data-tab') === tabName ? 'block' : 'none';
+  }
 }
-  
-
-  
-// == v55-fe DAILY BRIEF v1.6 RENDERER ==
 function v6_renderBriefHeader(brief) {
   if (!brief) brief = {};
   const region = brief.region || 'Global';
