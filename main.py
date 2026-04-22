@@ -2591,7 +2591,7 @@ NEUTRALITY:
 
 CROSS-SOURCE ANALYSIS:
 - When Western and non-Western sources report the same fact, that is high confidence
-- When sources contradict each other, the contradiction IS the story — present both versions as fact
+- When sources contradict each other, note it clearly — present both versions as fact and let the reader see the gap
 - When a government says one thing but does another, state both the words and the actions. The reader sees the gap
 - Track what has changed: if an actor's position shifted from yesterday, note what they said before and what they say now
 
@@ -2610,11 +2610,11 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
   "watch_level": "routine|elevated|active|urgent",
   "hook": "One sentence max 15 words — the key tension or contradiction in this story",
   "so_what_short": "One sentence connecting SPECIFIC facts from THIS story to why they matter. Not generic analysis — tie directly to what happened",
-  "summary": "TWO paragraphs max 150 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body — sources go in source_citations",
+  "summary": "THREE paragraphs, 250-300 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body — sources go in source_citations",
   "what_is_known": "Confirmed facts only. What multiple sources agree on",
   "what_is_disputed": "Where sources contradict each other. Side A says X, Side B says Y. State both flatly",
   "why_it_matters": "Second-order effects. What this changes. What to watch next. Be specific to this event, not generic",
-  "overview_prose": "2-3 paragraph narrative. Synthesise all sources into one coherent story. If actors contradict themselves or each other, state the contradiction as fact. Track narrative shifts if prior context is available",
+  "overview_prose": "3-4 paragraph detailed narrative. Synthesise all sources into one coherent story. If actors contradict themselves or each other, state the contradiction as fact. Track narrative shifts if prior context is available",
   "top_call": {{"text": "Specific next development that follows from THIS story within 48h — not generic", "rate_numerator": 3, "rate_denominator": 5}},
   "confidence_reason": "One sentence explaining confidence level based on source agreement and verification",
   "source_citations": [
@@ -2624,7 +2624,7 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
   "velocity_score": 50,
   "provisional": false
 }}""""
-    result = call_claude(prompt, max_tokens=3000)
+    result = call_claude(prompt, max_tokens=4000)
     if not result:
             _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
             print(f"  Story gen: Claude returned empty")
