@@ -3191,14 +3191,7 @@ def scheduler():
     last_brief_date = None
 
     # v88: no first run on deploy — wait for scheduled time (7 AM AZ / 14:00 UTC)
-    # Scheduler loop below handles timing
     print("Scheduler started — next scrape at 7 AM Arizona (14:00 UTC)")
-    except Exception as e:
-        import traceback
-        print(f"Scraper error: {e}")
-        print(traceback.format_exc())
-        last_run["status"] = f"error: {e}"
-
     while True:
         time.sleep(60)  # Check every minute for brief trigger
 
