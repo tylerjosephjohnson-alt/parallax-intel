@@ -2480,7 +2480,7 @@ function v6_renderBriefTabs(brief) {
       // If still one block, split roughly every 400 chars at ". " boundaries
       var result = [];
       var current = "";
-      var parts = text.split(/(?<=\. )/);
+      var parts = text.split(/(?<=\. )(?=[A-Z])/);
       for (var i = 0; i < parts.length; i++) {
         current += parts[i];
         if (current.length > 400) { result.push(current.trim()); current = ""; }
@@ -2498,7 +2498,7 @@ function v6_renderBriefTabs(brief) {
   if (brief.top_stories && !brief.stories) brief.stories = brief.top_stories;
   if (brief.overnight_signals && !brief.expected_today) {
     brief.expected_today = brief.overnight_signals.map(function(s){
-      return {text: s.signal, source: s.source, significance: s.significance};
+      return {text: s.signal, label: s.signal, source: s.source, significance: s.significance};
     });
   }
 
