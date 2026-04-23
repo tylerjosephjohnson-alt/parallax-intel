@@ -2496,7 +2496,14 @@ function v6_renderBriefTabs(brief) {
   });
   html += '</div>';
   html += '<div class="v6-brief-panel v6-active" id="v6-bp-overview">';
-  html += brief.overview_prose ? '<div class="v6-prose">'+String(brief.overview_prose).split(/\n\n+/).filter(p=>p.trim()).map(p=>'<p>'+v6_esc(p)+'</p>').join('')+'</div>' : '<p class="v6-empty">Overview will appear when the brief is generated.</p>';
+  html += brief.overview_prose ? '<div class="v6-prose">'+String(brief.overview_prose).split(/\n\n+/).filter(p=>p.trim()).map(function(p){
+        var h = p.match(/^(CURRENT SITUATION|THE CONNECTIONS|WHAT TO WATCH TODAY|WHAT MAINSTREAM IS MISSING)\s*[—\-]?\s*/);
+        if (h) {
+          var body = p.substring(h[0].length);
+          return '<div style="margin:24px 0 8px;padding:8px 0;border-top:1px solid rgba(255,255,255,0.08)"><span style="font-size:11px;letter-spacing:2px;color:var(--accent,#c9a55a);font-weight:700">' + v6_esc(h[1]) + '</span></div><p style="line-height:1.8;margin:0 0 12px">' + v6_esc(body) + '</p>';
+        }
+        return '<p style="line-height:1.8;margin:0 0 12px">' + v6_esc(p) + '</p>';
+      }).join('')+'</div>' : '<p class="v6-empty">Overview will appear when the brief is generated.</p>';
   html += '</div>';
   html += '<div class="v6-brief-panel" id="v6-bp-analysis"><p class="v6-empty">Analysis will appear when the brief is generated.</p></div>';
   html += '<div class="v6-brief-panel" id="v6-bp-expected"><p class="v6-empty">Expected-today predictions will appear when the brief is generated.</p></div>';
