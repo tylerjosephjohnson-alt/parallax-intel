@@ -2424,6 +2424,18 @@ function v6_adaptBriefData(raw) {
 }
 
 function v6_renderBriefHeader(brief) {
+  // v74-fe: map brief.json fields to expected names
+  if (brief.headline_brief && !brief.subline) brief.subline = brief.headline_brief;
+  if (brief.intelligence_overview && !brief.summary) {
+    var io = brief.intelligence_overview;
+    brief.summary = (io.paragraph_1_situation || "").substring(0, 300);
+  }
+  if (brief.overnight_signals && !brief.urgent_count) {
+    brief.urgent_count = brief.overnight_signals.filter(function(s){return s.significance==="high"}).length;
+    brief.active_count = (brief.top_stories || []).length;
+  }
+  if (brief.threat_level && !brief.watch_caption) brief.watch_caption = brief.threat_level.toUpperCase();
+
   if (!brief) brief = {};
   const region = brief.region || 'Global';
   const date = brief.date || new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -2456,6 +2468,22 @@ function v6_renderBriefHeader(brief) {
   return html;
 }
 function v6_renderBriefTabs(brief) {
+  // v74-fe: map brief.json fields to expected names
+  if (brief.intelligence_overview && !brief.overview_prose) {
+    var io = brief.intelligence_overview;
+    brief.overview_prose = "";
+    if (io.paragraph_1_situation) brief.overview_prose += "<h4 style=\"color:var(--accent);font-size:11px;letter-spacing:1px;margin:0 0 8px\">CURRENT SITUATION</h4><p>" + io.paragraph_1_situation + "</p>";
+    if (io.paragraph_2_connections) brief.overview_prose += "<h4 style=\"color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px\">CONNECTIONS</h4><p>" + io.paragraph_2_connections + "</p>";
+    if (io.paragraph_3_what_watch) brief.overview_prose += "<h4 style=\"color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px\">WHAT TO WATCH</h4><p>" + io.paragraph_3_what_watch + "</p>";
+    if (io.paragraph_4_buried) brief.overview_prose += "<h4 style=\"color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px\">WHAT MAINSTREAM IS MISSING</h4><p>" + io.paragraph_4_buried + "</p>";
+  }
+  if (brief.top_stories && !brief.stories) brief.stories = brief.top_stories;
+  if (brief.overnight_signals && !brief.expected_today) {
+    brief.expected_today = brief.overnight_signals.map(function(s){
+      return {text: s.signal, source: s.source, significance: s.significance};
+    });
+  }
+
   if (!brief) brief = {};
   const sc = (brief.stories&&brief.stories.length)||0, ec = (brief.expected_today&&brief.expected_today.length)||0;
   const tabs = [{id:'overview',label:'Overview',c:null},{id:'analysis',label:'Analysis',c:null},{id:'expected',label:'Expected today',c:ec},{id:'stories',label:'Top stories',c:sc},{id:'signals',label:'Signals',c:0}];
