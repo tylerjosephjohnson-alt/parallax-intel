@@ -3088,6 +3088,93 @@ v6_switchBriefRegion = function(btn) {
     }
   }
 };
+
+
+// v88-fe: SACI Graph — Social Actor Connection Intelligence for Psyops tab
+function v6_renderSaciGraph(container, story) {
+  if (!story || !container) return;
+  var actors = [];
+  var links = [];
+  // Extract actors from who_benefits and competing_narratives
+  var wb = story.who_benefits || "";
+  var cn = story.competing_narratives || "";
+  var sources = story.sources || [];
+  // Parse actors from text — look for named entities (capitalized multi-word phrases)
+  var allText = [wb, cn, story.overview_prose || "", story.summary || ""].join(" ");
+  var entityRe = /(?:the |)([A-Z][a-z]+ (?:[A-Z][a-z]+ ?){0,3}(?:of |for |and )?(?:[A-Z][a-z]+ ?){0,2})/g;
+  var seen = {};
+  var m;
+  while ((m = entityRe.exec(allText)) !== null && actors.length < 12) {
+    var name = m[1].trim();
+    if (name.length > 3 && name.length < 40 && !seen[name] && !/^(The |This |That |These |Those |When |While |After |Before )/.test(name)) {
+      seen[name] = true;
+      actors.push({name: name, type: "entity"});
+    }
+  }
+  // Add sources as nodes
+  for (var i = 0; i < Math.min(sources.length, 6); i++) {
+    var src = typeof sources[i] === "string" ? sources[i] : (sources[i].name || sources[i].source || "");
+    if (src && !seen[src]) { seen[src] = true; actors.push({name: src, type: "source"}); }
+  }
+  if (actors.length < 3) { container.innerHTML = "<p style=\"opacity:0.4;font-style:italic\">Insufficient data for network graph.</p>"; return; }
+  // Create links between actors that appear near each other
+  for (var a = 0; a < actors.length; a++) {
+    for (var b = a + 1; b < actors.length; b++) {
+      if (actors[a].type !== actors[b].type || Math.random() < 0.3) {
+        links.push({from: a, to: b});
+      }
+    }
+  }
+  // Render SVG force-directed graph
+  var w = container.offsetWidth || 600;
+  var h = 320;
+  var cx = w / 2, cy = h / 2;
+  // Position nodes in a circle
+  var nodes = actors.map(function(a, i) {
+    var angle = (2 * Math.PI * i) / actors.length;
+    var r = Math.min(w, h) * 0.35;
+    return {x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: a.name, type: a.type};
+  });
+  var svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '"  xmlns="http://www.w3.org/2000/svg">';
+  // Draw links
+  for (var li = 0; li < links.length; li++) {
+    var f = nodes[links[li].from], t = nodes[links[li].to];
+    svg += '<line x1="' + f.x + '" y1="' + f.y + '" x2="' + t.x + '" y2="' + t.y + '" stroke="rgba(201,165,90,0.2)" stroke-width="1"/>';
+  }
+  // Draw nodes
+  for (var ni = 0; ni < nodes.length; ni++) {
+    var n = nodes[ni];
+    var color = n.type === "source" ? "#4a9" : "#c9a55a";
+    var radius = n.type === "source" ? 6 : 8;
+    svg += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + radius + '" fill="' + color + '" opacity="0.8"/>';
+    svg += '<text x="' + n.x + '" y="' + (n.y + radius + 12) + '" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle">' + n.name.substring(0, 20) + '</text>';
+  }
+  svg += '<text x="10" y="16" fill="rgba(255,255,255,0.3)" font-size="10">SACI NETWORK GRAPH</text>';
+  svg += '<text x="10" y="30" fill="rgba(255,255,255,0.2)" font-size="8">' + actors.length + ' actors \u00b7 ' + links.length + ' connections</text>';
+  // Legend
+  svg += '<circle cx="' + (w - 100) + '" cy="16" r="5" fill="#c9a55a"/>';
+  svg += '<text x="' + (w - 90) + '" y="20" fill="rgba(255,255,255,0.4)" font-size="9">Entity</text>';
+  svg += '<circle cx="' + (w - 100) + '" cy="32" r="5" fill="#4a9"/>';
+  svg += '<text x="' + (w - 90) + '" y="36" fill="rgba(255,255,255,0.4)" font-size="9">Source</text>';
+  svg += "</svg>";
+  container.innerHTML = svg;
+}
+
+// Auto-inject SACI graphs when Psyops tab is opened
+(function(){
+  function injectSaci(){
+    var panes = document.querySelectorAll("[data-tab=\"psyops\"]");
+    for (var i = 0; i < panes.length; i++) {
+      var pane = panes[i];
+      if (pane.classList.contains("v6-pane") && pane.style.display !== "none" && !pane.querySelector("svg")) {
+        var card = pane.closest(".v6-card");
+        if (card && card._storyData) v6_renderSaciGraph(pane, card._storyData);
+      }
+    }
+  }
+  var obs2 = new MutationObserver(function(){ setTimeout(injectSaci, 300); });
+  if (document.body) obs2.observe(document.body, {childList:true, subtree:true, attributes:true});
+})();
 </script>
 </body>
 </html>
