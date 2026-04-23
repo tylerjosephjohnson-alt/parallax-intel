@@ -8,7 +8,7 @@
   :root {
     --bg: #0b0d10;
     --bg-card: #14171c;
-    --bg-hover: #1c2026;
+    --bg-hover: #1c2026
     --border: rgba(245, 239, 224, 0.08);
     --border-strong: rgba(245, 239, 224, 0.16);
     --text: #f5efe0;
@@ -3461,6 +3461,28 @@ window.atlasShowRegion = function(regionId){
     }, 600);
   };
 })();
+</script>
+
+<!-- v96-fe: fix SACI bars — bypass broken v94-fe wrapper -->
+<script>
+window.v6_renderSaciGraph = function(container, story) {
+  if (!container || !story) return;
+  if (container.getAttribute("data-tab") !== "psyops") return;
+  if (container.querySelector(".saci-bars")) return;
+  var sources = story.sources || [], citations = story.source_citations || [], cn = story.competing_narratives || [];
+  var colors = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#c0392b","#2980b9","#27ae60"];
+  var entities = {};
+  sources.forEach(function(s,i){ entities[s] = {type:"source",count:0,color:colors[i%colors.length]}; });
+  citations.forEach(function(c){ var src=c.source||c.name||""; if(!entities[src]) entities[src]={type:"source",count:0,color:colors[Object.keys(entities).length%colors.length]}; entities[src].count++; });
+  if(Array.isArray(cn)) cn.forEach(function(n){ var actor=n.source_actor||""; if(actor&&!entities[actor]) entities[actor]={type:"actor",count:0,color:colors[Object.keys(entities).length%colors.length]}; if(actor) entities[actor].count++; });
+  var keys = Object.keys(entities).sort(function(a,b){return entities[b].count-entities[a].count;});
+  if(keys.length===0) return;
+  var mx = Math.max.apply(null,keys.map(function(k){return entities[k].count||1;}));
+  var h = '<div class="saci-bars" style="padding:12px 0"><div style="font-size:10px;letter-spacing:1.5px;opacity:0.4;margin-bottom:12px">SOURCE INTELLIGENCE MAP</div>';
+  keys.slice(0,12).forEach(function(k){ var e=entities[k],w=Math.max(15,Math.round((e.count/mx)*100)),t=e.type==="actor"?"ACTOR":"SOURCE"; h+='<div style="display:flex;align-items:center;margin:4px 0;gap:8px"><div style="width:100px;font-size:11px;text-align:right;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+k+'</div><div style="flex:1;height:18px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+e.color+';border-radius:3px;display:flex;align-items:center;padding-left:6px"><span style="font-size:9px;color:#000;font-weight:bold;white-space:nowrap">'+t+' \u00b7 '+e.count+'</span></div></div></div>'; });
+  h += '<div style="margin-top:8px;font-size:10px;opacity:0.3">'+keys.length+' entities tracked</div></div>';
+  container.insertAdjacentHTML("beforeend", h);
+};
 </script>
 
 
