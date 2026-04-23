@@ -2295,8 +2295,6 @@ function v6_renderPanes(s) {
   var sc = s.source_citations || [];
   var ce = s.connecting_events || [];
 
-}
-
   // ANALYSIS pane — merged: narrative analysis + who benefits + competing narratives + gaps + convergence
   var aHtml = "";
   if (na) aHtml += '<div style="margin:0 0 16px"><p>' + na + '</p></div>';
@@ -2424,35 +2422,6 @@ function v6_adaptBriefData(raw) {
   raw._adapted = true;
   return raw;
 }
-
-
-function v6_formatDate(iso) {
-  if (!iso) return "";
-  try {
-    var d = new Date(iso);
-    if (isNaN(d)) return iso;
-    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    var h = d.getUTCHours() - 7; // Convert UTC to AZ (MST = UTC-7)
-    if (h < 0) h += 24;
-    var ampm = h >= 12 ? "PM" : "AM";
-    h = h % 12 || 12;
-    var min = d.getUTCMinutes();
-    var minStr = min < 10 ? "0" + min : "" + min;
-    return "Last updated " + months[d.getUTCMonth()] + " " + d.getUTCDate() + ", " + d.getUTCFullYear() + " at " + h + ":" + minStr + " " + ampm + " MTN";
-  } catch(e) { return iso; }
-
-// v83-fe: Auto-format ISO timestamps to readable MTN time
-(function(){
-  function formatTimestamps(){
-    document.querySelectorAll(".v6-updated").forEach(function(el){
-      var t = el.textContent.trim();
-      if (t.match(/\d{4}-\d{2}-\d{2}T/)) el.textContent = v6_formatDate(t.replace(/^UPDATED\s*/i,""));
-    });
-  }
-  var obs = new MutationObserver(function(){ setTimeout(formatTimestamps, 100); });
-  obs.observe(document.body, {childList:true, subtree:true});
-  setTimeout(formatTimestamps, 1000);
-})();
 
 function v6_renderBriefHeader(brief) {
   // v74-fe: map brief.json fields to expected names
