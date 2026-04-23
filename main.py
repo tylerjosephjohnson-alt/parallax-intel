@@ -5,12 +5,6 @@ Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
 The Flask server serves the app + stories.json.
 The background thread runs the scraper every 30 minutes.
 
-@app.route('/briefs-archive.json')
-def serve_briefs_archive():
-    if os.path.exists(BRIEF_ARCHIVE_FILE):
-        return send_from_directory(os.path.dirname(BRIEF_ARCHIVE_FILE), os.path.basename(BRIEF_ARCHIVE_FILE))
-    return jsonify([])
-
 
 @app.route('/test-claude')
 def test_claude():
@@ -3394,6 +3388,13 @@ if FLASK:
         t = threading.Thread(target=run_scraper, daemon=True)
         t.start()
         return jsonify({"status": "triggered", "message": "Scraper started in background"})
+
+
+    @app.route("/briefs-archive.json")
+    def briefs_archive():
+        if os.path.exists(BRIEF_ARCHIVE_FILE):
+            return send_from_directory(os.path.dirname(BRIEF_ARCHIVE_FILE), os.path.basename(BRIEF_ARCHIVE_FILE))
+        return jsonify([])
 
     @app.route("/brief.json")
     def brief_json():
