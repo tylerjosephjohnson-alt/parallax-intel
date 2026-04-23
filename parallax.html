@@ -3322,6 +3322,96 @@ function v6_renderSaciGraph(container, story) {
   }
   setTimeout(populateStubs, 2000);
 })();
+
+
+// v91-fe: Display new v95 enrichment fields in story card tabs
+(function(){
+  var _stories = null;
+  function getStory(headline, cb){
+    if (_stories) { cb(_stories.find(function(s){return s.headline === headline})); return; }
+    fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+      _stories = d.stories || [];
+      cb(_stories.find(function(s){return s.headline === headline}));
+    });
+  }
+  function mkSection(title, content, color){
+    if (!content) return "";
+    var c = color || "var(--accent,#c9a55a)";
+    return '<div style="margin:16px 0 0;padding:12px 16px;border-left:3px solid '+c+';background:rgba(255,255,255,0.02)">' +
+      '<div style="font-size:10px;letter-spacing:1.5px;opacity:0.4;margin-bottom:6px">'+title+'</div>' +
+      '<div style="font-size:13px;line-height:1.6;opacity:0.8">'+content+'</div></div>';
+  }
+  function injectV95Fields(){
+    var panes = document.querySelectorAll(".v6-pane");
+    for (var i = 0; i < panes.length; i++){
+      var pane = panes[i];
+      if (pane.style.display === "none" || pane.getAttribute("data-v95")) continue;
+      var tab = pane.getAttribute("data-tab");
+      if (!tab || (tab !== "analysis" && tab !== "psyops" && tab !== "expect")) continue;
+      var card = pane.closest(".v6-card");
+      if (!card) continue;
+      var h = card.querySelector("h2, h3");
+      if (!h) continue;
+      pane.setAttribute("data-v95","1");
+      var hText = h.textContent.trim();
+      getStory(hText, function(s){
+        if (!s) return;
+        var extra = "";
+        if (tab === "analysis"){
+          extra += mkSection("FINANCIAL CONNECTIONS", s.financial_connections, "#e67e22");
+          if (s.key_figures_involved && Array.isArray(s.key_figures_involved) && s.key_figures_involved.length > 0){
+            var kfHtml = s.key_figures_involved.map(function(kf){
+              return '<div style="margin:4px 0;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:12px">' +
+                '<strong style="color:var(--accent,#c9a55a)">' + (kf.name||"") + '</strong>' +
+                ' <span style="opacity:0.4">(' + (kf.role||"") + ')</span> — ' + (kf.connection||"") + '</div>';
+            }).join("");
+            extra += mkSection("KEY FIGURES INVOLVED", kfHtml);
+          }
+          extra += mkSection("WHAT\u2019S MISSING — ABSENCE SIGNALS", s.absence_signals, "#e74c3c");
+          extra += mkSection("HISTORICAL PATTERN", s.historical_pattern, "#8e44ad");
+        }
+        if (tab === "psyops"){
+          if (s.red_team_blue_team){
+            var rt = s.red_team_blue_team;
+            var rtHtml = "";
+            if (rt.actor_a){
+              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(231,76,60,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#e74c3c;margin-bottom:4px">RED TEAM: ' + (rt.actor_a.name||"") + '</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_a.red_team||"") + '</p></div>';
+              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(52,152,219,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#3498db;margin-bottom:4px">BLUE TEAM: ' + (rt.actor_a.name||"") + '</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_a.blue_team||"") + '</p></div>';
+            }
+            if (rt.actor_b){
+              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(231,76,60,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#e74c3c;margin-bottom:4px">RED TEAM: ' + (rt.actor_b.name||"") + '</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_b.red_team||"") + '</p></div>';
+              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(52,152,219,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#3498db;margin-bottom:4px">BLUE TEAM: ' + (rt.actor_b.name||"") + '</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_b.blue_team||"") + '</p></div>';
+            }
+            if (rt.wild_card) rtHtml += mkSection("WILD CARD", rt.wild_card, "#f39c12");
+            extra += mkSection("RED TEAM / BLUE TEAM", rtHtml);
+          }
+          if (s.psyops_indicators){
+            var pi = s.psyops_indicators;
+            var lvl = pi.coordination_level || "unknown";
+            var lvlColor = lvl === "high" ? "#e74c3c" : lvl === "medium" ? "#f39c12" : "#4a9";
+            var piHtml = '<span style="color:'+lvlColor+';font-weight:bold">' + lvl.toUpperCase() + '</span>';
+            if (pi.evidence) piHtml += ' — ' + pi.evidence;
+            extra += mkSection("PSYOPS COORDINATION SCORE", piHtml, lvlColor);
+          }
+        }
+        if (tab === "expect"){
+          extra += mkSection("SECOND ORDER EFFECTS", s.second_order_effects, "#8e44ad");
+        }
+        if (extra) pane.innerHTML += extra;
+      }.bind(null));
+    }
+  }
+  var obs5 = new MutationObserver(function(){ setTimeout(injectV95Fields, 400); });
+  if (document.body) obs5.observe(document.body, {childList:true, subtree:true, attributes:true});
+})();
 </script>
 </body>
 </html>
