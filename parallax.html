@@ -2390,64 +2390,119 @@ function v6_switchTab(btn) {
   }
 }
 function v6_renderBriefHeader(brief) {
-  if (!brief) brief = {};
-  const region = brief.region || 'Global';
-  const date = brief.date || new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const subline = brief.subline || brief.summary || '';
-  const published = brief.published || '';
-  const updated = brief.updated || brief.last_updated || '';
-  let html = '<nav class="v6-region-bar">';
-  [{id:'na',label:'North America',w:'elevated'},{id:'eu',label:'Europe',w:'routine'},{id:'me',label:'Middle East',w:'urgent'},{id:'ea',label:'East Asia',w:'active'},{id:'sa',label:'South Asia',w:'elevated'},{id:'af',label:'Africa',w:'routine'},{id:'la',label:'Latin America',w:'routine'},{id:'ru',label:'Russia \u00b7 Eurasia',w:'active'},{id:'gl',label:'Global \u00b7 Transnational',w:'elevated'}].forEach(r => {
-    const active = (region.toLowerCase().includes(r.label.toLowerCase().split(' ')[0])) ? ' v6-active' : '';
-    html += '<button class="v6-region-chip' + active + '" onclick="v6_switchBriefRegion(this)">' + v6_esc(r.label) + ' <span class="v6-w v6-w-' + r.w + '"></span></button>';
-  });
-  html += '</nav>';
-  html += '<header class="v6-brief-head"><div>';
-  html += '<div class="v6-eyebrow"><span class="v6-pulse"></span>DAILY BRIEF \u00b7 ' + v6_esc(region.toUpperCase()) + '</div>';
-  html += '<h1>' + v6_esc(region) + ' \u2014 ' + v6_esc(date) + '</h1>';
-  if (subline) html += '<p class="v6-subline">' + v6_esc(subline) + '</p>';
-  html += '<div class="v6-timestamps">';
-  if (published) html += '<span>' + v6_esc(published) + '</span>';
-  if (updated) html += '<span class="v6-live">' + v6_esc(updated) + '</span>';
-  html += '</div></div>';
-  const u = brief.urgent_count||0, a = brief.active_count||0, v = brief.verdicts_correct||0, p = brief.psyops_count||0;
-  html += '<aside class="v6-summary-24h"><div class="v6-s-grid">';
-  html += '<div class="v6-s-item"><span></span><span class="v6-n v6-bad">'+u+'</span><span class="v6-k">New urgent</span></div>';
-  html += '<div class="v6-s-item"><span></span><span class="v6-n v6-active">'+a+'</span><span class="v6-k">Active developing</span></div>';
-  html += '<div class="v6-s-item"><span></span><span class="v6-n v6-ok">'+v+'</span><span class="v6-k">Verdicts correct</span></div>';
-  html += '<div class="v6-s-item"><span></span><span class="v6-n">'+p+'</span><span class="v6-k">Psyops signal</span></div>';
-  html += '</div>';
-  if (brief.watch_caption) html += '<p class="v6-cap">' + v6_esc(brief.watch_caption) + '</p>';
-  html += '</aside></header>';
-  return html;
+  var io = brief.intelligence_overview || {};
+  var ts = brief.top_stories || [];
+  var sigs = brief.overnight_signals || [];
+  var urgentCount = sigs.filter(function(s){return s.significance === 'high'}).length;
+  var activeCount = ts.length;
+  var threatColor = brief.threat_level === 'critical' ? '#c74' : brief.threat_level === 'high' ? '#ca4' : '#4a7';
+  
+  return '<div class="v6-brief-header">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">' +
+      '<div>' +
+        '<div style="font-size:11px;letter-spacing:2px;opacity:0.5;margin-bottom:8px">DAILY BRIEF \u00b7 <span style="color:' + threatColor + '">' + (brief.threat_level||'').toUpperCase() + '</span></div>' +
+        '<h1 style="font-size:28px;margin:0 0 12px">' + (brief.date || '') + '</h1>' +
+        '<div style="font-style:italic;opacity:0.8;font-size:15px;max-width:700px">' + (brief.headline_brief || '') + '</div>' +
+      '</div>' +
+      '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);padding:16px 24px;min-width:220px">' +
+        '<div style="font-size:10px;letter-spacing:1px;opacity:0.4;margin-bottom:8px">LAST 24 HOURS</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+          '<div><span style="color:#c74;font-weight:700">' + urgentCount + '</span> HIGH SIGNALS</div>' +
+          '<div><span style="color:#ca4;font-weight:700">' + activeCount + '</span> TOP STORIES</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
 }
+
 function v6_renderBriefTabs(brief) {
-  if (!brief) brief = {};
-  const sc = (brief.stories&&brief.stories.length)||0, ec = (brief.expected_today&&brief.expected_today.length)||0;
-  const tabs = [{id:'overview',label:'Overview',c:null},{id:'analysis',label:'Analysis',c:null},{id:'expected',label:'Expected today',c:ec},{id:'stories',label:'Top stories',c:sc},{id:'signals',label:'Signals',c:0}];
-  let html = '<div class="v6-brief-tabs">';
-  tabs.forEach((t,i) => {
-    html += '<button class="v6-brief-tab'+(i===0?' v6-active':'')+'" data-panel="v6-bp-'+t.id+'" onclick="v6_switchBriefTab(this)">'+v6_esc(t.label);
-    if (t.c) html += '<span class="v6-tc">'+t.c+'</span>';
-    html += '</button>';
-  });
-  html += '</div>';
-  html += '<div class="v6-brief-panel v6-active" id="v6-bp-overview">';
-  html += brief.overview_prose ? '<div class="v6-prose">'+String(brief.overview_prose).split(/\n\n+/).filter(p=>p.trim()).map(p=>'<p>'+v6_esc(p)+'</p>').join('')+'</div>' : '<p class="v6-empty">Overview will appear when the brief is generated.</p>';
-  html += '</div>';
-  html += '<div class="v6-brief-panel" id="v6-bp-analysis"><p class="v6-empty">Analysis will appear when the brief is generated.</p></div>';
-  html += '<div class="v6-brief-panel" id="v6-bp-expected"><p class="v6-empty">Expected-today predictions will appear when the brief is generated.</p></div>';
-  html += '<div class="v6-brief-panel" id="v6-bp-stories"><p class="v6-empty">Top stories will appear here when stories are generated.</p></div>';
-  html += '<div class="v6-brief-panel" id="v6-bp-signals"><p class="v6-empty">Signals panel will appear when the synthesis pipeline is active.</p></div>';
-  return html;
+  var io = brief.intelligence_overview || {};
+  var ts = brief.top_stories || [];
+  var sigs = brief.overnight_signals || [];
+  var cn = brief.contested_numbers_today || [];
+  var an = brief.analyst_note || '';
+  
+  // Overview pane — intelligence_overview paragraphs
+  var overviewHtml = '';
+  if (io.paragraph_1_situation) overviewHtml += '<h4 style="color:var(--accent);font-size:11px;letter-spacing:1px;margin:0 0 8px">CURRENT SITUATION</h4><p style="margin:0 0 16px;line-height:1.7">' + io.paragraph_1_situation + '</p>';
+  if (io.paragraph_2_connections) overviewHtml += '<h4 style="color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px">CONNECTIONS</h4><p style="margin:0 0 16px;line-height:1.7">' + io.paragraph_2_connections + '</p>';
+  if (io.paragraph_3_what_watch) overviewHtml += '<h4 style="color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px">WHAT TO WATCH TODAY</h4><p style="margin:0 0 16px;line-height:1.7">' + io.paragraph_3_what_watch + '</p>';
+  if (io.paragraph_4_buried) overviewHtml += '<h4 style="color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px">WHAT MAINSTREAM IS MISSING</h4><p style="margin:0 0 16px;line-height:1.7">' + io.paragraph_4_buried + '</p>';
+  if (!overviewHtml) overviewHtml = '<p style="opacity:0.4;font-style:italic">Overview will appear when the brief is generated.</p>';
+  
+  // Analysis pane — analyst note + contested numbers
+  var analysisHtml = '';
+  if (an) analysisHtml += '<h4 style="color:var(--accent);font-size:11px;letter-spacing:1px;margin:0 0 8px">ANALYST NOTE</h4><p style="margin:0 0 20px;line-height:1.7">' + an + '</p>';
+  if (cn.length) {
+    analysisHtml += '<h4 style="color:var(--accent);font-size:11px;letter-spacing:1px;margin:16px 0 8px">CONTESTED NUMBERS</h4>';
+    for (var i = 0; i < cn.length; i++) {
+      var c = cn[i];
+      analysisHtml += '<div style="margin:12px 0;padding:12px;border-left:2px solid #ca4;background:rgba(255,255,255,0.02)">' +
+        '<div style="font-weight:700;margin-bottom:6px">' + (c.metric||'') + '</div>' +
+        '<div style="margin:4px 0"><strong>' + (c.actor_a||'') + ':</strong> ' + (c.value_a||'') + '</div>' +
+        '<div style="margin:4px 0"><strong>' + (c.actor_b||'') + ':</strong> ' + (c.value_b||'') + '</div>' +
+        '<div style="margin:6px 0 0;opacity:0.7;font-size:13px"><em>Gap: ' + (c.why_gap||'') + '</em></div>' +
+      '</div>';
+    }
+  }
+  if (!analysisHtml) analysisHtml = '<p style="opacity:0.4;font-style:italic">Analysis will appear when the brief is generated.</p>';
+  
+  // Top Stories pane
+  var storiesHtml = '';
+  for (var j = 0; j < ts.length; j++) {
+    var s = ts[j];
+    storiesHtml += '<div style="margin:0 0 24px;padding:16px;border-left:3px solid var(--accent);background:rgba(255,255,255,0.02)">' +
+      '<div style="font-size:11px;letter-spacing:1px;opacity:0.4;margin-bottom:4px">#' + (s.rank||j+1) + ' \u00b7 ' + (s.region||'').toUpperCase() + '</div>' +
+      '<h3 style="font-size:16px;margin:0 0 8px">' + (s.headline||'') + '</h3>' +
+      '<p style="opacity:0.7;font-size:13px;margin:0 0 8px"><em>' + (s.significance||'') + '</em></p>' +
+      '<p style="line-height:1.6">' + (s.paragraph_1_situation||'').substring(0, 400) + '...</p>' +
+    '</div>';
+  }
+  if (!storiesHtml) storiesHtml = '<p style="opacity:0.4;font-style:italic">Top stories will appear when the brief is generated.</p>';
+  
+  // Signals pane
+  var signalsHtml = '';
+  for (var k = 0; k < sigs.length; k++) {
+    var sig = sigs[k];
+    var sigColor = sig.significance === 'high' ? '#c74' : sig.significance === 'moderate' ? '#ca4' : '#4a7';
+    signalsHtml += '<div style="margin:8px 0;padding:10px 14px;border-left:2px solid ' + sigColor + '">' +
+      '<div style="font-size:11px;letter-spacing:1px;color:' + sigColor + ';margin-bottom:4px">' + (sig.significance||'').toUpperCase() + '</div>' +
+      '<p style="margin:0 0 4px">' + (sig.signal||'') + '</p>' +
+      '<div style="font-size:12px;opacity:0.5">' + (sig.source||'') + '</div>' +
+    '</div>';
+  }
+  if (!signalsHtml) signalsHtml = '<p style="opacity:0.4;font-style:italic">Signals will appear when the brief is generated.</p>';
+  
+  // Tab bar + panes
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">' +
+    '<button class="v6-brief-tab v6-tab-active" data-btab="overview" onclick="v6_switchBriefTab(this)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);padding:6px 14px;font-size:11px;letter-spacing:1px;cursor:pointer">OVERVIEW</button>' +
+    '<button class="v6-brief-tab" data-btab="analysis" onclick="v6_switchBriefTab(this)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);padding:6px 14px;font-size:11px;letter-spacing:1px;cursor:pointer">ANALYSIS</button>' +
+    '<button class="v6-brief-tab" data-btab="stories" onclick="v6_switchBriefTab(this)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);padding:6px 14px;font-size:11px;letter-spacing:1px;cursor:pointer">TOP STORIES</button>' +
+    '<button class="v6-brief-tab" data-btab="signals" onclick="v6_switchBriefTab(this)" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);padding:6px 14px;font-size:11px;letter-spacing:1px;cursor:pointer">SIGNALS</button>' +
+  '</div>' +
+  '<div class="v6-brief-pane" data-btab="overview" style="display:block">' + overviewHtml + '</div>' +
+  '<div class="v6-brief-pane" data-btab="analysis" style="display:none">' + analysisHtml + '</div>' +
+  '<div class="v6-brief-pane" data-btab="stories" style="display:none">' + storiesHtml + '</div>' +
+  '<div class="v6-brief-pane" data-btab="signals" style="display:none">' + signalsHtml + '</div>';
 }
+
 function v6_switchBriefTab(btn) {
-  const c = btn.closest('#view-brief')||btn.parentElement.parentElement;
-  c.querySelectorAll('.v6-brief-tab').forEach(t=>t.classList.remove('v6-active'));
-  c.querySelectorAll('.v6-brief-panel').forEach(p=>p.classList.remove('v6-active'));
-  btn.classList.add('v6-active');
-  const p = c.querySelector('#'+btn.dataset.panel);
-  if (p) p.classList.add('v6-active');
+  var tabs = document.querySelectorAll('.v6-brief-tab');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.remove('v6-tab-active');
+    tabs[i].style.background = 'rgba(255,255,255,0.04)';
+    tabs[i].style.borderColor = 'rgba(255,255,255,0.08)';
+    tabs[i].style.color = 'rgba(255,255,255,0.6)';
+  }
+  btn.classList.add('v6-tab-active');
+  btn.style.background = 'rgba(255,255,255,0.08)';
+  btn.style.borderColor = 'rgba(255,255,255,0.15)';
+  btn.style.color = 'rgba(255,255,255,0.8)';
+  var tabName = btn.getAttribute('data-btab');
+  var panes = document.querySelectorAll('.v6-brief-pane');
+  for (var j = 0; j < panes.length; j++) {
+    panes[j].style.display = panes[j].getAttribute('data-btab') === tabName ? 'block' : 'none';
+  }
 }
 function v6_switchBriefRegion(chip) {
   document.querySelectorAll('.v6-region-chip').forEach(c=>c.classList.remove('v6-active'));
