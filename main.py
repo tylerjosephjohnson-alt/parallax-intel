@@ -239,6 +239,26 @@ RSS_FEEDS = [
     {"url": "https://www.dea.gov/press-releases/rss",                "source": "DEA Press Releases",     "role": "official"},
     {"url": "https://www.atf.gov/news/rss",                          "source": "ATF News",                "role": "official"},
 
+    # ── v91: Drug Trafficking & Gang Violence sources ─────────────────
+    # Drug Enforcement
+    {"url": "https://www.dea.gov/what-we-do/news/press-releases/rss",  "source": "DEA Press Releases",    "role": "official"},
+    {"url": "https://www.deadiversion.usdoj.gov/fed_regs/rss.xml",    "source": "DEA Diversion Control",  "role": "official"},
+    {"url": "https://www.cbp.gov/newsroom/rss-feeds",                  "source": "CBP Newsroom",           "role": "official"},
+    {"url": "https://www.justice.gov/criminal/rss",                    "source": "DOJ Criminal Division",  "role": "official"},
+    {"url": "https://www.unodc.org/unodc/en/rss.html",               "source": "UNODC",                   "role": "multilateral"},
+    {"url": "https://insightcrime.org/feed/",                          "source": "InSight Crime",           "role": "investigative"},
+    {"url": "https://www.drugpolicy.org/feed",                         "source": "Drug Policy Alliance",   "role": "ngo"},
+    {"url": "https://filtermag.org/feed/",                             "source": "Filter Magazine",         "role": "investigative"},
+    # Gang Violence / Organized Crime
+    {"url": "https://www.atf.gov/news/press-releases/rss",            "source": "ATF Press Releases",     "role": "official"},
+    {"url": "https://www.interpol.int/en/News-and-Events/News/rss",   "source": "INTERPOL News",          "role": "multilateral"},
+    {"url": "https://www.usmarshals.gov/news/rss",                    "source": "US Marshals News",       "role": "official"},
+    {"url": "https://www.ojp.gov/news/rss",                           "source": "DOJ OJP News",           "role": "official"},
+    {"url": "https://theintercept.com/feed/?lang=en",                 "source": "The Intercept",           "role": "investigative"},
+    {"url": "https://borderlandbeat.com/feeds/posts/default?alt=rss", "source": "Borderland Beat",         "role": "investigative"},
+    {"url": "https://www.occrp.org/en/rss",                           "source": "OCCRP",                   "role": "investigative"},
+
+
 ]
 
 GDELT_API = "https://api.gdeltproject.org/api/v2/doc/doc"
