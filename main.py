@@ -1801,7 +1801,7 @@ def cluster(articles, threshold=0.12):
 # ─────────────────────────────────────────────
 # CLAUDE
 # ─────────────────────────────────────────────
-def call_claude(prompt, max_tokens=2000):
+def call_claude(prompt, max_tokens=3000):
     if not ANTHROPIC_API_KEY: return None
     payload = json.dumps({
         "model": MODEL, "max_tokens": max_tokens,
@@ -2739,27 +2739,42 @@ def enrich_story(story):
     for sc in story.get("source_citations", []):
         sources_text += f"- {sc.get('source','')}: {sc.get('claim','')}\n"
     
-    prompt = f"""You previously wrote a story with headline: "{headline}"
+    prompt = f"""You are an intelligence analyst. You do not take sides. Both sides are Red Team. Both sides are Blue Team. Analyze ALL actors with equal skepticism. Follow the money. Track the timing. Flag what is absent.
+
+Story headline: "{headline}"
 Summary: {summary}
 Sources:
 {sources_text}
 
-Now provide ONLY the deep analysis fields as a JSON object. Keep each field concise (1-2 sentences max per sub-field). No markdown.
+Provide ONLY these deep-analysis fields as a JSON object. Be specific: name names, cite dates, give numbers. No vague generalities. No markdown.
 {{
-  "narrative_analysis": "2-3 sentences: what competing narratives exist around this event",
+  "narrative_analysis": "2-3 sentences: what competing narratives exist and who benefits from each version",
   "who_benefits": [
-    {{"actor": "Name", "benefit": "Why", "level": "high|medium|low"}}
+    {{"actor": "Specific name", "benefit": "Specific financial or political gain", "level": "high|medium|low"}}
   ],
   "competing_narratives": [
-    {{"source_actor": "Who", "narrative": "Their framing", "verdict": "supported|disputed|unverifiable"}}
+    {{"source_actor": "Who", "narrative": "Their exact framing", "verdict": "supported|disputed|unverifiable", "cui_bono": "Who benefits if public believes this version"}}
   ],
-  "narrative_gaps": "What key information is missing from all sources",
-  "narrative_convergence": "Where sources agree despite different perspectives",
-  "civilian_impact": "Direct human impact in one sentence",
-  "source_diversity": "Brief note on source perspective balance",
+  "financial_connections": "Which companies, banks, insurers, or financial instruments connect to this event? Who traded, contracted, or positioned before it happened?",
+  "key_figures_involved": [
+    {{"name": "Person name", "role": "Their position", "connection": "How they connect: direct action, board seat, investment, advisory role, or policy decision"}}
+  ],
+  "absence_signals": "What SHOULD be reported but is not? Which actors, agencies, or companies are conspicuously silent? What data should exist but has not appeared?",
+  "historical_pattern": "Has this exact pattern played out before? Name the previous instance with dates, actors, and outcome.",
+  "narrative_gaps": "What key information is missing from all sources that would change the analysis if known",
+  "narrative_convergence": "Where opposing sources unexpectedly agree. This often reveals ground truth.",
+  "civilian_impact": "Direct human impact: who is affected, how many, what changes for them",
+  "source_diversity": "Rate the source balance 1-5. Are we hearing from all sides or just one?",
   "connecting_events": [
-    {{"related_event": "Name of an ongoing event this connects to", "connection": "Because of [this story], [that ongoing event] is affected in [this specific way]"}}
+    {{"related_event": "Specific ongoing event", "connection": "The causal chain: because X happened, Y is now affected in Z way"}}
   ],
+  "red_team_blue_team": {{
+    "actor_a": {{"name": "First major actor", "red_team": "Their optimal aggressive next move", "blue_team": "How to defend against them"}},
+    "actor_b": {{"name": "Second major actor", "red_team": "Their optimal aggressive next move", "blue_team": "How to defend against them"}},
+    "wild_card": "Which third party profits while these two are focused on each other?"
+  }},
+  "second_order_effects": "If the most likely outcome occurs, what cascade follows that nobody is discussing?",
+  "psyops_indicators": {{"coordination_level": "none|low|medium|high", "evidence": "What specific patterns suggest coordinated or manufactured messaging?"}},
   "contradiction_flags": []
 }}"""
     
@@ -2783,8 +2798,11 @@ Now provide ONLY the deep analysis fields as a JSON object. Keep each field conc
         enrichment = json.loads(result)
         # Merge enrichment fields into story
         for key in ["narrative_analysis", "who_benefits", "competing_narratives",
-                     "narrative_gaps", "narrative_convergence", "civilian_impact",
-                     "source_diversity", "contradiction_flags", "connecting_events"]:
+                     "financial_connections", "key_figures_involved", "absence_signals",
+                     "historical_pattern", "narrative_gaps", "narrative_convergence",
+                     "civilian_impact", "source_diversity", "connecting_events",
+                     "red_team_blue_team", "second_order_effects", "psyops_indicators",
+                     "contradiction_flags"]:
             if key in enrichment:
                 story[key] = enrichment[key]
         print(f"  Enriched: {headline[:50]}")
