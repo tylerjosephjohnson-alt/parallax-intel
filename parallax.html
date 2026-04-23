@@ -1590,7 +1590,7 @@
   function buildFilterChips(stories) {
     const regions = new Set(['all']);
     stories.forEach(s => { if (s.region) regions.add(s.region); });
-    const regionOrder = ['all', 'middle-east', 'east-asia', 'europe', 'africa', 'americas', 'global'];
+    const regionOrder = ['all', 'global', 'africa', 'americas', 'asia-pacific', 'china', 'east-asia', 'europe', 'middle-east', 'russia-fsu'];
     const sortedRegions = regionOrder.filter(r => regions.has(r)).concat([...regions].filter(r => !regionOrder.includes(r)));
     renderChipRow('filter-region', sortedRegions, 'region', (r) => r === 'all' ? 'All' : r.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
     renderChipRow('filter-watch', ['all', 'routine', 'elevated', 'active', 'urgent'], 'watch', (w) => w === 'all' ? 'All' : w.charAt(0).toUpperCase() + w.slice(1));
@@ -1710,7 +1710,7 @@
   }
   
   /* v36 helpers: region ordering, threat computation */
-  window._REGION_ORDER = ['middle-east','russia-fsu','europe','east-asia','asia-pacific','africa','americas','china','global'];
+  window._REGION_ORDER = ['global','africa','americas','asia-pacific','china','east-asia','europe','middle-east','russia-fsu'];
   window._REGION_LABEL = {
     'middle-east': 'Middle East',
     'russia-fsu': 'Russia / FSU',
