@@ -2520,12 +2520,15 @@ function v6_switchBriefRegion(chip) {
 (function v6_briefBoot() {
   var briefEl = document.getElementById('view-brief');
   if (!briefEl) { setTimeout(v6_briefBoot, 300); return; }
-  if (briefEl.querySelector('.v6-region-bar')) return; // already injected
+  if (briefEl.querySelector('.v6-region-bar')) return;
   var briefContent = briefEl.querySelector('#brief-content');
   if (!briefContent) { setTimeout(v6_briefBoot, 300); return; }
-  var existing = briefEl.innerHTML;
-  var briefData = v6_adaptBriefData(window._lastBriefData || {});
-  briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy">' + existing + '</div>';
+  // v75-fe: fetch brief.json directly instead of relying on _lastBriefData
+  fetch('/brief.json').then(function(r){return r.json()}).then(function(briefData){
+    window._lastBriefData = briefData;
+    var existing = briefEl.innerHTML;
+    briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy" style="display:none">' + existing + '</div>';
+  }).catch(function(e){ console.log('Brief fetch error:', e); });
 })();
   
 
