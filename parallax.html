@@ -3039,6 +3039,55 @@ function v6_formatDate(iso) {
   if (document.body) obs.observe(document.body, {childList:true, subtree:true});
   setTimeout(formatTimestamps, 1500);
 })();
+
+
+// v87-fe: Override v6_switchBriefRegion with real region filtering
+v6_switchBriefRegion = function(btn) {
+  var region = btn.textContent.trim().toLowerCase();
+  // Toggle active state on chips
+  var chips = document.querySelectorAll(".v6-region-chip");
+  var wasActive = btn.classList.contains("v6-chip-active");
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].classList.remove("v6-chip-active");
+    chips[i].style.borderColor = "rgba(255,255,255,0.15)";
+    chips[i].style.color = "rgba(255,255,255,0.7)";
+  }
+  if (!wasActive) {
+    btn.classList.add("v6-chip-active");
+    btn.style.borderColor = "var(--accent, #c9a55a)";
+    btn.style.color = "#fff";
+  }
+  // Filter brief content by region
+  var brief = window._lastBriefData;
+  if (!brief || !brief.top_stories) return;
+  var activeRegion = wasActive ? null : region;
+  // Update header to show selected region
+  var headerEl = document.querySelector(".v6-brief-header h1");
+  if (headerEl) {
+    headerEl.textContent = (activeRegion ? btn.textContent.trim() : "Global") + " — " + brief.date;
+  }
+  // Filter the Top Stories pane
+  var storiesPane = document.getElementById("v6-bp-stories");
+  if (storiesPane) {
+    var filtered = activeRegion ? brief.top_stories.filter(function(s) {
+      return (s.region || "").toLowerCase().indexOf(activeRegion) !== -1;
+    }) : brief.top_stories;
+    if (filtered.length === 0) {
+      storiesPane.innerHTML = "<p style=\"opacity:0.5;font-style:italic\">No top stories for this region in today\u2019s brief.</p>";
+    } else {
+      var html = "";
+      for (var j = 0; j < filtered.length; j++) {
+        var s = filtered[j];
+        html += "<div style=\"margin:0 0 20px;padding:12px 16px;border-left:3px solid var(--accent,#c9a55a);background:rgba(255,255,255,0.02)\">";
+        html += "<div style=\"font-size:11px;letter-spacing:1px;opacity:0.4;margin-bottom:4px\">#" + (s.rank||j+1) + " \u00b7 " + (s.region||"").toUpperCase() + "</div>";
+        html += "<h3 style=\"font-size:15px;margin:0 0 6px\">" + (s.headline||"") + "</h3>";
+        html += "<p style=\"opacity:0.7;font-size:13px;margin:0\"><em>" + (s.significance||"") + "</em></p>";
+        html += "</div>";
+      }
+      storiesPane.innerHTML = html;
+    }
+  }
+};
 </script>
 </body>
 </html>
