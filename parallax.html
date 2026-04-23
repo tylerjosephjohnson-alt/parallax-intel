@@ -2389,6 +2389,40 @@ function v6_switchTab(btn) {
     panes[j].style.display = panes[j].getAttribute('data-tab') === tabName ? 'block' : 'none';
   }
 }
+// v74-fe: Brief data adapter — maps new brief.json fields to what the render functions expect
+function v6_adaptBriefData(raw) {
+  if (!raw || raw._adapted) return raw;
+  var io = raw.intelligence_overview || {};
+  var sigs = raw.overnight_signals || [];
+  var ts = raw.top_stories || [];
+  var highCount = 0;
+  for (var i = 0; i < sigs.length; i++) { if (sigs[i].significance === 'high') highCount++; }
+  
+  // Build overview prose from intelligence_overview paragraphs
+  var overviewParts = [];
+  if (io.paragraph_1_situation) overviewParts.push(io.paragraph_1_situation);
+  if (io.paragraph_2_connections) overviewParts.push(io.paragraph_2_connections);
+  if (io.paragraph_3_what_watch) overviewParts.push(io.paragraph_3_what_watch);
+  if (io.paragraph_4_buried) overviewParts.push(io.paragraph_4_buried);
+  
+  // Map new fields to old field names the render functions expect
+  raw.subline = raw.headline_brief || '';
+  raw.summary = raw.headline_brief || '';
+  raw.overview_prose = overviewParts.join('\n\n');
+  raw.urgent_count = highCount;
+  raw.active_count = ts.length;
+  raw.verdicts_correct = 0;
+  raw.psyops_count = 0;
+  raw.watch_caption = raw.threat_level ? raw.threat_level.toUpperCase() : '';
+  raw.stories = ts;
+  raw.expected_today = io.paragraph_3_what_watch || '';
+  raw.published = raw.generated_at_iso || raw.generated_at || '';
+  raw.updated = raw.generated_at_iso || raw.generated_at || '';
+  raw.last_updated = raw.generated_at_iso || raw.generated_at || '';
+  raw._adapted = true;
+  return raw;
+}
+
 function v6_renderBriefHeader(brief) {
   if (!brief) brief = {};
   const region = brief.region || 'Global';
@@ -2462,7 +2496,7 @@ function v6_switchBriefRegion(chip) {
   var briefContent = briefEl.querySelector('#brief-content');
   if (!briefContent) { setTimeout(v6_briefBoot, 300); return; }
   var existing = briefEl.innerHTML;
-  var briefData = window._lastBriefData || {};
+  var briefData = v6_adaptBriefData(window._lastBriefData || {});
   briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy">' + existing + '</div>';
 })();
   
