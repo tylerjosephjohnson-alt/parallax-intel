@@ -5,6 +5,13 @@ Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
 The Flask server serves the app + stories.json.
 The background thread runs the scraper every 30 minutes.
 
+@app.route('/briefs-archive.json')
+def serve_briefs_archive():
+    if os.path.exists(BRIEF_ARCHIVE_FILE):
+        return send_from_directory(os.path.dirname(BRIEF_ARCHIVE_FILE), os.path.basename(BRIEF_ARCHIVE_FILE))
+    return jsonify([])
+
+
 @app.route('/test-claude')
 def test_claude():
     try:
@@ -75,6 +82,7 @@ try:
 except Exception as _e:
     pass
 BRIEF_FILE           = os.path.join(DATA_DIR, "brief.json")
+BRIEF_ARCHIVE_FILE   = os.path.join(DATA_DIR, "briefs_archive.json")
 MAX_STORIES = 20
 HOURS_LOOKBACK = 48
 CLUSTER_MIN_SOURCES = 3  # v43: raised from 2 — fewer clusters qualify, less Claude calls
@@ -2993,6 +3001,25 @@ The four intelligence_overview paragraphs are the core analytical product — ma
         # Add metadata
         brief["generated_at_iso"] = utc_now().isoformat()
         brief["generated_by"]     = "Parallax daily brief engine v1"
+
+        # v93: Archive old brief before overwriting
+        try:
+            if os.path.exists(BRIEF_FILE):
+                with open(BRIEF_FILE, "r") as old_f:
+                    old_brief = json.load(old_f)
+                old_brief["type"] = "daily_brief"
+                old_brief["archived_at"] = utc_now().isoformat()
+                archive = []
+                if os.path.exists(BRIEF_ARCHIVE_FILE):
+                    with open(BRIEF_ARCHIVE_FILE, "r") as af:
+                        archive = json.load(af)
+                archive.insert(0, old_brief)
+                archive = archive[:30]  # Keep last 30 briefs
+                with open(BRIEF_ARCHIVE_FILE, "w") as af:
+                    json.dump(archive, af, indent=2, ensure_ascii=False)
+                print(f"  Archived previous brief ({old_brief.get('date', 'unknown')})")
+        except Exception as ae:
+            print(f"  Brief archive error: {ae}")
 
         with open(BRIEF_FILE, "w") as f:
             json.dump(brief, f, indent=2, ensure_ascii=False)
