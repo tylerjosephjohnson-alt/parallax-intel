@@ -2472,10 +2472,10 @@ function v6_renderBriefTabs(brief) {
   if (brief.intelligence_overview && !brief.overview_prose) {
     var io = brief.intelligence_overview;
     var parts = [];
-    if (io.paragraph_1_situation) parts.push("CURRENT SITUATION\n" + io.paragraph_1_situation);
-    if (io.paragraph_2_connections) parts.push("THE CONNECTIONS\n" + io.paragraph_2_connections);
-    if (io.paragraph_3_what_watch) parts.push("WHAT TO WATCH TODAY\n" + io.paragraph_3_what_watch);
-    if (io.paragraph_4_buried) parts.push("WHAT MAINSTREAM IS MISSING\n" + io.paragraph_4_buried);
+    if (io.paragraph_1_situation) parts.push(io.paragraph_1_situation);
+    if (io.paragraph_2_connections) parts.push(io.paragraph_2_connections);
+    if (io.paragraph_3_what_watch) parts.push(io.paragraph_3_what_watch);
+    if (io.paragraph_4_buried) parts.push(io.paragraph_4_buried);
     brief.overview_prose = parts.join("\n\n");
   }
   if (brief.top_stories && !brief.stories) brief.stories = brief.top_stories;
