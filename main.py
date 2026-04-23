@@ -2736,7 +2736,7 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
 {{
   "headline": "Factual headline max 15 words — specific, not generic",
   "location": "City, Country or Region",
-  "region": "europe|middle-east|africa|asia-pacific|americas|russia-fsu|china|global",
+  "region": "europe|middle-east|africa|asia-pacific|americas|russia-fsu|south-asia|latin-america|global",
   "category": "conflict-war|politics|economics|human-rights|environment|technology|disinformation",
   "confidence": "low|medium|high",
   "watch_level": "routine|elevated|active|urgent",
@@ -2941,10 +2941,15 @@ def generate_daily_brief():
 
     system_prompt = f"""You are Parallax — an intelligence analysis system producing a morning briefing for {today}.
 
-Using your web search tool, search for overnight developments on the most significant current intelligence topics:
-- US-Iran war, ceasefire status, Strait of Hormuz
-- Ukraine frontline and any overnight Russian strikes or Ukrainian operations
-- Sudan/Darfur: RSF activity and humanitarian situation
+Using your web search tool, search for overnight developments across ALL major regions. Cover every region — do not let one conflict dominate. Search topics:
+- MIDDLE EAST: US-Iran war, ceasefire status, Strait of Hormuz, Israel-Palestine
+- EUROPE: Ukraine frontline, Russian strikes, NATO activity, EU policy
+- AFRICA: Sudan/Darfur RSF, Sahel security, East Africa, South Africa
+- AMERICAS: US domestic policy, drug trafficking enforcement, Latin American politics
+- ASIA PACIFIC: China military, Taiwan Strait, North Korea, ASEAN
+- SOUTH ASIA: India-Pakistan, Afghanistan, Sri Lanka, Myanmar
+- RUSSIA/EURASIA: Russian economy, Central Asia, Caucasus
+- GLOBAL: Energy markets, financial system, trade policy, organized crime, human trafficking
 - Any other major breaking developments overnight
 
 Current tracked stories for context:
