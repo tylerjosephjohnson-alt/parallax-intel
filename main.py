@@ -67,7 +67,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 SCRAPE_INTERVAL_MINUTES = 1440  # v43: once daily (was 720 twice-daily) — cost reduction
-BRIEF_HOUR_UTC       = 12  # 12:00 UTC = 5:00 AM Arizona (MST)at 05:00 UTC
+BRIEF_HOUR_UTC       = 14  # 14:00 UTC = 7:00 AM Arizona (MST)at 05:00 UTC
 # v35: Persistent data directory — use /data volume on Railway, cwd locally
 DATA_DIR = os.environ.get("DATA_DIR") or ("/data" if os.path.isdir("/data") else ".")
 try:
@@ -3190,10 +3190,9 @@ def scheduler():
     """
     last_brief_date = None
 
-    # First run immediately on start — scrape + generate brief
-    try:
-        run_scraper()
-        generate_daily_brief()
+    # v88: no first run on deploy — wait for scheduled time (7 AM AZ / 14:00 UTC)
+    # Scheduler loop below handles timing
+    print("Scheduler started — next scrape at 7 AM Arizona (14:00 UTC)")
     except Exception as e:
         import traceback
         print(f"Scraper error: {e}")
@@ -3211,6 +3210,8 @@ def scheduler():
                 and last_brief_date != now.date()):
             last_brief_date = now.date()
             try:
+                print("=== 7 AM AZ — Starting scheduled scrape + brief ===")
+                run_scraper()
                 generate_daily_brief()
             except Exception as e:
                 print(f"Brief error: {e}")
@@ -3564,10 +3565,10 @@ if __name__ == "__main__":
         raise SystemExit("ERROR: Flask not installed. Add 'flask' to requirements.txt")
 
     # Start scraper in background thread
-    # v71: AUTO-SCRAPER DISABLED — manual trigger only via /trigger
-    # scraper_thread = threading.Thread(target=scheduler, daemon=True)
-    # scraper_thread.start()
-    print("Background scraper DISABLED — use /trigger for manual scrapes")
+    # v88: AUTO-SCRAPER ENABLED — runs at 7 AM Arizona (14:00 UTC)
+    scraper_thread = threading.Thread(target=scheduler, daemon=True)
+    scraper_thread.start()
+    print("Background scheduler ENABLED — auto-scrape + brief at 7 AM AZ")
 
     # Start web server
     port = int(os.environ.get("PORT", 8080))
