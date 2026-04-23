@@ -3175,6 +3175,64 @@ function v6_renderSaciGraph(container, story) {
   var obs2 = new MutationObserver(function(){ setTimeout(injectSaci, 300); });
   if (document.body) obs2.observe(document.body, {childList:true, subtree:true, attributes:true});
 })();
+
+
+// v89-fe: Fix Expected Today panel — inject signal data when placeholder shown
+(function(){
+  function fixExpectedToday(){
+    var panel = document.getElementById("v6-bp-expected");
+    if (!panel) return;
+    var txt = panel.textContent.trim();
+    if (txt.indexOf("predictions will appear") === -1) return;
+    var brief = window._lastBriefData;
+    if (!brief || !brief.expected_today || brief.expected_today.length === 0) return;
+    var html = "";
+    brief.expected_today.forEach(function(s, i){
+      var sigColor = s.significance === "high" ? "#e74c3c" : s.significance === "medium" ? "#f39c12" : "#4a9";
+      html += "<div style=\"margin:0 0 16px;padding:12px 16px;border-left:3px solid " + sigColor + ";background:rgba(255,255,255,0.02)\">";
+      html += "<div style=\"font-size:10px;letter-spacing:1px;opacity:0.4;margin-bottom:4px\">" + (s.significance||"").toUpperCase() + " \u00b7 " + (s.source||"") + "</div>";
+      html += "<p style=\"margin:0;font-size:13px;line-height:1.6\">" + (s.label || s.text || "") + "</p>";
+      html += "</div>";
+    });
+    panel.innerHTML = html;
+  }
+  var obs3 = new MutationObserver(function(){ setTimeout(fixExpectedToday, 200); });
+  if (document.body) obs3.observe(document.body, {childList:true, subtree:true, attributes:true});
+  setTimeout(fixExpectedToday, 2000);
+})();
+
+// v89-fe: Fix SACI graph — fetch story data from stories.json instead of card._storyData
+(function(){
+  var cachedStories = null;
+  function loadAndInjectSaci(){
+    var panes = document.querySelectorAll("[data-tab=\"psyops\"]");
+    for (var i = 0; i < panes.length; i++) {
+      var pane = panes[i];
+      if (pane.style.display !== "none" && !pane.querySelector("svg")) {
+        var card = pane.closest(".v6-card");
+        if (!card) continue;
+        // Try card._storyData first, then match by headline
+        if (card._storyData) { v6_renderSaciGraph(pane, card._storyData); continue; }
+        var headline = card.querySelector("h2, h3");
+        if (!headline) continue;
+        var hText = headline.textContent.trim();
+        if (cachedStories) {
+          var match = cachedStories.find(function(s){ return s.headline === hText; });
+          if (match) v6_renderSaciGraph(pane, match);
+        } else {
+          fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+            cachedStories = d.stories || [];
+            var match = cachedStories.find(function(s){ return s.headline === hText; });
+            if (match) v6_renderSaciGraph(pane, match);
+          });
+        }
+      }
+    }
+  }
+  // Replace the old observer
+  var obs4 = new MutationObserver(function(){ setTimeout(loadAndInjectSaci, 300); });
+  if (document.body) obs4.observe(document.body, {childList:true, subtree:true, attributes:true});
+})();
 </script>
 </body>
 </html>
