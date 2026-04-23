@@ -3003,5 +3003,42 @@ function v6_renderVelocityGraph(data) {
   }, 1000);
 })();
   </script>
+
+<script>
+// v86-fe: Readable timestamps + date formatter (separate script block for safety)
+function v6_formatDate(iso) {
+  if (!iso) return "";
+  try {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var h = d.getUTCHours() - 7;
+    var dayOffset = 0;
+    if (h < 0) { h += 24; dayOffset = -1; }
+    var ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+    var min = d.getUTCMinutes();
+    var minStr = min < 10 ? "0" + min : "" + min;
+    var adjDate = new Date(d.getTime() + dayOffset * 86400000);
+    return "Last updated " + months[adjDate.getUTCMonth()] + " " + adjDate.getUTCDate() + ", " + adjDate.getUTCFullYear() + " at " + h + ":" + minStr + " " + ampm + " MTN";
+  } catch(e) { return iso; }
+}
+
+// Auto-format ISO timestamps on story cards
+(function(){
+  function formatTimestamps(){
+    var els = document.querySelectorAll(".v6-updated");
+    for (var i = 0; i < els.length; i++) {
+      var t = els[i].textContent.trim();
+      if (t.match(/\d{4}-\d{2}-\d{2}T/)) {
+        els[i].textContent = v6_formatDate(t.replace(/^UPDATED\s*/i, ""));
+      }
+    }
+  }
+  var obs = new MutationObserver(function(){ setTimeout(formatTimestamps, 200); });
+  if (document.body) obs.observe(document.body, {childList:true, subtree:true});
+  setTimeout(formatTimestamps, 1500);
+})();
+</script>
 </body>
 </html>
