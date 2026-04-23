@@ -67,7 +67,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 SCRAPE_INTERVAL_MINUTES = 1440  # v43: once daily (was 720 twice-daily) — cost reduction
-BRIEF_HOUR_UTC       = 5   # Generate daily brief at 05:00 UTC
+BRIEF_HOUR_UTC       = 12  # 12:00 UTC = 5:00 AM Arizona (MST)at 05:00 UTC
 # v35: Persistent data directory — use /data volume on Railway, cwd locally
 DATA_DIR = os.environ.get("DATA_DIR") or ("/data" if os.path.isdir("/data") else ".")
 try:
@@ -3190,9 +3190,10 @@ def scheduler():
     """
     last_brief_date = None
 
-    # First run immediately on start
+    # First run immediately on start — scrape + generate brief
     try:
         run_scraper()
+        generate_daily_brief()
     except Exception as e:
         import traceback
         print(f"Scraper error: {e}")
