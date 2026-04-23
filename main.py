@@ -311,6 +311,38 @@ RSS_FEEDS = [
 
 ]
 
+# ── Key Figures Tracking List ────────────────────────────────────────
+KEY_FIGURES = [
+    # Tier 1 — Heads of State
+    {"name": "Donald Trump",       "role": "US President",               "domain": "policy"},
+    {"name": "Xi Jinping",         "role": "China President",            "domain": "strategic"},
+    {"name": "Vladimir Putin",     "role": "Russia President",           "domain": "strategic"},
+    {"name": "Mohammed bin Salman","role": "Saudi Crown Prince",         "domain": "energy"},
+    {"name": "Ali Khamenei",      "role": "Iran Supreme Leader",        "domain": "conflict"},
+    {"name": "Volodymyr Zelensky","role": "Ukraine President",          "domain": "conflict"},
+    {"name": "Benjamin Netanyahu","role": "Israel PM",                  "domain": "conflict"},
+    # Tier 2 — Economic Power Brokers
+    {"name": "Jerome Powell",     "role": "Federal Reserve Chair",      "domain": "finance"},
+    {"name": "Jamie Dimon",       "role": "JPMorgan CEO",               "domain": "finance"},
+    {"name": "Larry Fink",        "role": "BlackRock CEO",              "domain": "finance"},
+    {"name": "Warren Buffett",    "role": "Berkshire Hathaway CEO",     "domain": "finance"},
+    # Tier 3 — Energy Controllers
+    {"name": "Darren Woods",      "role": "ExxonMobil CEO",             "domain": "energy"},
+    {"name": "Amin Nasser",       "role": "Saudi Aramco CEO",           "domain": "energy"},
+    {"name": "Chris Wright",      "role": "DOE Secretary/Liberty Energy","domain": "energy-policy"},
+    # Tier 4 — Defense / Tech
+    {"name": "Alex Karp",         "role": "Palantir CEO",               "domain": "defense-tech"},
+    {"name": "Elon Musk",         "role": "Tesla/SpaceX/X",             "domain": "tech-defense"},
+    {"name": "Jim Taiclet",       "role": "Lockheed Martin CEO",        "domain": "defense"},
+    {"name": "Palmer Luckey",     "role": "Anduril Founder",            "domain": "defense-tech"},
+    # Tier 5 — Retail / Supply Chain
+    {"name": "Doug McMillon",     "role": "Walmart CEO",                "domain": "consumer"},
+    {"name": "Andy Jassy",        "role": "Amazon CEO",                 "domain": "tech-logistics"},
+    {"name": "Jeff Bezos",        "role": "Amazon/Blue Origin founder", "domain": "tech-defense"},
+    {"name": "Mark Zuckerberg",   "role": "Meta CEO",                   "domain": "tech-info"},
+]
+
+
 GDELT_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 # ─────────────────────────────────────────────
 # SOURCE TIER SYSTEM
