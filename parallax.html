@@ -1148,6 +1148,14 @@
       </div>
       <div id="stories-content"><div class="loading">Loading stories…</div></div>
     </div>
+    <div id="view-saved" class="view">
+      <div class="view-header"><div class="view-title">My stories</div></div>
+      <div style="padding:24px;opacity:0.5;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">&#x2606;</div>
+        <h3 style="margin:0 0 8px;color:var(--accent,#c9a55a)">No saved stories yet</h3>
+        <p style="margin:0;font-size:13px;line-height:1.6;max-width:400px;display:inline-block">Click the bookmark icon on any story card to save it here for follow-up. Saved stories persist across sessions and are tracked for updates.</p>
+      </div>
+    </div>
     <div id="view-atlas" class="view">
       <div class="view-header"><div class="view-title">Atlas</div><div class="view-meta">Regions → countries → indicators</div></div>
       <div style="max-width:960px">
@@ -3232,6 +3240,87 @@ function v6_renderSaciGraph(container, story) {
   // Replace the old observer
   var obs4 = new MutationObserver(function(){ setTimeout(loadAndInjectSaci, 300); });
   if (document.body) obs4.observe(document.body, {childList:true, subtree:true, attributes:true});
+})();
+
+
+// v90-fe: Populate stub pages with real content from stories.json
+(function(){
+  function populateStubs(){
+    // ── PSYOPS PAGE ──
+    var psyopsView = document.getElementById("view-psyops");
+    if (psyopsView && psyopsView.querySelector(".placeholder")){
+      fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+        var stories = d.stories || [];
+        var html = '<div class="view-header"><div class="view-title">Psyops Signal Dashboard</div></div>';
+        html += '<div style="padding:20px">';
+        html += '<p style="opacity:0.5;font-size:13px;margin:0 0 20px">Narrative coordination detection, source credibility mapping, and information warfare tracking across all active stories.</p>';
+        stories.forEach(function(s){
+          var cn = s.competing_narratives;
+          if (!cn || (Array.isArray(cn) && cn.length === 0)) return;
+          html += '<div style="margin:0 0 16px;padding:14px 18px;border-left:3px solid var(--accent,#c9a55a);background:rgba(255,255,255,0.02)">';
+          html += '<h4 style="margin:0 0 8px;font-size:14px">' + (s.headline||"").substring(0,80) + '</h4>';
+          if (typeof cn === "string") html += '<p style="opacity:0.7;font-size:12px;margin:0">' + cn + '</p>';
+          else if (Array.isArray(cn)) cn.forEach(function(n){
+            html += '<div style="margin:4px 0;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:12px">';
+            html += '<span style="color:var(--accent,#c9a55a)">' + (n.source_actor||"") + ':</span> ';
+            html += (n.narrative||"") + ' <span style="opacity:0.4">[' + (n.verdict||"") + ']</span>';
+            html += '</div>';
+          });
+          html += '</div>';
+        });
+        html += '</div>';
+        psyopsView.innerHTML = html;
+      });
+    }
+    // ── SCENARIOS PAGE ──
+    var scenariosView = document.getElementById("view-scenarios");
+    if (scenariosView && scenariosView.querySelector(".placeholder")){
+      fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+        var stories = d.stories || [];
+        var html = '<div class="view-header"><div class="view-title">Scenarios</div><div style="opacity:0.4;font-size:12px">Red Team / Blue Team — Both sides analyzed equally</div></div>';
+        html += '<div style="padding:20px">';
+        html += '<p style="opacity:0.5;font-size:13px;margin:0 0 20px">Strategic scenario modeling with probability trees. We do not take sides — both actors are analyzed as Red Team and Blue Team simultaneously.</p>';
+        var urgent = stories.filter(function(s){return s.watch_level === "urgent" || s.watch_level === "active"});
+        urgent.slice(0, 5).forEach(function(s){
+          html += '<div style="margin:0 0 20px;padding:16px 20px;border:1px solid rgba(201,165,90,0.2);border-radius:6px;background:rgba(255,255,255,0.01)">';
+          html += '<h4 style="margin:0 0 6px;font-size:14px;color:var(--accent,#c9a55a)">' + (s.headline||"").substring(0,70) + '</h4>';
+          html += '<div style="font-size:11px;letter-spacing:1px;opacity:0.3;margin-bottom:10px">' + (s.region||"").toUpperCase() + ' · ' + (s.watch_level||"").toUpperCase() + '</div>';
+          if (s.top_call) html += '<div style="padding:8px 12px;background:rgba(201,165,90,0.08);border-radius:4px;font-size:12px;margin-bottom:8px"><strong>MOST LIKELY:</strong> ' + (typeof s.top_call === "string" ? s.top_call : s.top_call.text || "") + '</div>';
+          if (s.why_it_matters) html += '<p style="opacity:0.6;font-size:12px;margin:0">WHY IT MATTERS: ' + s.why_it_matters + '</p>';
+          html += '</div>';
+        });
+        html += '</div>';
+        scenariosView.innerHTML = html;
+      });
+    }
+    // ── NOTIFICATIONS PAGE ──
+    var notifsView = document.getElementById("view-notifications");
+    if (notifsView && notifsView.querySelector(".placeholder")){
+      var html = '<div class="view-header"><div class="view-title">Notifications</div></div>';
+      html += '<div style="padding:20px">';
+      html += '<div style="margin:0 0 20px;padding:16px;border:1px solid rgba(201,165,90,0.2);border-radius:6px;background:rgba(255,255,255,0.02)">';
+      html += '<h4 style="margin:0 0 8px;font-size:14px;color:var(--accent,#c9a55a)">Alert Configuration</h4>';
+      html += '<p style="opacity:0.6;font-size:12px;margin:0 0 12px">Set up custom alerts for entities, regions, topics, or watch level changes.</p>';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+      html += '<div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:11px"><strong>Watch Level Changes</strong><br><span style="opacity:0.5">Alert when a story escalates to URGENT</span></div>';
+      html += '<div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:11px"><strong>Key Figure Mentions</strong><br><span style="opacity:0.5">Alert when tracked individuals appear in stories</span></div>';
+      html += '<div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:11px"><strong>Region Activity</strong><br><span style="opacity:0.5">Alert on new stories in specific regions</span></div>';
+      html += '<div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:11px"><strong>Prediction Triggers</strong><br><span style="opacity:0.5">Alert when prediction indicators fire</span></div>';
+      html += '</div></div>';
+      html += '<p style="opacity:0.3;font-size:11px;text-align:center">Notification delivery requires account setup. Coming in Phase 3.</p>';
+      html += '</div>';
+      notifsView.innerHTML = html;
+    }
+  }
+  // Run when views are switched
+  var origSetView = window.setView;
+  if (origSetView) {
+    window.setView = function(v){
+      origSetView(v);
+      setTimeout(populateStubs, 300);
+    };
+  }
+  setTimeout(populateStubs, 2000);
 })();
 </script>
 </body>
