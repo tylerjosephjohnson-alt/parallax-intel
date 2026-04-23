@@ -2826,35 +2826,33 @@ Summary: {summary}
 Sources:
 {sources_text}
 
-Provide ONLY these deep-analysis fields as a JSON object. Be specific: name names, cite dates, give numbers. No vague generalities. No markdown.
+Provide deep-analysis fields as a JSON object. Be specific: name names, cite dates, give numbers. No markdown. Keep each field concise (2-3 sentences max).
 {{
-  "narrative_analysis": "2-3 sentences: what competing narratives exist and who benefits from each version",
+  "narrative_analysis": "What competing narratives exist and who benefits from each version",
   "who_benefits": [
     {{"actor": "Specific name", "benefit": "Specific financial or political gain", "level": "high|medium|low"}}
   ],
   "competing_narratives": [
-    {{"source_actor": "Who", "narrative": "Their exact framing", "verdict": "supported|disputed|unverifiable", "cui_bono": "Who benefits if public believes this version"}}
+    {{"source_actor": "Who", "narrative": "Their framing", "verdict": "supported|disputed|unverifiable"}}
   ],
-  "financial_connections": "Which companies, banks, insurers, or financial instruments connect to this event? Who traded, contracted, or positioned before it happened?",
-  "key_figures_involved": [
-    {{"name": "Person name", "role": "Their position", "connection": "How they connect: direct action, board seat, investment, advisory role, or policy decision"}}
-  ],
-  "absence_signals": "What SHOULD be reported but is not? Which actors, agencies, or companies are conspicuously silent? What data should exist but has not appeared?",
-  "historical_pattern": "Has this exact pattern played out before? Name the previous instance with dates, actors, and outcome.",
-  "narrative_gaps": "What key information is missing from all sources that would change the analysis if known",
-  "narrative_convergence": "Where opposing sources unexpectedly agree. This often reveals ground truth.",
-  "civilian_impact": "Direct human impact: who is affected, how many, what changes for them",
-  "source_diversity": "Rate the source balance 1-5. Are we hearing from all sides or just one?",
+  "financial_connections": "Which companies, banks, or financial instruments connect to this event? Who traded or positioned before it happened?",
+  "key_figures_involved": "List key individuals: Name (Role) — how they connect. Include indirect connections through board seats, investments, or advisory roles.",
+  "absence_signals": "What SHOULD be reported but is not? Which actors or agencies are conspicuously silent?",
+  "historical_pattern": "Has this pattern played out before? Name the previous instance with dates, actors, and outcome.",
+  "narrative_gaps": "What key information is missing from all sources",
+  "narrative_convergence": "Where opposing sources unexpectedly agree — this often reveals ground truth",
+  "civilian_impact": "Direct human impact — who is affected and how",
+  "source_diversity": "Rate source balance 1-5. Are we hearing from all sides?",
   "connecting_events": [
-    {{"related_event": "Specific ongoing event", "connection": "The causal chain: because X happened, Y is now affected in Z way"}}
+    {{"related_event": "Specific ongoing event", "connection": "The causal chain linking them"}}
   ],
-  "red_team_blue_team": {{
-    "actor_a": {{"name": "First major actor", "red_team": "Their optimal aggressive next move", "blue_team": "How to defend against them"}},
-    "actor_b": {{"name": "Second major actor", "red_team": "Their optimal aggressive next move", "blue_team": "How to defend against them"}},
-    "wild_card": "Which third party profits while these two are focused on each other?"
-  }},
+  "red_team_actor_a": "Name the first major actor. Their optimal aggressive next move is:",
+  "blue_team_actor_a": "Defending against that actor requires:",
+  "red_team_actor_b": "Name the second major actor. Their optimal aggressive next move is:",
+  "blue_team_actor_b": "Defending against that actor requires:",
+  "wild_card": "Which third party profits while these two are focused on each other?",
   "second_order_effects": "If the most likely outcome occurs, what cascade follows that nobody is discussing?",
-  "psyops_indicators": {{"coordination_level": "none|low|medium|high", "evidence": "What specific patterns suggest coordinated or manufactured messaging?"}},
+  "psyops_coordination": "none|low|medium|high — what specific patterns suggest coordinated messaging?",
   "contradiction_flags": []
 }}"""
     
@@ -2881,8 +2879,9 @@ Provide ONLY these deep-analysis fields as a JSON object. Be specific: name name
                      "financial_connections", "key_figures_involved", "absence_signals",
                      "historical_pattern", "narrative_gaps", "narrative_convergence",
                      "civilian_impact", "source_diversity", "connecting_events",
-                     "red_team_blue_team", "second_order_effects", "psyops_indicators",
-                     "contradiction_flags"]:
+                     "red_team_actor_a", "blue_team_actor_a", "red_team_actor_b",
+                     "blue_team_actor_b", "wild_card", "second_order_effects",
+                     "psyops_coordination", "contradiction_flags"]:
             if key in enrichment:
                 story[key] = enrichment[key]
         print(f"  Enriched: {headline[:50]}")
