@@ -307,6 +307,20 @@ RSS_FEEDS = [
     {"url": "https://www.europol.europa.eu/rss",                    "source": "Europol",                  "role": "multilateral-enforcement"},
     {"url": "https://www.who.int/rss-feeds/news-english.xml",       "source": "WHO",                      "role": "multilateral-health"},
 
+    # ── v101: Early Warning / Defense Intel (RSS only, no API needed) ────
+    {"url": "https://warontherocks.com/feed/",                    "source": "War on the Rocks",         "role": "defense-analysis"},
+    {"url": "https://www.thecipherbrief.com/feed",                "source": "The Cipher Brief",         "role": "intel-analysis"},
+    {"url": "https://www.justsecurity.org/feed/",                 "source": "Just Security",            "role": "natsec-legal"},
+    {"url": "https://www.lawfaremedia.org/feed",                  "source": "Lawfare",                  "role": "natsec-legal"},
+    {"url": "https://smallwarsjournal.com/feed",                  "source": "Small Wars Journal",       "role": "irregular-warfare"},
+    {"url": "https://breakingdefense.com/feed/",                  "source": "Breaking Defense",         "role": "defense-industry"},
+    {"url": "https://www.defenseone.com/rss/",                    "source": "Defense One",              "role": "defense-policy"},
+    {"url": "https://www.militarytimes.com/arc/outboundfeeds/rss/","source": "Military Times",          "role": "military-news"},
+    {"url": "https://www.criticalthreats.org/feed",               "source": "Critical Threats (AEI)",   "role": "threat-analysis"},
+    {"url": "https://www.longwarjournal.org/feed",                "source": "Long War Journal",         "role": "counterterrorism"},
+    {"url": "https://www.understandingwar.org/feed",              "source": "Understanding War",        "role": "conflict-analysis"},
+
+
 
 
 ]
