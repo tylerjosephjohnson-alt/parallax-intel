@@ -223,6 +223,22 @@ RSS_FEEDS = [
     {"url": "https://medium.com/feed/dfrlab",                      "source": "DFRLab",         "lean": "centre",           "role": "investigative-osint"},
     {"url": "https://disinfowatch.org/feed/",                      "source": "DisinfoWatch",   "lean": "centre-right",     "role": "investigative-osint"},
     {"url": "https://www.isd.org/feed/",                           "source": "ISD Global",     "lean": "centre",           "role": "investigative-osint"},
+
+    # ── v90: Enforcement / Trafficking / Hospitality sources ─────────────
+    {"url": "https://www.justice.gov/news/press-releases/rss",       "source": "DOJ Press Releases",     "role": "official"},
+    {"url": "https://www.justice.gov/usao/pressreleases/rss/feed",   "source": "USAO Press Releases",    "role": "official"},
+    {"url": "https://www.fbi.gov/feeds/fbi-top-stories/rss",        "source": "FBI Top Stories",         "role": "official"},
+    {"url": "https://www.fbi.gov/feeds/fbi-stories/rss",            "source": "FBI Stories",             "role": "official"},
+    {"url": "https://www.ice.gov/newsroom/rss",                      "source": "HSI/ICE Newsroom",       "role": "official"},
+    {"url": "https://www.dol.gov/rss/releases.xml",                  "source": "DOL News Releases",      "role": "official"},
+    {"url": "https://polarisproject.org/feed/",                      "source": "Polaris Project",         "role": "ngo"},
+    {"url": "https://polarisproject.org/news/feed/",                 "source": "Polaris News",            "role": "ngo"},
+    {"url": "https://skift.com/hotels/feed/",                        "source": "Skift Hotels",            "role": "industry"},
+    {"url": "https://www.hoteldive.com/feeds/news/",                 "source": "Hotel Dive",              "role": "industry"},
+    {"url": "https://freedomunited.org/news/feed/",                  "source": "Freedom United",          "role": "ngo"},
+    {"url": "https://www.dea.gov/press-releases/rss",                "source": "DEA Press Releases",     "role": "official"},
+    {"url": "https://www.atf.gov/news/rss",                          "source": "ATF News",                "role": "official"},
+
 ]
 
 GDELT_API = "https://api.gdeltproject.org/api/v2/doc/doc"
