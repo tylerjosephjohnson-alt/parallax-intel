@@ -3408,25 +3408,30 @@ function v6_renderSaciGraph(container, story) {
 })();
 </script>
 
-<!-- v93-fe: Fix SACI containment + Brief region filtering + Atlas navigation + Region buttons -->
+<!-- v94-fe: SACI containment + Atlas + Brief filtering -->
 <script>
-// FIX 1: Guard SACI rendering to only inside psyops tab panes
 (function(){
   var _origSaci = window.v6_renderSaciGraph;
-  window.v6_renderSaciGraph = function(container, storyData){
-    if (!container) return;
-    var pane = container.closest ? container.closest("[data-tab=\"psyops\"]") : null;
-    if (!pane) return;
-    var card = pane.closest(".v6-card");
-    if (!card) return;
-    var expanded = card.querySelector(".v6-pane");
-    if (!expanded || expanded.style.display === "none") return;
+  window.v6_renderSaciGraph = function(container, story){
+    if (!container || !story) return;
+    var tab = container.getAttribute("data-tab");
+    if (tab !== "psyops") return;
     if (container.querySelector("svg")) return;
-    _origSaci(container, storyData);
+    _origSaci(container, story);
+    var svg = container.querySelector("svg");
+    if (svg) { svg.style.width = "100%"; svg.style.height = "auto"; svg.style.minHeight = "300px"; svg.style.maxHeight = "500px"; }
   };
+  setInterval(function(){
+    var panes = document.querySelectorAll(".v6-pane");
+    for (var i = 0; i < panes.length; i++){
+      if (panes[i].getAttribute("data-tab") !== "psyops"){
+        var svgs = panes[i].querySelectorAll("svg");
+        for (var s = 0; s < svgs.length; s++) svgs[s].remove();
+      }
+    }
+  }, 2000);
 })();
 
-// FIX 2: Make brief region chips filter top stories
 window.v6_switchBriefRegion = function(chip){
   var chips = document.querySelectorAll(".v6-region-chip");
   for (var i = 0; i < chips.length; i++) chips[i].classList.remove("active");
@@ -3434,98 +3439,32 @@ window.v6_switchBriefRegion = function(chip){
   var region = chip.textContent.trim().toLowerCase();
   var panel = document.getElementById("v6-bp-topstories");
   if (!panel) return;
-  var stories = panel.querySelectorAll("[data-region]");
-  if (stories.length === 0) {
-    var allItems = panel.children;
-    for (var j = 0; j < allItems.length; j++){
-      allItems[j].style.display = "";
-    }
-    return;
-  }
-  for (var s = 0; s < stories.length; s++){
-    var sr = (stories[s].getAttribute("data-region") || "").toLowerCase();
-    if (region === "all" || sr.includes(region.replace(/\s/g, "-"))) {
-      stories[s].style.display = "";
-    } else {
-      stories[s].style.display = "none";
-    }
+  var items = panel.children;
+  for (var j = 0; j < items.length; j++){
+    var r = (items[j].getAttribute("data-region") || items[j].textContent || "").toLowerCase();
+    items[j].style.display = (region === "all" || r.indexOf(region.split(" ")[0]) !== -1) ? "" : "none";
   }
 };
 
-// FIX 3: Atlas region click stays in Atlas view
 window.atlasShowRegion = function(regionId){
-  var view = document.getElementById("view-atlas");
-  if (!view) return;
-  var existing = view.querySelector(".atlas-region-detail");
-  if (existing) existing.remove();
-  var regionNames = {
-    "middle-east": "Middle East", "europe": "Europe", "east-asia": "East Asia & Pacific",
-    "russia-fsu": "Russia & Eurasia", "africa": "Africa", "americas": "Americas",
-    "south-asia": "South Asia", "latin-america": "Latin America"
-  };
-  var countries = {
-    "middle-east": ["Iran","Iraq","Israel","Palestine","Lebanon","Syria","Saudi Arabia","Yemen","Jordan","Kuwait","UAE","Qatar","Bahrain","Oman"],
-    "europe": ["United Kingdom","France","Germany","Ukraine","Poland","Turkey","Italy","Spain","Netherlands","Belgium","Sweden","Norway","Finland","Greece","Bulgaria","Romania"],
-    "east-asia": ["China","Japan","South Korea","North Korea","Taiwan","Philippines","Vietnam","Indonesia","Malaysia","Thailand","Myanmar","Singapore"],
-    "russia-fsu": ["Russia","Kazakhstan","Uzbekistan","Georgia","Azerbaijan","Armenia","Belarus","Moldova","Turkmenistan","Kyrgyzstan","Tajikistan"],
-    "africa": ["Sudan","Ethiopia","Somalia","Nigeria","South Africa","Kenya","DRC","Egypt","Libya","Mali","Niger","Burkina Faso","Mozambique","Chad"],
-    "americas": ["United States","Canada","Mexico","Brazil","Argentina","Colombia","Venezuela","Chile","Peru","Cuba"],
-    "south-asia": ["India","Pakistan","Afghanistan","Bangladesh","Sri Lanka","Nepal"],
-    "latin-america": ["Mexico","Brazil","Colombia","Venezuela","Argentina","Chile","Peru","Ecuador","Guatemala","Honduras","El Salvador"]
-  };
-  var cs = countries[regionId] || [];
-  var html = '<div class="atlas-region-detail" style="margin:20px 0;padding:20px;border:1px solid rgba(201,165,90,0.2);border-radius:8px">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">';
-  html += '<h3 style="margin:0;color:var(--accent,#c9a55a)">' + (regionNames[regionId]||regionId) + '</h3>';
-  html += '<button onclick="this.closest(\\x27.atlas-region-detail\\x27).remove()" style="background:none;border:1px solid rgba(255,255,255,0.1);color:var(--fg,#e8e0d0);padding:4px 12px;border-radius:4px;cursor:pointer;font-size:11px">Close</button>';
-  html += '</div>';
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">';
-  cs.forEach(function(c){
-    html += '<div style="padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:4px;border-left:2px solid var(--accent,#c9a55a);font-size:13px">' + c + '</div>';
-  });
-  html += '</div></div>';
-  var target = view.querySelector(".view-header");
-  if (target) target.insertAdjacentHTML("afterend", html);
+  var v = document.getElementById("view-atlas");
+  if (!v) return;
+  var old = v.querySelector(".atlas-region-detail");
+  if (old) old.remove();
+  var names = {"middle-east":"Middle East","europe":"Europe","east-asia":"East Asia","russia-fsu":"Russia & Eurasia","africa":"Africa","americas":"Americas","south-asia":"South Asia","latin-america":"Latin America"};
+  var cs = {"middle-east":["Iran","Iraq","Israel","Palestine","Lebanon","Syria","Saudi Arabia","Yemen","Jordan","Kuwait","UAE","Qatar"],"europe":["UK","France","Germany","Ukraine","Poland","Turkey","Italy","Spain","Netherlands","Sweden","Norway"],"east-asia":["China","Japan","South Korea","North Korea","Taiwan","Philippines","Vietnam","Indonesia"],"russia-fsu":["Russia","Kazakhstan","Georgia","Azerbaijan","Armenia","Belarus","Moldova"],"africa":["Sudan","Ethiopia","Somalia","Nigeria","South Africa","Kenya","DRC","Egypt","Libya","Mali"],"americas":["United States","Canada","Mexico","Brazil","Argentina","Colombia","Venezuela"],"south-asia":["India","Pakistan","Afghanistan","Bangladesh","Sri Lanka","Nepal"],"latin-america":["Mexico","Brazil","Colombia","Venezuela","Argentina","Chile","Peru","Ecuador"]};
+  var list = cs[regionId] || [];
+  var h = "<div class=\"atlas-region-detail\" style=\"margin:20px 0;padding:20px;border:1px solid rgba(201,165,90,0.2);border-radius:8px\">";
+  h += "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:16px\"><h3 style=\"margin:0;color:#c9a55a\">" + (names[regionId]||regionId) + "</h3>";
+  h += "<button onclick=\"this.parentElement.parentElement.remove()\" style=\"background:none;border:1px solid rgba(255,255,255,0.1);color:#e8e0d0;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:11px\">Close</button></div>";
+  h += "<div style=\"display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px\">";
+  list.forEach(function(c){ h += "<div style=\"padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:4px;border-left:2px solid #c9a55a;font-size:13px\">" + c + "</div>"; });
+  h += "</div></div>";
+  var tgt = v.querySelector(".view-header");
+  if (tgt) tgt.insertAdjacentHTML("afterend", h);
 };
-
-
-// FIX 4: Ensure all 9 region filter buttons exist on All Stories
-(function(){
-  var allRegions = ["All","Global","Americas","Europe","Middle East","Asia Pacific","South Asia","Africa","Latin America","Russia \u00b7 Eurasia"];
-  var origSetView = window.setView;
-  window.setView = function(v){
-    origSetView(v);
-    if (v === "stories"){
-      setTimeout(function(){
-        var filterBar = document.querySelector("[data-filter=\"region\"]");
-        if (!filterBar) {
-          var bars = document.querySelectorAll(".v6-filter-row, .v6-filters");
-          for (var b = 0; b < bars.length; b++){
-            if (bars[b].textContent.includes("Region") || bars[b].textContent.includes("All")) { filterBar = bars[b]; break; }
-          }
-        }
-        if (!filterBar) return;
-        var existing = filterBar.querySelectorAll("button, .v6-chip");
-        var existingTexts = [];
-        for (var e = 0; e < existing.length; e++) existingTexts.push(existing[e].textContent.trim());
-        allRegions.forEach(function(r){
-          if (existingTexts.indexOf(r) === -1 && r !== "All"){
-            var lastBtn = existing[existing.length - 1];
-            if (lastBtn){
-              var newBtn = lastBtn.cloneNode(true);
-              newBtn.textContent = r;
-              newBtn.classList.remove("active");
-              newBtn.style.opacity = "0.5";
-              lastBtn.parentNode.insertBefore(newBtn, lastBtn.nextSibling);
-            }
-          }
-        });
-      }, 500);
-    }
-  };
-})();
-
 </script>
+
 
 </body>
 </html>
