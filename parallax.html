@@ -3359,47 +3359,41 @@ function v6_renderSaciGraph(container, story) {
         var extra = "";
         if (tab === "analysis"){
           extra += mkSection("FINANCIAL CONNECTIONS", s.financial_connections, "#e67e22");
-          if (s.key_figures_involved && Array.isArray(s.key_figures_involved) && s.key_figures_involved.length > 0){
-            var kfHtml = s.key_figures_involved.map(function(kf){
-              return '<div style="margin:4px 0;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:4px;font-size:12px">' +
-                '<strong style="color:var(--accent,#c9a55a)">' + (kf.name||"") + '</strong>' +
-                ' <span style="opacity:0.4">(' + (kf.role||"") + ')</span> — ' + (kf.connection||"") + '</div>';
-            }).join("");
-            extra += mkSection("KEY FIGURES INVOLVED", kfHtml);
+          if (s.key_figures_involved){
+            extra += mkSection("KEY FIGURES INVOLVED", s.key_figures_involved);
           }
           extra += mkSection("WHAT\u2019S MISSING — ABSENCE SIGNALS", s.absence_signals, "#e74c3c");
           extra += mkSection("HISTORICAL PATTERN", s.historical_pattern, "#8e44ad");
         }
         if (tab === "psyops"){
-          if (s.red_team_blue_team){
-            var rt = s.red_team_blue_team;
+          if (s.red_team_actor_a || s.red_team_actor_b){
             var rtHtml = "";
-            if (rt.actor_a){
-              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(231,76,60,0.08);border-radius:4px">';
-              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#e74c3c;margin-bottom:4px">RED TEAM: ' + (rt.actor_a.name||"") + '</div>';
-              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_a.red_team||"") + '</p></div>';
-              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(52,152,219,0.08);border-radius:4px">';
-              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#3498db;margin-bottom:4px">BLUE TEAM: ' + (rt.actor_a.name||"") + '</div>';
-              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_a.blue_team||"") + '</p></div>';
+            if (s.red_team_actor_a){
+              rtHtml += '<div style="margin:0 0 8px;padding:10px;background:rgba(231,76,60,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#e74c3c;margin-bottom:4px">RED TEAM</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + s.red_team_actor_a + '</p></div>';
             }
-            if (rt.actor_b){
-              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(231,76,60,0.08);border-radius:4px">';
-              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#e74c3c;margin-bottom:4px">RED TEAM: ' + (rt.actor_b.name||"") + '</div>';
-              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_b.red_team||"") + '</p></div>';
+            if (s.blue_team_actor_a){
               rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(52,152,219,0.08);border-radius:4px">';
-              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#3498db;margin-bottom:4px">BLUE TEAM: ' + (rt.actor_b.name||"") + '</div>';
-              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + (rt.actor_b.blue_team||"") + '</p></div>';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#3498db;margin-bottom:4px">BLUE TEAM</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + s.blue_team_actor_a + '</p></div>';
             }
-            if (rt.wild_card) rtHtml += mkSection("WILD CARD", rt.wild_card, "#f39c12");
+            if (s.red_team_actor_b){
+              rtHtml += '<div style="margin:0 0 8px;padding:10px;background:rgba(231,76,60,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#e74c3c;margin-bottom:4px">RED TEAM</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + s.red_team_actor_b + '</p></div>';
+            }
+            if (s.blue_team_actor_b){
+              rtHtml += '<div style="margin:0 0 12px;padding:10px;background:rgba(52,152,219,0.08);border-radius:4px">';
+              rtHtml += '<div style="font-size:11px;letter-spacing:1px;color:#3498db;margin-bottom:4px">BLUE TEAM</div>';
+              rtHtml += '<p style="margin:0;font-size:12px;opacity:0.8">' + s.blue_team_actor_b + '</p></div>';
+            }
+            if (s.wild_card) rtHtml += mkSection("WILD CARD", s.wild_card, "#f39c12");
             extra += mkSection("RED TEAM / BLUE TEAM", rtHtml);
           }
-          if (s.psyops_indicators){
-            var pi = s.psyops_indicators;
-            var lvl = pi.coordination_level || "unknown";
-            var lvlColor = lvl === "high" ? "#e74c3c" : lvl === "medium" ? "#f39c12" : "#4a9";
-            var piHtml = '<span style="color:'+lvlColor+';font-weight:bold">' + lvl.toUpperCase() + '</span>';
-            if (pi.evidence) piHtml += ' — ' + pi.evidence;
-            extra += mkSection("PSYOPS COORDINATION SCORE", piHtml, lvlColor);
+          if (s.psyops_coordination){
+            var piHtml = s.psyops_coordination;
+            extra += mkSection("PSYOPS COORDINATION", piHtml, "#f39c12");
           }
         }
         if (tab === "expect"){
