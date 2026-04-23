@@ -2468,14 +2468,29 @@ function v6_renderBriefHeader(brief) {
   return html;
 }
 function v6_renderBriefTabs(brief) {
-  // v76-fe: map brief.json fields to plain text (template escapes HTML)
+  // v80-fe: map brief.json fields — break up text for scannability
   if (brief.intelligence_overview && !brief.overview_prose) {
     var io = brief.intelligence_overview;
+    function splitPara(text, maxSentences) {
+      if (!text) return [];
+      // Split numbered items like (1)...(2)...(3) into separate lines
+      var numbered = text.replace(/\s*\((\d+)\)\s*/g, "\n\n($1) ");
+      // Split on double newlines we just created, then group sentences
+      var chunks = numbered.split(/\n\n+/).filter(function(c){return c.trim()});
+      if (chunks.length > 1) return chunks;
+      // If no numbered items, split every 3 sentences for readability
+      var sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      var result = [];
+      for (var i = 0; i < sentences.length; i += maxSentences) {
+        result.push(sentences.slice(i, i + maxSentences).join("").trim());
+      }
+      return result;
+    }
     var parts = [];
-    if (io.paragraph_1_situation) parts.push(io.paragraph_1_situation);
-    if (io.paragraph_2_connections) parts.push(io.paragraph_2_connections);
-    if (io.paragraph_3_what_watch) parts.push(io.paragraph_3_what_watch);
-    if (io.paragraph_4_buried) parts.push(io.paragraph_4_buried);
+    if (io.paragraph_1_situation) splitPara(io.paragraph_1_situation, 3).forEach(function(p){parts.push(p)});
+    if (io.paragraph_2_connections) splitPara(io.paragraph_2_connections, 3).forEach(function(p){parts.push(p)});
+    if (io.paragraph_3_what_watch) splitPara(io.paragraph_3_what_watch, 2).forEach(function(p){parts.push(p)});
+    if (io.paragraph_4_buried) splitPara(io.paragraph_4_buried, 3).forEach(function(p){parts.push(p)});
     brief.overview_prose = parts.join("\n\n");
   }
   if (brief.top_stories && !brief.stories) brief.stories = brief.top_stories;
