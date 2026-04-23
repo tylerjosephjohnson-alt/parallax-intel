@@ -260,6 +260,54 @@ RSS_FEEDS = [
     {"url": "https://borderlandbeat.com/feeds/posts/default?alt=rss", "source": "Borderland Beat",         "role": "investigative"},
     {"url": "https://www.occrp.org/en/rss",                           "source": "OCCRP",                   "role": "investigative"},
 
+    # ── v97: Independent Journalists ───────────────────────────────────
+    {"url": "https://seymourhersh.substack.com/feed",               "source": "Seymour Hersh",            "role": "investigative"},
+    {"url": "https://taibbi.substack.com/feed",                     "source": "Matt Taibbi",              "role": "investigative"},
+    {"url": "https://greenwald.substack.com/feed",                  "source": "Glenn Greenwald",          "role": "investigative"},
+    {"url": "https://caitlinjohnstone.substack.com/feed",           "source": "Caitlin Johnstone",        "role": "investigative"},
+    {"url": "https://unlimitedhangout.com/feed",                    "source": "Whitney Webb",             "role": "investigative"},
+    {"url": "https://bellingcat.com/feed",                          "source": "Bellingcat",               "role": "investigative-osint"},
+    {"url": "https://feeds.propublica.org/propublica/main",         "source": "ProPublica",               "role": "investigative"},
+    {"url": "https://icij.org/feed",                                "source": "ICIJ",                     "role": "investigative"},
+    {"url": "https://globalwitness.org/en/feed",                    "source": "Global Witness",           "role": "investigative"},
+    {"url": "https://thebureauinvestigates.com/feed",               "source": "Bureau of Invest Journalism","role": "investigative"},
+    {"url": "https://thedrive.com/the-war-zone/feed",               "source": "The War Zone",             "role": "investigative-defense"},
+    {"url": "https://themarshallproject.org/rss/feed",              "source": "The Marshall Project",     "role": "investigative"},
+    {"url": "https://thetrace.org/feed",                            "source": "The Trace",                "role": "investigative"},
+    {"url": "https://coreysdigs.com/feed",                          "source": "Corey Lynn",               "role": "investigative"},
+
+    # ── v97: Corporate — Energy ─────────────────────────────────────
+    {"url": "https://corporate.exxonmobil.com/news/newsroom/rss",   "source": "ExxonMobil",               "role": "corporate-energy"},
+    {"url": "https://www.shell.com/media/news-and-media-releases.rss","source": "Shell",                   "role": "corporate-energy"},
+    {"url": "https://www.bp.com/en/global/corporate/news-and-insights.rss","source": "BP",                "role": "corporate-energy"},
+    {"url": "https://opec.org/opec_web/en/press_room/rss.xml",      "source": "OPEC",                     "role": "multilateral-energy"},
+
+    # ── v97: Corporate — Defense ────────────────────────────────────
+    {"url": "https://news.lockheedmartin.com/rss",                  "source": "Lockheed Martin",          "role": "corporate-defense"},
+    {"url": "https://palantir.com/blog/rss",                        "source": "Palantir",                 "role": "corporate-defense-tech"},
+
+    # ── v97: Corporate — Finance ────────────────────────────────────
+    {"url": "https://www.goldmansachs.com/insights/rss",            "source": "Goldman Sachs",            "role": "corporate-finance"},
+    {"url": "https://www.federalreserve.gov/feeds/press_all.xml",   "source": "Federal Reserve",          "role": "official-finance"},
+    {"url": "https://www.imf.org/en/News/rss",                      "source": "IMF",                      "role": "multilateral-finance"},
+
+    # ── v97: Corporate — Retail/Supply Chain ────────────────────────
+    {"url": "https://corporate.walmart.com/newsroom/rss",           "source": "Walmart Corporate",        "role": "corporate-retail"},
+    {"url": "https://www.aboutamazon.com/rss",                      "source": "Amazon News",              "role": "corporate-tech-retail"},
+
+    # ── v97: Financial Crime / Fraud Detection ──────────────────────
+    {"url": "https://www.transparency.org/en/feed",                 "source": "Transparency International","role": "ngo-anticorruption"},
+    {"url": "https://globalinitiative.net/feed",                    "source": "Global Initiative TOC",    "role": "investigative"},
+    {"url": "https://www.fincen.gov/news/rss",                      "source": "FinCEN",                   "role": "official-finance"},
+
+    # ── v97: Government / Regulatory ────────────────────────────────
+    {"url": "https://www.state.gov/rss",                            "source": "US State Dept",            "role": "official"},
+    {"url": "https://home.treasury.gov/news/press-releases/rss",    "source": "US Treasury",              "role": "official-finance"},
+    {"url": "https://www.cisa.gov/news-events/rss",                 "source": "CISA",                     "role": "official-cyber"},
+    {"url": "https://www.europol.europa.eu/rss",                    "source": "Europol",                  "role": "multilateral-enforcement"},
+    {"url": "https://www.who.int/rss-feeds/news-english.xml",       "source": "WHO",                      "role": "multilateral-health"},
+
+
 
 ]
 
