@@ -3100,83 +3100,52 @@ v6_switchBriefRegion = function(btn) {
 
 // v88-fe: SACI Graph — Social Actor Connection Intelligence for Psyops tab
 function v6_renderSaciGraph(container, story) {
-  if (!story || !container) return;
-  var actors = [];
-  var links = [];
-  // Extract actors from who_benefits and competing_narratives
-  var wb = story.who_benefits || "";
-  var cn = story.competing_narratives || "";
-  var sources = story.sources || [];
-  // Parse actors from text — look for named entities (capitalized multi-word phrases)
-  var allText = [wb, cn, story.overview_prose || "", story.summary || ""].join(" ");
-  var entityRe = /(?:the |)([A-Z][a-z]+ (?:[A-Z][a-z]+ ?){0,3}(?:of |for |and )?(?:[A-Z][a-z]+ ?){0,2})/g;
-  var seen = {};
-  var m;
-  while ((m = entityRe.exec(allText)) !== null && actors.length < 12) {
-    var name = m[1].trim();
-    if (name.length > 3 && name.length < 40 && !seen[name] && !/^(The |This |That |These |Those |When |While |After |Before )/.test(name)) {
-      seen[name] = true;
-      actors.push({name: name, type: "entity"});
-    }
+    if (!container || !story) return;
+    if (container.getAttribute("data-tab") !== "psyops") return;
+    if (container.querySelector(".saci-bars")) return;
+    var sources = story.sources || [];
+    var citations = story.source_citations || [];
+    var cn = story.competing_narratives || [];
+    var colors = ["#e74c3c","#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#c0392b","#2980b9","#27ae60"];
+    var entities = {};
+    sources.forEach(function(s,i){ entities[s] = {type:"source",count:0,color:colors[i % colors.length]}; });
+    citations.forEach(function(c){
+      var src = c.source || c.name || "";
+      if (!entities[src]) entities[src] = {type:"source",count:0,color:colors[Object.keys(entities).length % colors.length]};
+      entities[src].count++;
+    });
+    if (Array.isArray(cn)) cn.forEach(function(n){
+      var actor = n.source_actor || "";
+      if (actor && !entities[actor]) entities[actor] = {type:"actor",count:0,color:colors[Object.keys(entities).length % colors.length]};
+      if (actor) entities[actor].count++;
+    });
+    var keys = Object.keys(entities).sort(function(a,b){ return entities[b].count - entities[a].count; });
+    if (keys.length === 0) return;
+    var maxCount = Math.max.apply(null, keys.map(function(k){return entities[k].count || 1}));
+    var h = "<div class=\"saci-bars\" style=\"padding:12px 0\">";
+    h += "<div style=\"font-size:10px;letter-spacing:1.5px;opacity:0.4;margin-bottom:12px\">SOURCE INTELLIGENCE MAP</div>";
+    keys.slice(0,12).forEach(function(k){
+      var e = entities[k];
+      var w = Math.max(15, Math.round((e.count / maxCount) * 100));
+      var typeLabel = e.type === "actor" ? "ACTOR" : "SOURCE";
+      h += "<div style=\"display:flex;align-items:center;margin:4px 0;gap:8px\">";
+      h += "<div style=\"width:100px;font-size:11px;text-align:right;opacity:0.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">" + k + "</div>";
+      h += "<div style=\"flex:1;height:18px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden\">";
+      h += "<div style=\"height:100%;width:" + w + "%;background:" + e.color + ";border-radius:3px;display:flex;align-items:center;padding:0 6px\">";
+      h += "<span style=\"font-size:9px;color:#000;font-weight:bold;white-space:nowrap\">" + typeLabel + " \u00b7 " + e.count + "</span>";
+      h += "</div></div></div>";
+    });
+    h += "<div style=\"margin-top:8px;font-size:10px;opacity:0.3\">" + keys.length + " entities tracked</div>";
+    h += "</div>";
+    container.insertAdjacentHTML("beforeend", h);
   }
-  // Add sources as nodes
-  for (var i = 0; i < Math.min(sources.length, 6); i++) {
-    var src = typeof sources[i] === "string" ? sources[i] : (sources[i].name || sources[i].source || "");
-    if (src && !seen[src]) { seen[src] = true; actors.push({name: src, type: "source"}); }
-  }
-  if (actors.length < 3) { container.innerHTML = "<p style=\"opacity:0.4;font-style:italic\">Insufficient data for network graph.</p>"; return; }
-  // Create links between actors that appear near each other
-  for (var a = 0; a < actors.length; a++) {
-    for (var b = a + 1; b < actors.length; b++) {
-      if (actors[a].type !== actors[b].type || Math.random() < 0.3) {
-        links.push({from: a, to: b});
-      }
-    }
-  }
-  // Render SVG force-directed graph
-  var w = container.offsetWidth || 600;
-  var h = 320;
-  var cx = w / 2, cy = h / 2;
-  // Position nodes in a circle
-  var nodes = actors.map(function(a, i) {
-    var angle = (2 * Math.PI * i) / actors.length;
-    var r = Math.min(w, h) * 0.35;
-    return {x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle), name: a.name, type: a.type};
-  });
-  var svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + " " + h + '"  xmlns="http://www.w3.org/2000/svg">';
-  // Draw links
-  for (var li = 0; li < links.length; li++) {
-    var f = nodes[links[li].from], t = nodes[links[li].to];
-    svg += '<line x1="' + f.x + '" y1="' + f.y + '" x2="' + t.x + '" y2="' + t.y + '" stroke="rgba(201,165,90,0.2)" stroke-width="1"/>';
-  }
-  // Draw nodes
-  for (var ni = 0; ni < nodes.length; ni++) {
-    var n = nodes[ni];
-    var color = n.type === "source" ? "#4a9" : "#c9a55a";
-    var radius = n.type === "source" ? 6 : 8;
-    svg += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + radius + '" fill="' + color + '" opacity="0.8"/>';
-    svg += '<text x="' + n.x + '" y="' + (n.y + radius + 12) + '" fill="rgba(255,255,255,0.7)" font-size="9" text-anchor="middle">' + n.name.substring(0, 20) + '</text>';
-  }
-  svg += '<text x="10" y="16" fill="rgba(255,255,255,0.3)" font-size="10">SACI NETWORK GRAPH</text>';
-  svg += '<text x="10" y="30" fill="rgba(255,255,255,0.2)" font-size="8">' + actors.length + ' actors \u00b7 ' + links.length + ' connections</text>';
-  // Legend
-  svg += '<circle cx="' + (w - 100) + '" cy="16" r="5" fill="#c9a55a"/>';
-  svg += '<text x="' + (w - 90) + '" y="20" fill="rgba(255,255,255,0.4)" font-size="9">Entity</text>';
-  svg += '<circle cx="' + (w - 100) + '" cy="32" r="5" fill="#4a9"/>';
-  svg += '<text x="' + (w - 90) + '" y="36" fill="rgba(255,255,255,0.4)" font-size="9">Source</text>';
-  svg += "</svg>";
-  container.innerHTML = svg;
-}
-
-// Auto-inject SACI graphs when Psyops tab is opened
-(function(){
   function injectSaci(){
     var panes = document.querySelectorAll("[data-tab=\"psyops\"]");
     for (var i = 0; i < panes.length; i++) {
       var pane = panes[i];
       if (pane.classList.contains("v6-pane") && pane.style.display !== "none" && !pane.querySelector("svg")) {
         var card = pane.closest(".v6-card");
-        if (card && card._storyData) v6_renderSaciGraph(pane, card._storyData);
+        if (card && card._storyData && pane.getAttribute("data-tab") === "psyops") v6_renderSaciGraph(pane, card._storyData);
       }
     }
   }
@@ -3220,7 +3189,7 @@ function v6_renderSaciGraph(container, story) {
         var card = pane.closest(".v6-card");
         if (!card) continue;
         // Try card._storyData first, then match by headline
-        if (card._storyData) { v6_renderSaciGraph(pane, card._storyData); continue; }
+        if (card._storyData && pane.getAttribute("data-tab") === "psyops") { v6_renderSaciGraph(pane, card._storyData); continue; }
         var headline = card.querySelector("h2, h3");
         if (!headline) continue;
         var hText = headline.textContent.trim();
@@ -3425,8 +3394,8 @@ function v6_renderSaciGraph(container, story) {
     var panes = document.querySelectorAll(".v6-pane");
     for (var i = 0; i < panes.length; i++){
       if (panes[i].getAttribute("data-tab") !== "psyops"){
-        var svgs = panes[i].querySelectorAll("svg");
-        for (var s = 0; s < svgs.length; s++) svgs[s].remove();
+        var bars = panes[i].querySelectorAll(".saci-bars");
+        for (var s = 0; s < bars.length; s++) bars[s].remove();
       }
     }
   }, 2000);
@@ -3463,6 +3432,35 @@ window.atlasShowRegion = function(regionId){
   var tgt = v.querySelector(".view-header");
   if (tgt) tgt.insertAdjacentHTML("afterend", h);
 };
+
+// FIX 4: Add missing region buttons to All Stories
+(function(){
+  var _sv2 = window.setView;
+  window.setView = function(v){
+    _sv2(v);
+    if (v === "stories") setTimeout(function(){
+      var row = document.querySelector("#view-stories .v6-chip-row");
+      if (!row) {
+        var chips = document.querySelectorAll("#view-stories .v6-chip");
+        if (chips.length > 0) row = chips[0].parentElement;
+      }
+      if (!row) return;
+      var have = [];
+      var btns = row.querySelectorAll(".v6-chip");
+      for (var b = 0; b < btns.length; b++) have.push(btns[b].textContent.trim());
+      var need = ["Africa","Latin America","Russia \u00b7 Eurasia","Asia Pacific"];
+      need.forEach(function(r){
+        if (have.indexOf(r) === -1 && btns.length > 0){
+          var btn = btns[btns.length - 1].cloneNode(true);
+          btn.textContent = r;
+          btn.classList.remove("active");
+          btn.style.opacity = "0.4";
+          row.appendChild(btn);
+        }
+      });
+    }, 600);
+  };
+})();
 </script>
 
 
