@@ -2896,14 +2896,22 @@ Respond ONLY with valid JSON. No markdown, no explanations, no text outside the 
         if result.strip().startswith("```"):
             result = result.strip().split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         
-        try:
-            enrichment = json.loads(result)
-        except json.JSONDecodeError:
-            import re as _re_fix
-            result = _re_fix.sub(r'"\s*\n\s*"', '",\n"', result)
-            result = _re_fix.sub(r'(\])\s*\n\s*"', r'\1,\n"', result)
-            result = _re_fix.sub(r'(true|false|null|\d)\s*\n\s*"', r'\1,\n"', result)
-            enrichment = json.loads(result)
+        _parse_text = result
+        for _attempt in range(6):
+            try:
+                enrichment = json.loads(_parse_text)
+                break
+            except json.JSONDecodeError as _je:
+                if _attempt == 5:
+                    raise
+                _pos = _je.pos
+                _back = _pos - 1
+                while _back > 0 and _parse_text[_back] in ' \t\n\r':
+                    _back -= 1
+                if _back > 0 and _parse_text[_back] in '"]}0123456789euls':
+                    _parse_text = _parse_text[:_back+1] + ',' + _parse_text[_back+1:]
+                else:
+                    raise
         # Merge enrichment fields into story
         for key in ["narrative_analysis", "who_benefits", "competing_narratives",
                      "financial_connections", "key_figures_involved", "absence_signals",
