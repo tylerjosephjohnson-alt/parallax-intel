@@ -2880,7 +2880,7 @@ Provide deep-analysis fields as a JSON object. Be specific: name names, cite dat
 Respond ONLY with valid JSON. No markdown, no explanations, no text outside the JSON object."""
     
     try:
-        result = call_claude(prompt, max_tokens=2000)
+        result = call_claude(prompt, max_tokens=6000)
         if not result:
             return story
         
