@@ -3486,5 +3486,299 @@ window.v6_renderSaciGraph = function(container, story) {
 </script>
 
 
+<!-- v97-fe: comprehensive frontend fixes â issues 6-14 -->
+<script>
+(function(){
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIX #13: Hook switchTab to trigger SACI bars on psyops click
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+var _origSwitchTab = window.v6_switchTab;
+window.v6_switchTab = function(btn) {
+  _origSwitchTab(btn);
+  var tabName = btn.textContent.trim().toLowerCase();
+  if (tabName.indexOf("psyops") === -1) return;
+  var card = btn.closest(".v6-card");
+  if (!card) return;
+  var panes = card.querySelectorAll('[data-tab="psyops"]');
+  var pane = null;
+  for (var i = 0; i < panes.length; i++) {
+    if (panes[i].style.display !== "none" && panes[i].offsetHeight > 0) { pane = panes[i]; break; }
+  }
+  if (!pane || pane.querySelector(".saci-bars")) return;
+  var headline = card.querySelector("h2, h3");
+  if (!headline) return;
+  var hText = headline.textContent.trim();
+  fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+    var stories = d.stories || [];
+    var match = stories.find(function(s){ return s.headline === hText; });
+    if (!match) match = stories.find(function(s){ return hText.indexOf(s.headline.substring(0,25)) > -1 || s.headline.indexOf(hText.substring(0,25)) > -1; });
+    if (match) v6_renderSaciGraph(pane, match);
+  });
+};
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIX #6: Save icon on story cards â bookmark to My Stories
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+var savedStories = [];
+
+function addSaveButtons() {
+  var cards = document.querySelectorAll(".v6-card");
+  cards.forEach(function(card) {
+    if (card.querySelector(".v6-save-btn")) return;
+    var header = card.querySelector(".v6-card-header, [style*='display:flex']");
+    if (!header) header = card.firstElementChild;
+    if (!header) return;
+    var btn = document.createElement("button");
+    btn.className = "v6-save-btn";
+    btn.innerHTML = "&#9734;";
+    btn.title = "Save to My Stories";
+    btn.style.cssText = "position:absolute;top:8px;right:8px;background:none;border:1px solid rgba(255,255,255,0.15);color:var(--text-dim);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:4px;z-index:10;transition:all 0.2s;";
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      var h = card.querySelector("h2, h3");
+      if (!h) return;
+      var headline = h.textContent.trim();
+      var idx = savedStories.findIndex(function(s){ return s.headline === headline; });
+      if (idx > -1) {
+        savedStories.splice(idx, 1);
+        btn.innerHTML = "&#9734;";
+        btn.style.color = "var(--text-dim)";
+        btn.style.borderColor = "rgba(255,255,255,0.15)";
+      } else {
+        savedStories.push({ headline: headline, savedAt: new Date().toISOString() });
+        btn.innerHTML = "&#9733;";
+        btn.style.color = "#f39c12";
+        btn.style.borderColor = "#f39c12";
+      }
+      renderSavedStories();
+    };
+    card.style.position = "relative";
+    card.appendChild(btn);
+  });
+}
+
+function renderSavedStories() {
+  var container = document.querySelector("#view-saved .v6-saved-list, #view-saved");
+  if (!container) return;
+  var existing = container.querySelector(".v6-saved-cards");
+  if (existing) existing.remove();
+  if (savedStories.length === 0) return;
+  var h = '<div class="v6-saved-cards">';
+  savedStories.forEach(function(s) {
+    h += '<div style="padding:12px;margin:8px 0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:flex;justify-content:space-between;align-items:center">';
+    h += '<span style="color:var(--text)">' + s.headline + '</span>';
+    h += '<span style="font-size:11px;color:var(--text-faint)">' + new Date(s.savedAt).toLocaleDateString() + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  container.insertAdjacentHTML("beforeend", h);
+}
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIX #7: Source Registry links â add website URLs
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+function addSourceLinks() {
+  var registry = document.getElementById("view-sources");
+  if (!registry) return;
+  var items = registry.querySelectorAll("[style*='border-radius']");
+  items.forEach(function(item) {
+    if (item.querySelector("a")) return;
+    var name = item.querySelector("strong, h3, div");
+    if (!name) return;
+    var srcName = name.textContent.trim();
+    var urlMap = {
+      "Reuters": "https://www.reuters.com", "AP": "https://apnews.com", "AFP": "https://www.afp.com",
+      "BBC": "https://www.bbc.com/news", "DW": "https://www.dw.com", "The Guardian": "https://www.theguardian.com",
+      "Bloomberg": "https://www.bloomberg.com", "Al Jazeera": "https://www.aljazeera.com",
+      "TASS": "https://tass.com", "Xinhua": "https://english.news.cn", "NHK": "https://www3.nhk.or.jp/nhkworld",
+      "Bellingcat": "https://www.bellingcat.com", "ProPublica": "https://www.propublica.org",
+      "ICIJ": "https://www.icij.org", "OCCRP": "https://www.occrp.org",
+      "War on the Rocks": "https://warontherocks.com", "Cipher Brief": "https://www.thecipherbrief.com",
+      "Breaking Defense": "https://breakingdefense.com", "Defense One": "https://www.defenseone.com",
+      "Lawfare": "https://www.lawfaremedia.org", "Just Security": "https://www.justsecurity.org"
+    };
+    var url = urlMap[srcName];
+    if (url) {
+      name.innerHTML = '<a href="' + url + '" target="_blank" style="color:inherit;text-decoration:underline;text-decoration-color:rgba(255,255,255,0.2)">' + srcName + '</a>';
+    }
+  });
+}
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIX #8: Card source links â clickable article URLs in Sources tab
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+function addArticleLinks() {
+  var panes = document.querySelectorAll('[data-tab="sources"]');
+  panes.forEach(function(pane) {
+    if (pane.dataset.linksAdded) return;
+    pane.dataset.linksAdded = "true";
+    var card = pane.closest(".v6-card");
+    if (!card) return;
+    var headline = (card.querySelector("h2, h3") || {}).textContent || "";
+    fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+      var stories = d.stories || [];
+      var match = stories.find(function(s){ return s.headline === headline.trim(); });
+      if (!match || !match.article_urls) return;
+      var urls = match.article_urls;
+      var items = pane.querySelectorAll("li, div[style*='margin']");
+      items.forEach(function(item, idx) {
+        if (idx < urls.length && !item.querySelector("a.src-link")) {
+          var link = document.createElement("a");
+          link.className = "src-link";
+          link.href = urls[idx];
+          link.target = "_blank";
+          link.textContent = " [open]";
+          link.style.cssText = "font-size:10px;color:#3498db;margin-left:6px;text-decoration:none;opacity:0.6";
+          item.appendChild(link);
+        }
+      });
+    });
+  });
+}
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIX #9: Atlas country click â show stories for that country
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+function setupAtlasCountryClick() {
+  var atlas = document.getElementById("view-atlas");
+  if (!atlas) return;
+  atlas.addEventListener("click", function(e) {
+    var countryEl = e.target.closest("[data-country]");
+    if (!countryEl) return;
+    var country = countryEl.getAttribute("data-country");
+    if (!country) return;
+    var detail = atlas.querySelector(".atlas-country-detail");
+    if (detail) detail.remove();
+    fetch("/stories.json").then(function(r){return r.json()}).then(function(d){
+      var stories = (d.stories || []).filter(function(s) {
+        return (s.location || "").toLowerCase().indexOf(country.toLowerCase()) > -1 ||
+               (s.headline || "").toLowerCase().indexOf(country.toLowerCase()) > -1;
+      });
+      var h = '<div class="atlas-country-detail" style="margin:20px 0;padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px">';
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+      h += '<h3 style="margin:0;color:#c9a55a">' + country + '</h3>';
+      h += '<button onclick="this.parentElement.parentElement.remove()" style="background:none;border:1px solid rgba(255,255,255,0.1);color:#e8e0d0;padding:2px 8px;border-radius:4px;cursor:pointer">&times;</button>';
+      h += '</div>';
+      if (stories.length === 0) {
+        h += '<p style="color:var(--text-dim)">No stories currently mention ' + country + '.</p>';
+      } else {
+        stories.forEach(function(s) {
+          h += '<div style="padding:8px 12px;margin:4px 0;background:rgba(255,255,255,0.03);border-radius:4px;border-left:2px solid #c9a55a">';
+          h += '<div style="color:var(--text);font-size:13px">' + s.headline + '</div>';
+          h += '<div style="color:var(--text-faint);font-size:11px;margin-top:4px">' + (s.region || "global") + ' &middot; ' + (s.watch_level || "routine") + '</div>';
+          h += '</div>';
+        });
+      }
+      h += '</div>';
+      var header = atlas.querySelector(".view-header, h2, h1");
+      if (header) header.insertAdjacentHTML("afterend", h);
+      else atlas.insertAdjacentHTML("afterbegin", h);
+    });
+  });
+}
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIX #14: Region filter buttons â ensure all regions present
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+function fixRegionButtons() {
+  var row = document.querySelector("#view-stories .v6-chip-row");
+  if (!row) {
+    var chips = document.querySelectorAll("#view-stories .v6-chip");
+    if (chips.length > 0) row = chips[0].parentElement;
+  }
+  if (!row) return;
+  var have = [];
+  row.querySelectorAll(".v6-chip").forEach(function(c){ have.push(c.textContent.trim()); });
+  var need = ["All","Global","Americas","Europe","Middle East","East Asia","South Asia","Africa","Latin America","Russia \u00b7 Eurasia","Asia Pacific"];
+  need.forEach(function(r) {
+    if (have.indexOf(r) === -1 && row.children.length > 0) {
+      var btn = row.children[row.children.length - 1].cloneNode(true);
+      btn.textContent = r;
+      btn.classList.remove("active");
+      btn.style.opacity = "0.7";
+      row.appendChild(btn);
+    }
+  });
+}
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// FIXES #10, #11, #12: Populate Predictions, Psyops, Scenarios pages
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+function populatePages() {
+  // Predictions â already has demo cards, add explanation header
+  var pred = document.getElementById("view-predictions");
+  if (pred && !pred.querySelector(".v97-header")) {
+    var header = pred.querySelector(".view-header, h2");
+    if (header) {
+      header.insertAdjacentHTML("afterend", '<div class="v97-header" style="padding:12px 0;margin-bottom:16px;border-bottom:1px solid var(--border)"><p style="color:var(--text-dim);font-size:13px;margin:0">Each prediction follows three lenses: <strong style="color:#e74c3c">Current State</strong> (what is happening now), <strong style="color:#f39c12">How We Got Here</strong> (the chain of events), and <strong style="color:#2ecc71">Where It\'s Going</strong> (calibrated probability with base rates). Click any card for the full breakdown.</p></div>');
+    }
+  }
+
+  // Psyops page â competing narratives dashboard
+  var psyops = document.getElementById("view-psyops");
+  if (psyops && !psyops.querySelector(".v97-psyops")) {
+    var pContent = psyops.querySelector("p, .view-content");
+    if (pContent && pContent.textContent.indexOf("Phase 2") > -1) pContent.remove();
+    var ph = '<div class="v97-psyops" style="padding:16px 0">';
+    ph += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:20px">Narrative divergence tracking across stories. When sources tell different versions of the same event, Vantage flags the gap. Data populates from enrichment analysis.</p>';
+    ph += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+    ph += '<div style="padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;border-left:3px solid #e74c3c">';
+    ph += '<div style="font-size:10px;letter-spacing:1px;color:#e74c3c;margin-bottom:8px">NARRATIVE A</div>';
+    ph += '<div style="color:var(--text-dim);font-size:13px">Red team analysis appears here after enrichment runs. Each story\'s competing narratives are extracted and cross-referenced.</div></div>';
+    ph += '<div style="padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;border-left:3px solid #3498db">';
+    ph += '<div style="font-size:10px;letter-spacing:1px;color:#3498db;margin-bottom:8px">NARRATIVE B</div>';
+    ph += '<div style="color:var(--text-dim);font-size:13px">Blue team analysis appears here. Vantage treats both sides equally â view both as red and both as blue.</div></div>';
+    ph += '</div>';
+    ph += '<div style="margin-top:16px;padding:12px;background:rgba(243,156,18,0.05);border:1px solid rgba(243,156,18,0.15);border-radius:8px">';
+    ph += '<div style="font-size:10px;letter-spacing:1px;color:#f39c12;margin-bottom:6px">COORDINATION SIGNALS</div>';
+    ph += '<div style="color:var(--text-dim);font-size:13px">When multiple outlets publish near-identical framing within a short window, Vantage flags potential coordinated messaging. Signals populate after enrichment.</div></div>';
+    ph += '</div>';
+    psyops.insertAdjacentHTML("beforeend", ph);
+  }
+
+  // Scenarios page â Red/Blue team format
+  var scenarios = document.getElementById("view-scenarios");
+  if (scenarios && !scenarios.querySelector(".v97-scenarios")) {
+    var sContent = scenarios.querySelector("p, .view-content");
+    if (sContent && sContent.textContent.indexOf("Phase 5") > -1) sContent.remove();
+    var sh = '<div class="v97-scenarios" style="padding:16px 0">';
+    sh += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:20px">Cross-Atlas, cross-Predictions scenario modeling. Each scenario tests: What happens if X? Who benefits? What signals would confirm or invalidate?</p>';
+    sh += '<div style="padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:12px">';
+    sh += '<div style="display:flex;gap:8px;margin-bottom:12px">';
+    sh += '<span style="font-size:10px;padding:2px 8px;background:rgba(231,76,60,0.15);color:#e74c3c;border-radius:3px">RED TEAM</span>';
+    sh += '<span style="font-size:10px;padding:2px 8px;background:rgba(52,152,219,0.15);color:#3498db;border-radius:3px">BLUE TEAM</span>';
+    sh += '</div>';
+    sh += '<h3 style="color:var(--text);margin:0 0 8px">Scenario format</h3>';
+    sh += '<div style="color:var(--text-dim);font-size:13px">Each scenario card will present: <strong>Trigger condition</strong> (what starts it), <strong>Red team view</strong> (adversarial interpretation), <strong>Blue team view</strong> (defensive interpretation), <strong>Indicators to watch</strong> (what confirms which view is correct), and <strong>Second-order effects</strong> (what follows). Scenarios generate from story clusters after enrichment.</div>';
+    sh += '</div></div>';
+    scenarios.insertAdjacentHTML("beforeend", sh);
+  }
+}
+
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Run all fixes on load and on DOM changes
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+function runAllFixes() {
+  addSaveButtons();
+  addSourceLinks();
+  addArticleLinks();
+  fixRegionButtons();
+  populatePages();
+}
+
+// Run immediately
+setTimeout(runAllFixes, 1000);
+
+// Run on DOM changes (new cards rendered, page switches)
+var fixObserver = new MutationObserver(function(){ setTimeout(runAllFixes, 500); });
+if (document.body) fixObserver.observe(document.body, {childList:true, subtree:true});
+
+// Setup atlas click handler once
+setTimeout(setupAtlasCountryClick, 1500);
+
+})();
+</script>
+
 </body>
 </html>
