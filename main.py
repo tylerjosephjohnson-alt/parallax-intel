@@ -3572,6 +3572,10 @@ if FLASK:
                 print(f"Enrichment complete: {enriched_count}/{len(stories)} stories enriched")
             except Exception as e:
                 print(f"Enrichment error: {e}")
+                import traceback
+                globals()['_LAST_CLAUDE_ERROR'] = f"ENRICH_CRASH: {str(e)} | {traceback.format_exc()}"
+                import traceback
+                globals()['_LAST_CLAUDE_ERROR'] = f"ENRICH_CRASH: {str(e)} | {traceback.format_exc()}"
         t = threading.Thread(target=_do_enrich, daemon=True)
         t.start()
         return jsonify({"status": "triggered", "message": "Enrichment started for unenriched stories"})
