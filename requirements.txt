@@ -1,3 +1,4 @@
 flask
 newspaper4k
 trafilatura
+json5
