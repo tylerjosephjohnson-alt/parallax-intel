@@ -2982,6 +2982,8 @@ SCANNABLE OUTPUT RULES FOR DAILY BRIEF (covers the globe, not single events):
 - paragraph_3_what_watch: Numbered list (1. 2. 3.) of specific verifiable indicators. Each names the actor, the action, and what it would mean. Specific primary evidence, not generic themes.
 - paragraph_4_buried: Prose format. 2-3 sentences on the underreported story plus 1-2 on why the silence matters. No bullets needed — this reads as narrative.
 - Apply the same rules to each top_story paragraph.
+MANDATORY REGION COVERAGE: The top_stories array MUST include at minimum one story for EACH of these regions: middle-east, europe, africa, americas, asia-pacific, south-asia, russia-fsu, and one global/transnational story. That is 8 minimum top_stories. If no major development occurred in a region, still include the most significant activity from that region. Every region tab on the dashboard must have content.
+
 
 
 Return ONLY a JSON object (no markdown):
