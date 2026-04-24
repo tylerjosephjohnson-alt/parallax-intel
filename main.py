@@ -2908,6 +2908,8 @@ Provide deep-analysis fields as a JSON object. Be specific: name names, cite dat
         print(f"  Enriched: {headline[:50]}")
     except Exception as e:
         print(f"  Enrichment failed (non-fatal): {e}")
+        import traceback
+        globals()['_LAST_CLAUDE_ERROR'] = f"ENRICH_STORY_FAIL: {str(e)} | headline: {headline[:50]} | {traceback.format_exc()}"
     
     return story
 
