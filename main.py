@@ -3575,6 +3575,27 @@ if FLASK:
         t = threading.Thread(target=_do_enrich, daemon=True)
         t.start()
         return jsonify({"status": "triggered", "message": "Enrichment started for unenriched stories"})
+    @app.route("/debug-error")
+    def debug_error():
+        """Show last Claude API error without making any API calls."""
+        return jsonify({
+            "last_claude_error": globals().get("_LAST_CLAUDE_ERROR", "no error recorded"),
+            "api_key_set": bool(ANTHROPIC_API_KEY),
+            "api_key_prefix": ANTHROPIC_API_KEY[:12] + "..." if ANTHROPIC_API_KEY else "not set",
+            "model": MODEL,
+            "data_file_exists": os.path.exists(DATA_FILE),
+            "stories_count": len(json.load(open(DATA_FILE)).get("stories", [])) if os.path.exists(DATA_FILE) else 0
+        })
+
+    @app.route("/test-claude")
+    def test_claude_endpoint():
+        """Make one small API call and return the result or error."""
+        try:
+            result = call_claude("Say hello in exactly 3 words.", max_tokens=50)
+            return jsonify({"status": "ok", "result": result[:200] if result else "empty", "key_set": bool(ANTHROPIC_API_KEY), "last_error": globals().get("_LAST_CLAUDE_ERROR", "none")})
+        except Exception as e:
+            return jsonify({"status": "error", "error": str(e), "key_set": bool(ANTHROPIC_API_KEY), "last_error": globals().get("_LAST_CLAUDE_ERROR", "none")})
+
 
     @app.route("/debug-brief")
     def debug_brief():
