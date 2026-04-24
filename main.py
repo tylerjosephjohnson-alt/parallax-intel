@@ -3551,6 +3551,31 @@ if FLASK:
         t.start()
         return jsonify({"status": "triggered", "message": "Brief generation started"})
 
+    @app.route("/trigger-enrich")
+    def trigger_enrich():
+        """Enrich existing stories without re-scraping. Reads stories.json, runs enrich_story on unenriched stories, writes back."""
+        def _do_enrich():
+            try:
+                with open(DATA_FILE, "r") as f:
+                    data = json.load(f)
+                stories = data.get("stories", [])
+                enriched_count = 0
+                for story in stories:
+                    if not story.get("competing_narratives"):
+                        enrich_story(story)
+                        if story.get("competing_narratives"):
+                            enriched_count += 1
+                            print(f"  Enriched: {story.get('headline', '')[:50]}")
+                data["stories"] = stories
+                with open(DATA_FILE, "w") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"Enrichment complete: {enriched_count}/{len(stories)} stories enriched")
+            except Exception as e:
+                print(f"Enrichment error: {e}")
+        t = threading.Thread(target=_do_enrich, daemon=True)
+        t.start()
+        return jsonify({"status": "triggered", "message": "Enrichment started for unenriched stories"})
+
     @app.route("/debug-brief")
     def debug_brief():
         """Serves latest brief debug files. Query: ?file=raw|repaired, ?pos=<char>, ?ctx=<radius>"""
