@@ -2745,6 +2745,13 @@ CROSS-SOURCE ANALYSIS:
 {history_context}
 ARTICLES:
 {article_text}
+SCANNABLE OUTPUT RULES FOR STORY CARDS:
+- summary: Lead sentence stating what happened. Then key facts with line breaks between them. Max 120 words. No wall of text.
+- what_is_known: 3-5 confirmed facts as a dashed list. Use - at start of each fact. One fact per line.
+- what_is_disputed: Each dispute on its own line. Format: - Source A says X vs Source B says Y.
+- why_it_matters: 3 numbered consequences. 1. [sentence] 2. [sentence] 3. [sentence]. Specific to THIS event.
+- overview_prose: Break into 2-3 short paragraphs. First: what happened. Second: context or contradiction. Third: what comes next. No single wall of text.
+
 
 Respond with ONLY a JSON object (no markdown). Keep the response compact.
 {{
@@ -2969,6 +2976,13 @@ Current tracked stories for context:
 {story_context}
 
 Produce a concise, factual morning brief. Every claim must be attributed to a specific source.
+SCANNABLE OUTPUT RULES FOR DAILY BRIEF (covers the globe, not single events):
+- paragraph_1_situation: Break into sub-sections by region or theater. Use short labeled headers like HORMUZ: or UKRAINE: or AFRICA: before each sub-section. Separate sub-sections with line breaks. 2-3 sentences of prose under each header. Cover the globe — do not let one conflict dominate.
+- paragraph_2_connections: Opening sentence naming the pattern. Then 2-3 specific connections, each on its own line starting with a dash. Each connection is 1-2 sentences tying stories together by name. End with one sentence on the broader implication.
+- paragraph_3_what_watch: Numbered list (1. 2. 3.) of specific verifiable indicators. Each names the actor, the action, and what it would mean. Specific primary evidence, not generic themes.
+- paragraph_4_buried: Prose format. 2-3 sentences on the underreported story plus 1-2 on why the silence matters. No bullets needed — this reads as narrative.
+- Apply the same rules to each top_story paragraph.
+
 
 Return ONLY a JSON object (no markdown):
 {{
