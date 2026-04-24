@@ -3387,7 +3387,7 @@ def scheduler():
         if last_time_str:
             elapsed = (now - datetime.fromisoformat(last_time_str)).total_seconds() / 60
         else:
-            elapsed = SCRAPE_INTERVAL_MINUTES + 1  # never ran → trigger now
+                        elapsed = 0  # v102: never ran on deploy -- wait for scheduled time
 
         if elapsed >= SCRAPE_INTERVAL_MINUTES:
             try:
