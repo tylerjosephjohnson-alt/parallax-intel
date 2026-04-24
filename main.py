@@ -2875,7 +2875,9 @@ Provide deep-analysis fields as a JSON object. Be specific: name names, cite dat
   "second_order_effects": "If the most likely outcome occurs, what cascade follows that nobody is discussing?",
   "psyops_coordination": "none|low|medium|high — what specific patterns suggest coordinated messaging?",
   "contradiction_flags": []
-}}"""
+}}
+
+Respond ONLY with valid JSON. No markdown, no explanations, no text outside the JSON object."""
     
     try:
         result = call_claude(prompt, max_tokens=2000)
@@ -2894,7 +2896,14 @@ Provide deep-analysis fields as a JSON object. Be specific: name names, cite dat
         if result.strip().startswith("```"):
             result = result.strip().split("\n", 1)[-1].rsplit("```", 1)[0].strip()
         
-        enrichment = json.loads(result)
+        try:
+            enrichment = json.loads(result)
+        except json.JSONDecodeError:
+            import re as _re_fix
+            result = _re_fix.sub(r'"\s*\n\s*"', '",\n"', result)
+            result = _re_fix.sub(r'(\])\s*\n\s*"', r'\1,\n"', result)
+            result = _re_fix.sub(r'(true|false|null|\d)\s*\n\s*"', r'\1,\n"', result)
+            enrichment = json.loads(result)
         # Merge enrichment fields into story
         for key in ["narrative_analysis", "who_benefits", "competing_narratives",
                      "financial_connections", "key_figures_involved", "absence_signals",
