@@ -3155,6 +3155,14 @@ The four intelligence_overview paragraphs are the core analytical product — ma
         except Exception as ae:
             print(f"  Brief archive error: {ae}")
 
+        # v113: Map nested brief fields to top level for frontend tab rendering
+        _ov = brief.get("intelligence_overview", {})
+        if isinstance(_ov, dict):
+            brief["analysis"] = _ov.get("paragraph_2_connections", "")
+            brief["expected_today"] = _ov.get("paragraph_3_what_watch", "")
+            brief["overview_prose"] = _ov.get("paragraph_1_situation", "")
+            brief["buried_lede"] = _ov.get("paragraph_4_buried", "")
+
         with open(BRIEF_FILE, "w") as f:
             json.dump(brief, f, indent=2, ensure_ascii=False)
 
