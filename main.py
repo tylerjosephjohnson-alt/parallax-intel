@@ -3813,7 +3813,29 @@ def fetch_acled_events(country=None, days_back=7):
 # ── v114: Atlas Economic Intelligence Engine ──
 # Append this entire block to the END of main.py
 # DO NOT edit any existing code above
+
 import json5
+
+def call_claude_atlas(prompt, max_tokens=8000):
+    """Atlas-specific Claude caller with 300s timeout for large JSON responses"""
+    if not ANTHROPIC_API_KEY: return None
+    payload = json.dumps({
+        "model": MODEL, "max_tokens": max_tokens,
+        "messages": [{"role":"user","content":prompt}]
+    }).encode()
+    req = Request("https://api.anthropic.com/v1/messages", data=payload,
+        headers={"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,
+                 "anthropic-version":"2023-06-01"}, method="POST")
+    try:
+        with urlopen(req, timeout=300) as r:
+            _body = r.read()
+            _resp = json.loads(_body)
+            if _resp.get("content"):
+                return _resp["content"][0].get("text","")
+            return None
+    except Exception as e:
+        print(f"    Claude atlas error: {type(e).__name__}: {e}")
+        return None
 
 ATLAS_FILE = os.path.join(VOLUME_PATH, 'atlas.json') if 'VOLUME_PATH' in dir() else 'atlas.json'
 
@@ -3827,7 +3849,6 @@ def serve_atlas():
             return jsonify({'error': 'Atlas not generated yet. Use /trigger-atlas to generate.', 'regions': []}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/trigger-atlas')
 def trigger_atlas():
@@ -3881,7 +3902,7 @@ The JSON must have this EXACT structure (all values are strings or numbers, NO n
 REGIONAL METRICS must include ALL 11: Avg GDP Growth, Intra-Regional Trade Volume, Regional Integration Score, Key Export Revenue status, Commodity Price Exposure, Regional Contagion Risk, Migration Flows, Shared Infrastructure Vulnerability, Regional Currency Dynamics, Cross-Border Conflict Economic Cost, Regional Development Bank Activity.
 
 Include 3-5 cascading_effects showing cross-country chains."""
-    result = call_claude(prompt, max_tokens=6000)
+    result = call_claude_atlas(prompt, max_tokens=6000)
     if not result:
         return {'name': region_name, 'health_score': 50, 'summary': 'No data', 'countries': [], 'metrics': [], 'cascading_effects': []}
     try:
@@ -3926,7 +3947,7 @@ SECTION 4 Vulnerability Geopolitical (category vulnerability) 12 metrics: Food I
 For EVERY metric provide: name, current (specific number), baseline, baseline_label, direction (use arrows), direction_class (ub/db/ug/dg/st/cr), status (critical/declining/caution/stable/improving), category, why (2-3 sentences), cascade (1-2 sentences), source.
 
 Include 4-6 cascading_effects. Be specific with numbers."""
-    result = call_claude(prompt, max_tokens=6000)
+    result = call_claude_atlas(prompt, max_tokens=8000)
     if not result:
         return {'name': country_name, 'health_score': 50, 'assessment': 'Generation failed', 'sections': [], 'cascading_effects': []}
     try:
@@ -3938,8 +3959,6 @@ Include 4-6 cascading_effects. Be specific with numbers."""
             print(f"[ATLAS] JSON parse failed for {country_name}: {e}")
             return {'name': country_name, 'health_score': 50, 'assessment': 'Parse error', 'sections': [], 'cascading_effects': []}
     return country_data
-
-
 if __name__ == "__main__":
     print("Parallax starting...")
     print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
