@@ -233,6 +233,21 @@ v6_switchBriefRegion = function(chip) {
       shown++;
     } else {
       cards[k].style.display = 'none';
+// AUTO-BOOTSTRAP: re-render brief on load
+(function() {
+  fetch('/brief.json').then(function(r){return r.json()}).then(function(brief) {
+    var parent = document.getElementById('view-brief');
+    if (!parent) return;
+    var oldTabs = parent.querySelector('.v6-brief-tabs');
+    var oldPanels = parent.querySelectorAll('.v6-brief-panel');
+    if (oldTabs) oldTabs.remove();
+    oldPanels.forEach(function(p) { p.remove(); });
+    var html = v6_renderBriefTabs(brief);
+    var header = parent.querySelector('.v6-brief-head');
+    if (header) header.insertAdjacentHTML('afterend', html);
+  });
+})();
+
     }
   }
 
