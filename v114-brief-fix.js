@@ -233,8 +233,24 @@ v6_switchBriefRegion = function(chip) {
       shown++;
     } else {
       cards[k].style.display = 'none';
-// AUTO-BOOTSTRAP: re-render brief on load
+    }
+  }
+
+  // Auto-switch to Top Stories tab if not already there
+  var storiesTab = document.querySelector('[data-panel="v6-bp-stories"]');
+  if (storiesTab && !storiesTab.classList.contains('v6-active')) {
+    v6_switchBriefTab(storiesTab);
+  }
+};
+
+// ── AUTO-BOOTSTRAP: re-render brief on load ──
 (function() {
+  // Load CSS
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/v114-brief-fix.css';
+  document.head.appendChild(link);
+  // Re-render brief tabs
   fetch('/brief.json').then(function(r){return r.json()}).then(function(brief) {
     var parent = document.getElementById('view-brief');
     if (!parent) return;
@@ -247,13 +263,3 @@ v6_switchBriefRegion = function(chip) {
     if (header) header.insertAdjacentHTML('afterend', html);
   });
 })();
-
-    }
-  }
-
-  // Auto-switch to Top Stories tab if not already there
-  var storiesTab = document.querySelector('[data-panel="v6-bp-stories"]');
-  if (storiesTab && !storiesTab.classList.contains('v6-active')) {
-    v6_switchBriefTab(storiesTab);
-  }
-};
