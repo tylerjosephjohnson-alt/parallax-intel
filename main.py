@@ -3813,6 +3813,7 @@ def fetch_acled_events(country=None, days_back=7):
 # ── v114: Atlas Economic Intelligence Engine ──
 # Append this entire block to the END of main.py
 # DO NOT edit any existing code above
+import json5
 
 ATLAS_FILE = os.path.join(VOLUME_PATH, 'atlas.json') if 'VOLUME_PATH' in dir() else 'atlas.json'
 
