@@ -4014,7 +4014,7 @@ def generate_predictions():
 
 Generate 20-30 intelligence predictions organized by timeframe. Use the CURRENT geopolitical situation to make specific, falsifiable predictions.
 
-IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Another example: "bbl (barrel of oil)" then just "bbl" after. This is plain text in parentheses, not HTML. Text inside parentheses for acronym expansion does NOT count toward any length or word limits. This must be consistent — every section of the site uses this same format.
+IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Another example: "bbl (barrel of oil)" then just "bbl" after. This is plain text, not HTML. Text inside parentheses for acronym expansion does NOT count toward any length or word limits.
 
 Respond ONLY with valid JSON. No markdown, no backticks.
 
