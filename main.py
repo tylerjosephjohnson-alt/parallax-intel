@@ -3960,6 +3960,177 @@ Include 4-6 cascading_effects. Be specific with numbers."""
             return {'name': country_name, 'health_score': 50, 'assessment': 'Parse error', 'sections': [], 'cascading_effects': []}
     return country_data
  # ── v115: Predictions Intelligence Forecasting Engine ──
+ # ── v116: Scenarios Global War Gaming Engine ──
+# Append this block to main.py BEFORE if __name__ == "__main__":
+
+SCENARIOS_FILE = os.path.join(VOLUME_PATH, 'scenarios.json') if 'VOLUME_PATH' in dir() else 'scenarios.json'
+
+@app.route('/scenarios.json')
+def serve_scenarios():
+    try:
+        if os.path.exists(SCENARIOS_FILE):
+            with open(SCENARIOS_FILE, 'r') as f:
+                return f.read(), 200, {'Content-Type': 'application/json'}
+        else:
+            return jsonify({'error': 'Scenarios not generated yet. Use /trigger-scenarios to generate.', 'scenarios': []}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/trigger-scenarios')
+def trigger_scenarios():
+    try:
+        scn_data = generate_scenarios()
+        return jsonify({'status': 'ok', 'scenarios': len(scn_data.get('scenarios', []))})
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+def generate_scenarios():
+    """Generate global war gaming scenarios from current intelligence."""
+    stories_context = ""
+    brief_context = ""
+    try:
+        stories_file = os.path.join(VOLUME_PATH, 'stories.json') if 'VOLUME_PATH' in dir() else 'stories.json'
+        if os.path.exists(stories_file):
+            with open(stories_file, 'r') as f:
+                stories = json.load(f)
+                headlines = [s.get('headline','') for s in stories[:20] if s.get('headline')]
+                stories_context = "Current stories: " + "; ".join(headlines)
+    except: pass
+    try:
+        brief_file = os.path.join(VOLUME_PATH, 'brief.json') if 'VOLUME_PATH' in dir() else 'brief.json'
+        if os.path.exists(brief_file):
+            with open(brief_file, 'r') as f:
+                brief = json.load(f)
+                if brief.get('intelligence_overview'):
+                    brief_context = "Brief overview: " + str(brief['intelligence_overview'])[:500]
+    except: pass
+
+    prompt = f"""You are a senior intelligence war-gaming analyst. Today is {datetime.now(timezone.utc).strftime('%d %B %Y')}.
+
+{stories_context}
+
+{brief_context}
+
+TASK: Read the current intelligence above. Identify the 10-15 most consequential trigger events happening RIGHT NOW that could branch into multiple futures. For each one, war-game it across ALL domains simultaneously.
+
+Do NOT use a pre-set list of scenarios. Let the CURRENT DATA drive what scenarios you create. The scenarios must reflect what is actually happening in the world today.
+
+IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Text inside parentheses does NOT count toward any length or word limits.
+
+QUALITY CHECK — your scenarios MUST collectively cover ALL of these domains. If the current situation does not naturally produce a scenario in a domain, create one from emerging signals:
+- Military escalation (war expansion, new fronts, weapons deployment, proxy activation)
+- Economic shock (market crash, currency collapse, supply chain break, sanctions cascade)
+- Political rupture (alliance fracture, regime change, election disruption, governance crisis)
+- Technology disruption (compute chokepoint, AI breakthrough, export controls, autonomous weapons)
+- Criminal/cartel (narco-state formation, trafficking route shift, cartel vs state, black market exploitation)
+- Climate/resource (water conflict, grid collapse, famine cascade, energy crisis)
+- Information warfare (deepfake deployment, coordinated disinfo, media capture, narrative control)
+- Pandemic/health (pathogen emergence, health system collapse, bioweapon signal)
+- Black swan (unexpected event nobody is watching that could reshape everything)
+
+Respond ONLY with valid JSON. No markdown, no backticks.
+
+{{"generated_at": "{datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC')}",
+"stats": {{"critical": 3, "elevated": 4, "monitoring": 5, "dormant": 2, "total_branches": 35}},
+"scenarios": [
+  {{
+    "title": "scenario title",
+    "threat_level": "critical",
+    "trigger_condition": "the specific event that starts this scenario",
+    "trigger_probability": 65,
+    "timeline": "hours/days/weeks/months",
+    "category": "military",
+    "categories": ["military", "economic"],
+    "region": "Middle East",
+    "regions": ["Middle East", "Global"],
+    "players": [
+      {{"name": "Actor Name", "objective": "what they want", "capability": "what they can do", "constraint": "what limits them"}}
+    ],
+    "red_team": "How the adversary sees this playing out. Their optimal move, their reasoning, what victory looks like from their side.",
+    "blue_team": "How US/allies see this. Optimal response, available tools, acceptable outcomes, escalation limits.",
+    "gray_actors": "Who else is involved — China, corporations, cartels, neutral states, criminal orgs. Who benefits from chaos, who exploits the distraction, who plays both sides.",
+    "branches": [
+      {{
+        "name": "Escalation Path",
+        "probability": 40,
+        "description": "Step by step what happens in this branch",
+        "timeline": "how fast this plays out",
+        "domains": [
+          {{"domain": "Military", "impact": "specific military consequences — force movements, casualties, weapons used"}},
+          {{"domain": "Economic", "impact": "GDP impact, commodity prices, currency movements, trade disruption"}},
+          {{"domain": "Political", "impact": "domestic and international political fallout, governance changes"}},
+          {{"domain": "Humanitarian", "impact": "displacement numbers, casualties, food/water/medical impact"}},
+          {{"domain": "Cyber", "impact": "cyber attacks, infrastructure vulnerability, tech dimension"}},
+          {{"domain": "Corporate", "impact": "which industries/companies win and lose, supply chain breaks"}},
+          {{"domain": "Criminal", "impact": "cartel/trafficking/black market response, criminal exploitation"}},
+          {{"domain": "Information", "impact": "AI/deepfake deployment, disinfo campaigns, narrative control"}},
+          {{"domain": "Alliance", "impact": "who joins, leaves, stays neutral, who exploits"}},
+          {{"domain": "Energy", "impact": "oil, gas, water, food, minerals, rare earth impact"}},
+          {{"domain": "Financial", "impact": "equities, bonds, currencies, crypto, insurance markets"}}
+        ]
+      }},
+      {{
+        "name": "Negotiated Exit",
+        "probability": 35,
+        "description": "step by step",
+        "timeline": "timeline",
+        "domains": []
+      }},
+      {{
+        "name": "Frozen Conflict",
+        "probability": 25,
+        "description": "step by step",
+        "timeline": "timeline",
+        "domains": []
+      }}
+    ],
+    "historical_analog": "When has something like this happened before? Cite specific dates, actors, outcomes. What can we learn from precedent?",
+    "early_warning": [
+      {{"signal": "specific observable indicator that this scenario is activating", "status": "watching"}},
+      {{"signal": "another indicator", "status": "triggered"}}
+    ],
+    "connected": "If this scenario fires: Scenario X changes to critical, Prediction Y probability shifts by +Z%, Scenario W becomes dormant because conditions change",
+    "sources": "list of sources"
+  }}
+]}}
+
+REQUIREMENTS FOR EACH SCENARIO:
+1. title — clear scenario name
+2. threat_level — critical/elevated/monitoring/dormant based on how close the trigger is to firing
+3. trigger_condition — specific, observable event that starts this
+4. trigger_probability — 0-100 how likely the trigger fires
+5. timeline — how fast the scenario plays out once triggered
+6. players — every actor with objective, capability, constraint
+7. red_team — adversary perspective and optimal move
+8. blue_team — US/allied perspective and optimal response
+9. gray_actors — neutral/opportunistic actors — who benefits, who exploits
+10. branches — 2-3 possible paths, each with probability and ALL 11 domain impacts
+11. historical_analog — specific precedent with dates
+12. early_warning — observable indicators with status (watching/triggered/clear)
+13. connected — how this scenario links to other scenarios and predictions
+
+THE 11 DOMAINS (every branch must cover ALL of these):
+Military, Economic, Political, Humanitarian, Cyber, Corporate, Criminal, Information, Alliance, Energy, Financial
+
+Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be grounded in what is actually happening right now. No generic templates — every word should reflect current intelligence."""
+
+    result = call_claude_atlas(prompt, max_tokens=8000)
+    if not result:
+        return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
+
+    try:
+        scn_data = json.loads(result)
+    except:
+        try:
+            scn_data = json5.loads(result)
+        except Exception as e:
+            print(f"[SCENARIOS] JSON parse failed: {e}")
+            return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
+
+    with open(SCENARIOS_FILE, 'w') as f:
+        json.dump(scn_data, f, indent=2)
+    print(f"[SCENARIOS] Saved scenarios.json with {len(scn_data.get('scenarios', []))} scenarios")
+    return scn_data
 # Append this block to main.py BEFORE if __name__ == "__main__":
 
 PREDICTIONS_FILE = os.path.join(VOLUME_PATH, 'predictions.json') if 'VOLUME_PATH' in dir() else 'predictions.json'
