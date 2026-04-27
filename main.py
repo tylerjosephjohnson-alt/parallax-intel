@@ -3959,6 +3959,192 @@ Include 4-6 cascading_effects. Be specific with numbers."""
             print(f"[ATLAS] JSON parse failed for {country_name}: {e}")
             return {'name': country_name, 'health_score': 50, 'assessment': 'Parse error', 'sections': [], 'cascading_effects': []}
     return country_data
+    # ── v115: Predictions Intelligence Forecasting Engine ──
+# Append this block to main.py BEFORE if __name__ == "__main__":
+
+PREDICTIONS_FILE = os.path.join(VOLUME_PATH, 'predictions.json') if 'VOLUME_PATH' in dir() else 'predictions.json'
+
+@app.route('/predictions.json')
+def serve_predictions():
+    try:
+        if os.path.exists(PREDICTIONS_FILE):
+            with open(PREDICTIONS_FILE, 'r') as f:
+                return f.read(), 200, {'Content-Type': 'application/json'}
+        else:
+            return jsonify({'error': 'Predictions not generated yet. Use /trigger-predictions to generate.', 'timeframes': []}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/trigger-predictions')
+def trigger_predictions():
+    try:
+        pred_data = generate_predictions()
+        count = sum(len(tf.get('predictions',[])) for tf in pred_data.get('timeframes',[]))
+        return jsonify({'status': 'ok', 'predictions': count})
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+def generate_predictions():
+    """Generate intelligence predictions across all categories."""
+    # Load current stories and brief for context
+    stories_context = ""
+    brief_context = ""
+    try:
+        stories_file = os.path.join(VOLUME_PATH, 'stories.json') if 'VOLUME_PATH' in dir() else 'stories.json'
+        if os.path.exists(stories_file):
+            with open(stories_file, 'r') as f:
+                stories = json.load(f)
+                headlines = [s.get('headline','') for s in stories[:20] if s.get('headline')]
+                stories_context = "Current top stories: " + "; ".join(headlines)
+    except: pass
+    try:
+        brief_file = os.path.join(VOLUME_PATH, 'brief.json') if 'VOLUME_PATH' in dir() else 'brief.json'
+        if os.path.exists(brief_file):
+            with open(brief_file, 'r') as f:
+                brief = json.load(f)
+                if brief.get('intelligence_overview'):
+                    brief_context = "Today's brief overview: " + str(brief['intelligence_overview'])[:500]
+    except: pass
+
+    prompt = f"""You are a senior intelligence analyst producing predictions for a geopolitical intelligence platform. Today is {datetime.now(timezone.utc).strftime('%d %B %Y')}.
+
+{stories_context}
+
+{brief_context}
+
+Generate 20-30 intelligence predictions organized by timeframe. Use the CURRENT geopolitical situation to make specific, falsifiable predictions.
+
+IMPORTANT: On first use of any acronym, write it as: full name (ACRONYM). Example: "International Energy Agency (IEA)" then "IEA" after that.
+
+Respond ONLY with valid JSON. No markdown, no backticks.
+
+{{"generated_at": "{datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC')}",
+"scorecard": {{"active": 20, "confirmed": 0, "evolving": 0, "invalidated": 0, "accuracy_rate": "NEW"}},
+"timeframes": [
+  {{"label": "Next 7 Days — X Active Predictions",
+    "predictions": [
+      {{
+        "headline": "specific falsifiable prediction with acronyms expanded on first use",
+        "probability": 75,
+        "confidence_band": "plus or minus 8%",
+        "status": "active",
+        "category": "economic",
+        "region": "Middle East",
+        "regions": ["Middle East", "Global"],
+        "updated": "25 Apr",
+        "logic_chain": [
+          "Step 1: specific fact or data point with source",
+          "Step 2: what this implies",
+          "Step 3: the mechanism that drives the outcome",
+          "Therefore: the conclusion"
+        ],
+        "probability_history": [
+          {{"date": "20 Apr", "value": 60, "reason": "initial assessment"}},
+          {{"date": "25 Apr", "value": 75, "reason": "new data point confirmed trend"}}
+        ],
+        "accelerators": [
+          {{"event": "specific observable event", "impact": "+10%"}},
+          {{"event": "another event", "impact": "+8%"}}
+        ],
+        "decelerators": [
+          {{"event": "specific observable event", "impact": "-15%"}},
+          {{"event": "another event", "impact": "-20%"}}
+        ],
+        "historical_precedent": "When this pattern occurred X times in history, outcome Y happened Z% of the time. Cite specific cases with dates.",
+        "competing_hypothesis": "The strongest argument against this prediction. Why it might NOT happen.",
+        "falsification": "This prediction is WRONG if: (1) specific condition, (2) specific condition, (3) specific condition",
+        "connected_predictions": "If this fires: Prediction A probability changes by +X%, Prediction B changes by -Y%",
+        "indicators": [
+          {{"text": "specific observable indicator", "status": "watching"}},
+          {{"text": "another indicator", "status": "triggered"}}
+        ],
+        "sources": "List of sources"
+      }}
+    ]
+  }},
+  {{"label": "Next 30 Days — X Active Predictions", "predictions": []}},
+  {{"label": "Next 90 Days — X Active Predictions", "predictions": []}},
+  {{"label": "6+ Months — X Active Predictions", "predictions": []}}
+]}}
+
+REQUIRED PREDICTION CATEGORIES - you MUST include predictions from ALL of these domains:
+
+ECONOMIC (at least 4):
+- Oil/commodity price targets with specific numbers
+- Currency movements (rial, ruble, euro, yuan)
+- Recession predictions for specific economies
+- Interest rate changes by specific central banks
+- Trade balance shifts from tariffs or sanctions
+- Sanctions cascade effects
+
+MILITARY (at least 3):
+- Escalation or de-escalation probabilities
+- Weapons deployment or capability demonstrations
+- Alliance shifts (who joins or leaves coalitions)
+- Proxy force activation (Hezbollah, Houthis, Wagner)
+
+POLITICAL (at least 3):
+- Regime stability assessments
+- Election or governance changes
+- Alliance fractures (NATO, GCC, EU cohesion)
+- New sanctions or sanctions relief
+
+HUMANITARIAN (at least 2):
+- Refugee flow triggers with numbers
+- Food security thresholds (IPC phases)
+- Medical system collapse indicators
+
+CYBER AND TECHNOLOGY (at least 3):
+- AI regulatory changes by country or bloc
+- Cyber attacks on critical infrastructure
+- Compute supply chain disruptions (GPU, chips, TSMC)
+- Deepfake or AI-generated disinformation deployment
+- Export control expansions (US-China tech restrictions)
+- Autonomous weapons development signals
+
+CORPORATE RISK (at least 2):
+- Supply chain disruptions by specific industry
+- Tariff exposure impact on specific sectors
+- Energy cost impact on operations and data centers
+- M&A windows created by crisis
+- Consumer sentiment and boycott risk
+
+FINANCIAL MARKET (at least 2):
+- Equity index movements (S&P, DAX, Nikkei)
+- Bond yield shifts
+- Credit rating changes for sovereigns
+- FDI flow reversals
+
+GOVERNMENT OPERATIONS (at least 1):
+- Evacuation trigger assessments for specific countries
+- Host nation stability for foreign operations
+- Information environment shifts
+
+For EVERY prediction you MUST include ALL of these fields:
+headline, probability (0-100), confidence_band, status, category, region, regions (array), updated, logic_chain (array of 3-5 steps), accelerators (array with event and impact), decelerators (array with event and impact), historical_precedent, competing_hypothesis, falsification, connected_predictions, indicators (array with text and status), sources
+
+Indicator status values: "watching", "triggered", "clear"
+
+Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every prediction must be falsifiable — someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
+
+    result = call_claude_atlas(prompt, max_tokens=8000)
+    if not result:
+        return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
+
+    try:
+        pred_data = json.loads(result)
+    except:
+        try:
+            pred_data = json5.loads(result)
+        except Exception as e:
+            print(f"[PREDICTIONS] JSON parse failed: {e}")
+            return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
+
+    # Save to file
+    with open(PREDICTIONS_FILE, 'w') as f:
+        json.dump(pred_data, f, indent=2)
+    print(f"[PREDICTIONS] Saved predictions.json")
+    return pred_data
 if __name__ == "__main__":
     print("Parallax starting...")
     print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
