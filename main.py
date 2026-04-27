@@ -3959,7 +3959,7 @@ Include 4-6 cascading_effects. Be specific with numbers."""
             print(f"[ATLAS] JSON parse failed for {country_name}: {e}")
             return {'name': country_name, 'health_score': 50, 'assessment': 'Parse error', 'sections': [], 'cascading_effects': []}
     return country_data
-    # ── v115: Predictions Intelligence Forecasting Engine ──
+ # ── v115: Predictions Intelligence Forecasting Engine ──
 # Append this block to main.py BEFORE if __name__ == "__main__":
 
 PREDICTIONS_FILE = os.path.join(VOLUME_PATH, 'predictions.json') if 'VOLUME_PATH' in dir() else 'predictions.json'
@@ -4014,7 +4014,7 @@ def generate_predictions():
 
 Generate 20-30 intelligence predictions organized by timeframe. Use the CURRENT geopolitical situation to make specific, falsifiable predictions.
 
-IMPORTANT: On first use of any acronym, write it as: full name (ACRONYM). Example: "International Energy Agency (IEA)" then "IEA" after that.
+IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Another example: "bbl (barrel of oil)" then just "bbl" after. This is plain text in parentheses, not HTML. Text inside parentheses for acronym expansion does NOT count toward any length or word limits. This must be consistent — every section of the site uses this same format.
 
 Respond ONLY with valid JSON. No markdown, no backticks.
 
