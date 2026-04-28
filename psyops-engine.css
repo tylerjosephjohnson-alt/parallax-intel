@@ -1,0 +1,249 @@
+/* =========================================
+   PSYOPS ENGINE — CSS
+   Vantage Geopolitical Intelligence Platform
+   ========================================= */
+
+/* SEARCH & FILTERS */
+.psyops-controls{padding:0 0 12px}
+.psyops-search-wrap{position:relative;margin-bottom:10px}
+.psyops-search{width:100%;padding:9px 14px 9px 36px;background:var(--card-bg,#111318);border:1px solid var(--border,#27272a);border-radius:8px;color:#e4e4e7;font-family:inherit;font-size:13px;outline:none;transition:border-color .2s}
+.psyops-search:focus{border-color:#ef4444}
+.psyops-search::placeholder{color:#71717a}
+.psyops-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#71717a;font-size:14px;pointer-events:none}
+.psyops-filter-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+.psyops-filter-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#71717a;padding:5px 0;margin-right:3px;display:flex;align-items:center}
+.psyops-filter-btn{padding:4px 10px;font-size:10px;font-weight:500;border:1px solid #27272a;border-radius:5px;background:transparent;color:#71717a;cursor:pointer;transition:all .15s;font-family:inherit}
+.psyops-filter-btn:hover{border-color:#3f3f46;color:#a1a1aa}
+.psyops-filter-btn.pf-active{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:#ef4444}
+
+/* INTEGRITY WARNING */
+.psyops-integrity{background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(239,68,68,.03));border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
+.psyops-integrity-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.psyops-integrity-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#ef4444;margin-bottom:2px}
+.psyops-integrity p{font-size:12px;color:#a1a1aa;line-height:1.45}
+
+/* CAMPAIGN CARD — COLLAPSIBLE */
+.psyop-card{background:var(--card-bg,#111318);border:1px solid var(--border,#27272a);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.psyop-card.expanded{margin-bottom:14px}
+.psyop-hdr{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;transition:background .12s;user-select:none}
+.psyop-hdr:hover{background:rgba(255,255,255,.02)}
+.psyop-hdr-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.psyop-hdr-info{flex:1;min-width:0}
+.psyop-id{font-family:var(--mono,'JetBrains Mono',monospace);font-size:9px;color:#71717a;margin-bottom:1px}
+.psyop-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psyop-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px}
+.psyop-operator{font-size:11px;color:#a1a1aa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+.psyop-conf{font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:3px}
+.psyop-conf-confirmed{background:rgba(34,197,94,.12);color:#22c55e}
+.psyop-conf-probable{background:rgba(245,158,11,.12);color:#f59e0b}
+.psyop-conf-suspected{background:rgba(168,85,247,.12);color:#a855f7}
+.psyop-status{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:4px}
+.psyop-status-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.psyop-status-active{background:rgba(239,68,68,.1);color:#ef4444}
+.psyop-status-escalating{background:rgba(249,115,22,.1);color:#f97316}
+.psyop-status-exposed{background:rgba(34,197,94,.1);color:#22c55e}
+.psyop-status-dormant{background:rgba(113,113,122,.1);color:#71717a}
+.psyop-hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.psyop-score{text-align:center;min-width:40px}
+.psyop-score-label{font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#71717a;margin-bottom:2px}
+.psyop-score-val{font-size:18px;font-weight:700}
+.psyop-score-high{color:#ef4444}
+.psyop-score-med{color:#f59e0b}
+.psyop-score-low{color:#22c55e}
+.psyop-arrow{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:#71717a;transition:transform .2s;font-size:10px;flex-shrink:0}
+.psyop-card.expanded .psyop-arrow{transform:rotate(180deg)}
+.psyop-body{display:none;border-top:1px solid var(--border,#27272a)}
+.psyop-card.expanded .psyop-body{display:block}
+
+/* CAMPAIGN BODY SECTIONS */
+.psyop-summary{padding:14px 16px;font-size:13px;color:#a1a1aa;border-bottom:1px solid var(--border,#27272a);line-height:1.6}
+.psyop-tabs{display:flex;border-bottom:1px solid var(--border,#27272a);overflow-x:auto;scrollbar-width:none}
+.psyop-tabs::-webkit-scrollbar{display:none}
+.psyop-tab{padding:10px 14px;font-size:11px;font-weight:500;color:#71717a;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+.psyop-tab:hover{color:#a1a1aa}
+.psyop-tab.active{color:#e4e4e7;border-bottom-color:#ef4444}
+.psyop-tab-content{display:none;padding:16px}
+.psyop-tab-content.active{display:block}
+
+/* SECTION HEADERS */
+.psyop-section{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border,#27272a)}
+.psyop-section.red{color:#ef4444}
+.psyop-section.blue{color:#3b82f6}
+.psyop-section.amber{color:#f59e0b}
+.psyop-section.green{color:#22c55e}
+.psyop-section.purple{color:#a855f7}
+.psyop-section.coral{color:#f97316}
+
+/* FIELDS */
+.psyop-field{margin-bottom:12px}
+.psyop-field-label{font-size:10px;font-weight:600;color:#71717a;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
+.psyop-field-value{font-size:12px;color:#e4e4e7;line-height:1.55}
+.psyop-field-muted{color:#a1a1aa}
+.psyop-field-evidence{font-size:11px;color:#71717a;font-style:italic;margin-top:2px}
+
+/* SACI COMPONENT — REUSABLE */
+.saci-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border,#27272a)}
+.saci-combined{font-size:22px;font-weight:700}
+.saci-combined-lbl{font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#71717a}
+.saci-pills{display:flex;gap:3px}
+.saci-pill{font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px}
+.saci-activity{display:flex;gap:10px;margin-left:auto}
+.saci-act-item{text-align:center}
+.saci-act-val{font-size:12px;font-weight:700}
+.saci-act-label{font-size:7px;color:#71717a;text-transform:uppercase;letter-spacing:.04em}
+.saci-act-trend{font-size:8px;font-weight:600}
+
+.saci-scores{padding:10px 16px;border-bottom:1px solid var(--border,#27272a)}
+.saci-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.saci-row:last-of-type{margin-bottom:0}
+.saci-ltr{font-size:10px;font-weight:700;width:10px}
+.saci-dim{font-size:9px;color:#71717a;width:72px}
+.saci-track{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden}
+.saci-fill{height:100%;border-radius:3px;transition:width .5s ease-out}
+.saci-val{font-size:10px;font-weight:700;width:18px;text-align:right}
+.saci-def{font-size:8px;color:#a1a1aa;padding-left:88px;margin-top:-2px;margin-bottom:2px;line-height:1.3;opacity:.65;font-style:italic}
+.saci-reason{font-size:8px;color:#71717a;padding-left:88px;margin-top:-1px;margin-bottom:5px;line-height:1.25}
+
+/* PHASE TRACKER */
+.saci-phase{padding:8px 16px;border-bottom:1px solid var(--border,#27272a)}
+.saci-phase-lbl{font-size:8px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#71717a;margin-bottom:4px}
+.saci-phase-bar{display:flex;gap:2px}
+.saci-phase-step{height:4px;border-radius:2px;flex:1}
+.saci-phase-done{background:rgba(239,68,68,.4)}
+.saci-phase-now{background:#ef4444;box-shadow:0 0 4px rgba(239,68,68,.3)}
+.saci-phase-later{background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.06)}
+.saci-phase-labels{display:flex;gap:2px;margin-top:2px}
+.saci-phase-label-item{flex:1;font-size:7px;color:#71717a;text-align:center;line-height:1.1}
+.saci-phase-label-active{color:#ef4444;font-weight:700}
+
+/* CHARTS */
+.saci-charts{padding:12px 16px}
+.saci-chart-block{margin-bottom:12px}
+.saci-chart-block:last-child{margin-bottom:0}
+.saci-chart-title{font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#71717a;margin-bottom:3px}
+.saci-chart-box{position:relative;height:72px}
+.saci-chart-box canvas{width:100%!important;height:100%!important}
+.saci-chart-x{display:flex;justify-content:space-between;font-size:7px;color:rgba(255,255,255,.18);margin-top:2px}
+.saci-chart-legend{display:flex;gap:8px;margin-top:3px;flex-wrap:wrap}
+.saci-chart-legend-item{display:flex;align-items:center;gap:3px;font-size:8px;color:#71717a}
+.saci-chart-legend-dot{width:7px;height:2px;border-radius:1px}
+.saci-chart-insight{font-size:9px;color:#a1a1aa;line-height:1.4;padding:5px 7px;background:rgba(239,68,68,.06);border-left:2px solid rgba(239,68,68,.25);border-radius:0 4px 4px 0;margin-top:5px}
+
+/* SOURCE CONVERGENCE */
+.saci-sources{padding:10px 16px;border-top:1px solid var(--border,#27272a)}
+.saci-sources-lbl{font-size:8px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#71717a;margin-bottom:6px}
+.saci-src{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.saci-src-name{font-size:9px;color:#a1a1aa;width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saci-src-track{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.04);overflow:hidden}
+.saci-src-fill{height:100%;border-radius:2px}
+.saci-src-ct{font-size:8px;color:#71717a;width:26px;text-align:right}
+.saci-src-tag{font-size:7px;font-weight:700;padding:1px 4px;border-radius:2px}
+.saci-src-same{background:rgba(239,68,68,.1);color:#ef4444}
+.saci-src-indep{background:rgba(34,197,94,.1);color:#22c55e}
+.saci-src-advisory{margin-top:6px;padding:5px 7px;border-left:2px solid rgba(245,158,11,.3);border-radius:0 4px 4px 0;background:rgba(245,158,11,.06)}
+.saci-src-advisory-label{font-size:8px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+.saci-src-advisory p{font-size:9px;color:#a1a1aa;line-height:1.35}
+
+/* NARRATIVE TIMELINE */
+.psyop-timeline{position:relative;padding-left:20px;margin:12px 0}
+.psyop-timeline::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--border,#27272a)}
+.psyop-tl-entry{position:relative;margin-bottom:18px;padding-left:16px}
+.psyop-tl-entry::before{content:'';position:absolute;left:-18px;top:5px;width:10px;height:10px;border-radius:50%;border:2px solid #ef4444;background:var(--card-bg,#111318)}
+.psyop-tl-entry.origin::before{background:#ef4444}
+.psyop-tl-entry.current::before{background:#f59e0b;border-color:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.35)}
+.psyop-tl-date{font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#71717a;margin-bottom:3px}
+.psyop-tl-narrative{font-size:13px;font-weight:500;margin-bottom:4px;line-height:1.4}
+.psyop-tl-meta{font-size:11px;color:#a1a1aa;line-height:1.45}
+.psyop-tl-shift{display:inline-flex;align-items:center;gap:4px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:5px;padding:3px 8px;font-size:10px;color:#ef4444;margin:4px 0;font-weight:500}
+.psyop-tl-technique{display:inline-flex;padding:1px 6px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.15);border-radius:3px;color:#a855f7;margin:3px 3px 0 0}
+
+/* AMPLIFIER CHAIN */
+.psyop-chain{display:flex;flex-direction:column;gap:0;margin:10px 0}
+.psyop-chain-node{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid var(--border,#27272a);border-radius:6px;position:relative}
+.psyop-chain-connector{width:2px;height:14px;background:var(--border,#27272a);margin-left:22px}
+.psyop-chain-pos{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.psyop-chain-pos-operator{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.psyop-chain-pos-knowing{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+.psyop-chain-pos-unwitting{background:rgba(59,130,246,.08);color:#3b82f6;border:1px solid rgba(59,130,246,.2)}
+.psyop-chain-entity{font-size:12px;font-weight:600}
+.psyop-chain-type{font-size:8px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#71717a;margin-left:5px}
+.psyop-chain-role{font-size:11px;color:#a1a1aa;margin-top:2px;line-height:1.4}
+.psyop-chain-funding{font-size:10px;color:#f59e0b;margin-top:3px}
+
+/* TECHNIQUE CARDS */
+.psyop-tech{background:rgba(255,255,255,.02);border:1px solid var(--border,#27272a);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.psyop-tech-hdr{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.psyop-tech-hdr:hover{background:rgba(255,255,255,.02)}
+.psyop-tech-name{font-size:13px;font-weight:600}
+.psyop-tech-badge{font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:rgba(168,85,247,.08);color:#a855f7;border:1px solid rgba(168,85,247,.15)}
+.psyop-tech-body{padding:0 14px 14px;display:none}
+.psyop-tech-body.open{display:block}
+.psyop-tech-section{margin-bottom:10px}
+.psyop-tech-section-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#71717a;margin-bottom:3px}
+.psyop-tech-section p{font-size:12px;color:#a1a1aa;line-height:1.5}
+.psyop-tech-spot{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);border-radius:6px;padding:8px 10px}
+.psyop-tech-spot p{color:#f59e0b!important;font-size:11px!important}
+
+/* RED/BLUE TEAM */
+.psyop-team{background:rgba(255,255,255,.02);border-radius:6px;padding:10px 12px;margin-bottom:8px;border-left:3px solid}
+.psyop-team-red{border-left-color:#ef4444}
+.psyop-team-blue{border-left-color:#3b82f6}
+.psyop-team-plaus{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.psyop-team-plaus-low{color:#22c55e}
+.psyop-team-plaus-moderate{color:#f59e0b}
+.psyop-team-plaus-high{color:#ef4444}
+.psyop-team p{font-size:12px;color:#a1a1aa;line-height:1.5}
+
+/* EVIDENCE CHAIN */
+.psyop-ev{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border,#27272a)}
+.psyop-ev:last-child{border-bottom:none}
+.psyop-ev-id{font-family:var(--mono,'JetBrains Mono',monospace);font-size:9px;color:#71717a;min-width:34px;padding-top:1px}
+.psyop-ev-claim{font-size:12px;margin-bottom:2px}
+.psyop-ev-source{font-size:10px;color:#71717a}
+.psyop-ev-verified{color:#22c55e}
+.psyop-ev-type{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:2px;background:rgba(255,255,255,.04);color:#71717a;margin-left:4px}
+
+/* CONFIDENCE PANEL */
+.psyop-confidence{background:rgba(255,255,255,.02);border-radius:8px;padding:12px 14px;margin:12px 0;border-left:3px solid}
+.psyop-confidence-confirmed{border-left-color:#22c55e}
+.psyop-confidence-probable{border-left-color:#f59e0b}
+.psyop-confidence-suspected{border-left-color:#a855f7}
+.psyop-conf-badge{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.psyop-conf-layers{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+.psyop-conf-layer{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:500}
+.psyop-conf-corr{background:rgba(34,197,94,.08);color:#22c55e;border:1px solid rgba(34,197,94,.15)}
+.psyop-conf-incon{background:rgba(245,158,11,.08);color:#f59e0b;border:1px solid rgba(245,158,11,.15)}
+
+/* CONNECTIONS */
+.psyop-conn{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(255,255,255,.02);border-radius:5px;margin-bottom:4px;font-size:11px;color:#a1a1aa}
+.psyop-conn-type{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:2px}
+
+/* PROJECTION PHASES */
+.psyop-proj-phases{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.psyop-proj-pill{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:500;border:1px solid var(--border,#27272a);color:#71717a}
+.psyop-proj-past{background:rgba(255,255,255,.03);border-color:#3f3f46;color:#a1a1aa}
+.psyop-proj-current{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:#ef4444;font-weight:600}
+.psyop-proj-future{border-style:dashed}
+
+/* NO RESULTS */
+.psyops-empty{text-align:center;padding:32px 16px;color:#71717a;font-size:13px}
+
+/* MIRROR CARD */
+.psyop-mirror{background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(59,130,246,.06));border:1px solid var(--border,#27272a);border-radius:8px;padding:12px 14px;margin:10px 0}
+.psyop-mirror-label{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a855f7;margin-bottom:4px}
+
+/* RESPONSE CARDS */
+.psyop-response{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.12);border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.psyop-response p{font-size:12px;color:#a1a1aa;line-height:1.5}
+
+/* IMPACT */
+.psyop-impact{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px}
+.psyop-impact-icon{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px}
+.psyop-impact-text{font-size:12px;color:#a1a1aa;line-height:1.45}
+
+/* FRAMEWORK GRIDS (PCP / FEAR) */
+.psyop-fw-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.psyop-fw-item{background:rgba(255,255,255,.02);border-radius:6px;padding:10px;border-left:3px solid #f59e0b}
+.psyop-fw-letter{font-size:14px;font-weight:700;color:#f59e0b;margin-bottom:1px}
+.psyop-fw-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#71717a;margin-bottom:3px}
+.psyop-fw-desc{font-size:11px;color:#a1a1aa;line-height:1.4}
