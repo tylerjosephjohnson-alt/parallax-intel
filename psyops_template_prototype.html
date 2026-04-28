@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vantage — Psyops Detection Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0b0d;--bg2:#111318;--bg3:#181b22;--bg4:#1e222b;
+--tx:#e4e4e7;--tx2:#a1a1aa;--tx3:#71717a;
+--bdr:#27272a;--bdr2:#3f3f46;
+--red:#ef4444;--red-dim:#7f1d1d;--red-bg:rgba(239,68,68,.08);
+--blue:#3b82f6;--blue-dim:#1e3a5f;--blue-bg:rgba(59,130,246,.08);
+--amber:#f59e0b;--amber-dim:#78350f;--amber-bg:rgba(245,158,11,.08);
+--green:#22c55e;--green-dim:#14532d;--green-bg:rgba(34,197,94,.08);
+--purple:#a855f7;--purple-dim:#3b0764;--purple-bg:rgba(168,85,247,.08);
+--coral:#f97316;--coral-dim:#7c2d12;--coral-bg:rgba(249,115,22,.08);
+--teal:#14b8a6;--teal-dim:#134e4a;--teal-bg:rgba(20,184,166,.08);
+--cyan:#06b6d4;
+--font:'DM Sans',system-ui,sans-serif;
+--mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.6;overflow-x:hidden}
+
+/* SEARCH & FILTERS */
+.controls{padding:0 20px;margin-bottom:16px}
+.search-bar{width:100%;padding:10px 14px 10px 38px;background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;color:var(--tx);font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s}
+.search-bar:focus{border-color:var(--red)}
+.search-bar::placeholder{color:var(--tx3)}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:14px;pointer-events:none}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.filter-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);padding:6px 0;margin-right:4px;display:flex;align-items:center}
+.filter-btn{padding:5px 12px;font-size:11px;font-weight:500;border:1px solid var(--bdr);border-radius:6px;background:transparent;color:var(--tx3);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.filter-btn:hover{border-color:var(--bdr2);color:var(--tx2)}
+.filter-btn.active{background:var(--red-bg);border-color:rgba(239,68,68,.3);color:var(--red)}
+.filter-btn.active-green{background:var(--green-bg);border-color:rgba(34,197,94,.3);color:var(--green)}
+.filter-btn.active-amber{background:var(--amber-bg);border-color:rgba(245,158,11,.3);color:var(--amber)}
+.filter-btn.active-purple{background:var(--purple-bg);border-color:rgba(168,85,247,.3);color:var(--purple)}
+.sort-row{display:flex;gap:6px;align-items:center}
+
+/* CAMPAIGN CARD — COLLAPSIBLE */
+.campaign{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;margin:0 20px 12px;overflow:hidden;transition:margin .2s}
+.campaign.expanded{margin-bottom:20px}
+.campaign-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:background .15s;user-select:none}
+.campaign-header:hover{background:var(--bg3)}
+.campaign-header-left{display:flex;align-items:center;gap:14px;flex:1;min-width:0}
+.campaign-header-info{flex:1;min-width:0}
+.campaign-id{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-bottom:2px}
+.campaign-name{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.campaign-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.campaign-operator-short{font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+.campaign-header-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.expand-arrow{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--tx3);transition:transform .2s;font-size:12px;flex-shrink:0}
+.campaign.expanded .expand-arrow{transform:rotate(180deg)}
+.campaign-body{display:none;border-top:1px solid var(--bdr)}
+.campaign.expanded .campaign-body{display:block}
+.no-results{text-align:center;padding:40px 20px;color:var(--tx3);font-size:14px}
+.integrity-warning{
+background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.04));
+border:1px solid rgba(239,68,68,.25);border-radius:10px;
+padding:16px 20px;margin:20px;display:flex;align-items:flex-start;gap:12px;
+}
+.integrity-warning .icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.integrity-warning .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:4px}
+.integrity-warning p{font-size:13px;color:var(--tx2);line-height:1.5}
+
+/* CAMPAIGN CARD */
+.campaign{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;margin:0 20px 20px;overflow:hidden}
+.campaign-header{padding:20px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--bdr)}
+.campaign-id{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-bottom:4px}
+.campaign-name{font-size:18px;font-weight:600;color:var(--tx);margin-bottom:6px}
+.campaign-operator{font-size:13px;color:var(--tx2)}
+.campaign-operator .conf{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-left:6px}
+.conf-confirmed{background:rgba(34,197,94,.15);color:var(--green)}
+.conf-probable{background:rgba(245,158,11,.15);color:var(--amber)}
+.conf-suspected{background:rgba(168,85,247,.15);color:var(--purple)}
+
+.campaign-scores{display:flex;gap:12px;flex-shrink:0;align-items:flex-start}
+.score-block{text-align:center;min-width:52px}
+.score-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.score-value{font-size:22px;font-weight:700}
+.score-value.high{color:var(--red)}
+.score-value.med{color:var(--amber)}
+.score-value.low{color:var(--green)}
+
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:4px 10px;border-radius:6px;margin-top:8px}
+.status-exposed{background:rgba(34,197,94,.12);color:var(--green)}
+.status-active{background:rgba(239,68,68,.12);color:var(--red)}
+.status-escalating{background:rgba(249,115,22,.12);color:var(--coral)}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+.campaign-summary{padding:16px 24px;font-size:14px;color:var(--tx2);border-bottom:1px solid var(--bdr);line-height:1.65}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:12px 18px;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--tx2)}
+.tab.active{color:var(--tx);border-bottom-color:var(--red)}
+
+.tab-content{display:none;padding:20px 24px}
+.tab-content.active{display:block}
+
+/* SECTION HEADERS */
+.section-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--bdr)}
+.section-title.red{color:var(--red)}
+.section-title.blue{color:var(--blue)}
+.section-title.amber{color:var(--amber)}
+.section-title.green{color:var(--green)}
+.section-title.purple{color:var(--purple)}
+
+/* FIELD ROWS */
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:600;color:var(--tx3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
+.field-value{font-size:13px;color:var(--tx);line-height:1.6}
+.field-value.muted{color:var(--tx2)}
+.field-evidence{font-size:12px;color:var(--tx3);font-style:italic;margin-top:3px}
+
+/* SACI DETAIL */
+.saci-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.saci-item{background:var(--bg3);border-radius:8px;padding:12px 14px}
+.saci-item .letter{font-size:13px;font-weight:700;margin-bottom:2px}
+.saci-item .val{font-size:20px;font-weight:700;margin-bottom:4px}
+.saci-item .reason{font-size:11px;color:var(--tx3);line-height:1.4}
+
+/* LEGITIMACY METER */
+.legit-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.legit-label{font-size:12px;color:var(--tx2);min-width:140px}
+.legit-bar-bg{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.legit-bar{height:100%;border-radius:3px;transition:width .5s}
+.legit-score{font-size:12px;font-weight:600;min-width:24px;text-align:right}
+
+/* NARRATIVE TIMELINE */
+.timeline{position:relative;padding-left:24px;margin:16px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--bdr)}
+.tl-entry{position:relative;margin-bottom:24px;padding-left:20px}
+.tl-entry::before{content:'';position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--red);background:var(--bg2)}
+.tl-entry.origin::before{background:var(--red);border-color:var(--red)}
+.tl-entry.current::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 8px rgba(245,158,11,.4)}
+.tl-date{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-bottom:4px}
+.tl-narrative{font-size:14px;font-weight:500;color:var(--tx);margin-bottom:6px;line-height:1.5}
+.tl-meta{font-size:12px;color:var(--tx2);line-height:1.5}
+.tl-shift{display:inline-flex;align-items:center;gap:6px;background:var(--red-bg);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--red);margin:6px 0;font-weight:500}
+.tl-technique{display:inline-flex;align-items:center;gap:4px;background:var(--purple-bg);border:1px solid rgba(168,85,247,.2);border-radius:4px;padding:2px 8px;font-size:10px;color:var(--purple);font-weight:600;text-transform:uppercase;margin:4px 4px 0 0}
+.tl-amplifiers{font-size:12px;color:var(--tx3);margin-top:4px}
+.tl-amplifiers span{color:var(--tx2)}
+
+/* AMPLIFIER CHAIN */
+.chain{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.chain-node{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;position:relative}
+.chain-connector{width:2px;height:20px;background:var(--bdr);margin-left:26px}
+.chain-pos{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.chain-pos.knowing{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.chain-pos.unwitting{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+.chain-pos.operator{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.5)}
+.chain-body{flex:1;min-width:0}
+.chain-entity{font-size:13px;font-weight:600;color:var(--tx)}
+.chain-type{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin-left:6px}
+.chain-role{font-size:12px;color:var(--tx2);margin-top:2px}
+.chain-funding{font-size:11px;color:var(--amber);margin-top:4px}
+.chain-awareness{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:2px 6px;border-radius:3px;position:absolute;top:10px;right:12px}
+
+/* TECHNIQUE CARDS */
+.technique-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;margin-bottom:14px;overflow:hidden}
+.technique-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.technique-header:hover{background:var(--bg4)}
+.technique-name{font-size:14px;font-weight:600;color:var(--tx)}
+.technique-badge{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--purple-bg);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.technique-body{padding:0 16px 16px;display:none}
+.technique-body.open{display:block}
+.technique-section{margin-bottom:12px}
+.technique-section-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.technique-section p{font-size:13px;color:var(--tx2);line-height:1.6}
+.technique-spot{background:var(--amber-bg);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:12px 14px}
+.technique-spot p{color:var(--amber)!important;font-size:12px!important}
+
+/* RED/BLUE TEAM */
+.team-finding{background:var(--bg3);border-radius:8px;padding:14px 16px;margin-bottom:10px;border-left:3px solid}
+.team-finding.red{border-left-color:var(--red)}
+.team-finding.blue{border-left-color:var(--blue)}
+.team-finding .plaus{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.team-finding .plaus.low{color:var(--green)}
+.team-finding .plaus.moderate{color:var(--amber)}
+.team-finding .plaus.high{color:var(--red)}
+.team-finding p{font-size:13px;color:var(--tx2);line-height:1.55}
+
+/* PROJECTION */
+.projection-phase{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.phase-pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--bdr);color:var(--tx3)}
+.phase-pill.past{background:var(--bg4);border-color:var(--bdr2);color:var(--tx2)}
+.phase-pill.current{background:var(--red-bg);border-color:rgba(239,68,68,.3);color:var(--red);font-weight:600}
+.phase-pill.projected{border-style:dashed;color:var(--tx3)}
+
+/* EVIDENCE CHAIN */
+.evidence-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.evidence-item:last-child{border-bottom:none}
+.ev-id{font-family:var(--mono);font-size:10px;color:var(--tx3);min-width:40px;padding-top:2px}
+.ev-body{flex:1}
+.ev-claim{font-size:13px;color:var(--tx);margin-bottom:2px}
+.ev-source{font-size:11px;color:var(--tx3)}
+.ev-type{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:3px;background:var(--bg4);color:var(--tx3);margin-left:6px}
+.ev-verified{color:var(--green)}
+
+/* OPERATION ARCHITECTURE */
+.arch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.arch-item{background:var(--bg3);border-radius:8px;padding:12px 14px}
+.arch-item .arch-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.arch-item p{font-size:12px;color:var(--tx2);line-height:1.5}
+
+/* IMPACT */
+.impact-row{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start}
+.impact-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px}
+.impact-text{font-size:13px;color:var(--tx2);line-height:1.5}
+
+/* RESPONSE */
+.response-card{background:var(--green-bg);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.response-card p{font-size:13px;color:var(--tx2);line-height:1.6}
+
+/* CONFIDENCE PANEL */
+.confidence-panel{background:var(--bg3);border-radius:10px;padding:16px 18px;margin:16px 0;border-left:3px solid}
+.confidence-panel.confirmed{border-left-color:var(--green)}
+.confidence-panel.probable{border-left-color:var(--amber)}
+.confidence-panel.suspected{border-left-color:var(--purple)}
+.conf-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.conf-badge{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.conf-layers{display:flex;gap:6px;margin:8px 0}
+.conf-layer{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:500}
+.conf-layer.corr{background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.conf-layer.incon{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.conf-layer.contra{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+
+/* MIRROR */
+.mirror-card{background:linear-gradient(135deg,var(--red-bg),var(--blue-bg));border:1px solid var(--bdr);border-radius:10px;padding:16px 18px;margin:12px 0}
+.mirror-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);margin-bottom:6px}
+
+/* COUNTER-OP */
+.counter-card{background:var(--teal-bg);border:1px solid rgba(20,184,166,.15);border-radius:10px;padding:14px 16px;margin:12px 0}
+
+/* PCP / FEAR */
+.framework-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.fw-item{background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--amber)}
+.fw-letter{font-size:16px;font-weight:700;color:var(--amber);margin-bottom:2px}
+.fw-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:4px}
+.fw-desc{font-size:12px;color:var(--tx2);line-height:1.5}
+
+/* CONNECTIONS */
+.conn-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border-radius:6px;margin-bottom:6px;font-size:12px;color:var(--tx2)}
+.conn-type{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:3px}
+
+.page-header{padding:20px 20px 0;margin-bottom:4px}
+.page-title{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:2px}
+.page-subtitle{font-size:11px;color:var(--tx3)}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+<div class="page-title">&#9632; Vantage Psyops Detection Engine</div>
+<div class="page-subtitle">Generated April 28, 2026 — Global scan coverage</div>
+</div>
+
+<!-- SEARCH & FILTER CONTROLS -->
+<div class="controls">
+<div class="search-wrap">
+<span class="search-icon">&#9906;</span>
+<input type="text" class="search-bar" placeholder="Search campaigns — name, operator, technique, region..." oninput="filterCampaigns()">
+</div>
+<div class="filter-row">
+<span class="filter-label">Status</span>
+<button class="filter-btn" onclick="toggleFilter(this,'status','all')">All</button>
+<button class="filter-btn" onclick="toggleFilter(this,'status','active')">Active</button>
+<button class="filter-btn" onclick="toggleFilter(this,'status','escalating')">Escalating</button>
+<button class="filter-btn" onclick="toggleFilter(this,'status','exposed')">Exposed</button>
+<button class="filter-btn" onclick="toggleFilter(this,'status','dormant')">Dormant</button>
+<button class="filter-btn" onclick="toggleFilter(this,'status','suspected')">Suspected</button>
+</div>
+<div class="filter-row">
+<span class="filter-label">Type</span>
+<button class="filter-btn" onclick="toggleFilter(this,'type','all')">All</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','state_vs_state')">State vs State</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','corporate')">Corporate</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','domestic_gov')">Domestic Gov</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','election')">Election</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','platform_manipulation')">Platform</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','economic')">Economic</button>
+<button class="filter-btn" onclick="toggleFilter(this,'type','mirror')">Mirror Op</button>
+</div>
+<div class="filter-row">
+<span class="filter-label">Confidence</span>
+<button class="filter-btn" onclick="toggleFilter(this,'conf','all')">All</button>
+<button class="filter-btn" onclick="toggleFilter(this,'conf','confirmed')">Confirmed</button>
+<button class="filter-btn" onclick="toggleFilter(this,'conf','probable')">Probable</button>
+<button class="filter-btn" onclick="toggleFilter(this,'conf','suspected')">Suspected</button>
+</div>
+<div class="sort-row">
+<span class="filter-label">Sort by</span>
+<button class="filter-btn" onclick="sortCampaigns(this,'saci')">SACI &#8595;</button>
+<button class="filter-btn" onclick="sortCampaigns(this,'legit')">Legitimacy &#8593;</button>
+<button class="filter-btn" onclick="sortCampaigns(this,'date')">Date &#8595;</button>
+</div>
+</div>
+
+<!-- DATA INTEGRITY WARNING -->
+<div class="integrity-warning">
+<div class="icon">&#9888;</div>
+<div>
+<div class="label">Data integrity alert</div>
+<p>2 campaigns detected that may be affecting Vantage story data. PSY-001 (Guatemala/PBSUCCESS) narrative patterns detected in current Central American coverage framing. PSY-002 (Venezuela dual narrative warfare) is actively distorting coverage of US-Venezuela relations from BOTH sides — pro-US and anti-US narratives both contain confirmed inauthentic amplification. See campaigns for full analysis.</p>
+</div>
+</div>
+
+<div id="campaign-list">
+
+<!-- CAMPAIGN 1 -->
+<div class="campaign" data-status="exposed" data-type="corporate" data-conf="confirmed" data-saci="8.5" data-legit="1.8" data-date="1950" data-search="operation pbsuccess guatemala bernays united fruit company corporate narrative laundering amplifier chain manufactured consensus communist cold war CIA coup regime change latin america">
+
+<div class="campaign-header" onclick="toggleCampaign(this)">
+<div class="campaign-header-left">
+<div class="campaign-header-info">
+<div class="campaign-id">PSY-001</div>
+<div class="campaign-name">Operation PBSUCCESS — Guatemala Narrative Campaign</div>
+<div class="campaign-meta">
+<span class="campaign-operator-short">United Fruit Company via Bernays</span>
+<span class="conf conf-confirmed">Confirmed</span>
+<div class="status-badge status-exposed" style="margin:0"><span class="status-dot"></span> Exposed</div>
+</div>
+</div>
+</div>
+<div class="campaign-header-right">
+<div class="score-block"><div class="score-label">SACI</div><div class="score-value high">8.5</div></div>
+<div class="score-block"><div class="score-label">Legit</div><div class="score-value high">1.8</div></div>
+<div class="expand-arrow">&#9660;</div>
+</div>
+</div>
+
+<div class="campaign-body">
+<!-- SUMMARY -->
+<div class="campaign-summary">
+A 4-year corporate influence campaign (1950-1954) run by PR pioneer Edward Bernays on behalf of the United Fruit Company. Bernays systematically shifted public perception of Guatemala's democratic land reform from a domestic economic matter into an existential communist threat, ultimately manufacturing public consent for a CIA-orchestrated coup that overthrew the democratically elected government of Jacobo Arbenz. The operation is a textbook case of narrative laundering, amplifier chain exploitation, and manufactured consensus.
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+<div class="tab active" onclick="showTab(this,'overview')">Overview</div>
+<div class="tab" onclick="showTab(this,'detection')">Detection</div>
+<div class="tab" onclick="showTab(this,'timeline')">Narrative Timeline</div>
+<div class="tab" onclick="showTab(this,'architecture')">Operation Architecture</div>
+<div class="tab" onclick="showTab(this,'chain')">Amplifier Chain</div>
+<div class="tab" onclick="showTab(this,'techniques')">Techniques</div>
+<div class="tab" onclick="showTab(this,'psychology')">Psychological Targeting</div>
+<div class="tab" onclick="showTab(this,'redblue')">Red / Blue Team</div>
+<div class="tab" onclick="showTab(this,'projection')">Projection</div>
+<div class="tab" onclick="showTab(this,'impact')">Impact &amp; Response</div>
+<div class="tab" onclick="showTab(this,'evidence')">Evidence Chain</div>
+<div class="tab" onclick="showTab(this,'connections')">Connections</div>
+</div>
+
+<!-- TAB: OVERVIEW -->
+<div class="tab-content active" id="tab-overview">
+<div class="section-title">Identification</div>
+<div class="field"><div class="field-label">Classification</div><div class="field-value">Corporate influence campaign / State-aligned covert action</div></div>
+<div class="field"><div class="field-label">First Detected</div><div class="field-value">1950 (initial PR campaign activities)</div></div>
+<div class="field"><div class="field-label">Self-sustaining</div><div class="field-value">Yes — anti-communist framing of Latin American politics became self-sustaining for decades. The template was reused across Cold War interventions without Bernays' direct involvement.</div></div>
+<div class="field"><div class="field-label">Algorithm role</div><div class="field-value muted">Not applicable — pre-digital era. However, the amplification architecture Bernays built is the analog precursor to algorithmic amplification.</div></div>
+<div class="field"><div class="field-label">Historical parallel</div><div class="field-value">This IS the historical parallel. Nearly every subsequent regime-change narrative campaign (Iraq WMDs, Libya intervention, Syria chemical weapons framing) follows the Bernays template.</div></div>
+<div class="field"><div class="field-label">Operator profile match</div><div class="field-value">US corporate-government convergence playbook — corporate interest aligned with government geopolitical strategy, PR apparatus used to manufacture public consent for covert action.</div></div>
+
+<div class="section-title" style="margin-top:20px">Purpose</div>
+<div class="field"><div class="field-label">Primary objective</div><div class="field-value">Manufacture American public consent for the overthrow of Guatemala's democratically elected President Jacobo Arbenz, to protect United Fruit Company's land holdings from agrarian reform.</div></div>
+<div class="field"><div class="field-label">Timing intelligence</div><div class="field-value">Campaign escalated in direct correlation with Arbenz's land reform implementation timeline. Each narrative shift preceded a specific policy or military action.</div></div>
+<div class="field"><div class="field-label">Real vs apparent objective</div><div class="field-value">Apparent: Protect democracy from communist expansion. Real: Protect UFC's monopoly on Guatemalan land and banana exports from legal redistribution to peasant farmers.</div></div>
+<div class="field"><div class="field-label">Secondary objectives</div><div class="field-value">Establish precedent for corporate-government covert action. Demonstrate PR as a tool for geopolitical manipulation. Position UFC as defending American interests rather than exploiting foreign labor.</div></div>
+
+<div class="section-title" style="margin-top:20px">Targeting</div>
+<div class="field"><div class="field-label">Primary target audience</div><div class="field-value">American public and US congressional leadership</div></div>
+<div class="field"><div class="field-label">Secondary audiences</div><div class="field-value">Latin American governments (deterrence), European allies (legitimacy), Guatemalan military (encouragement to defect), international press (narrative adoption)</div></div>
+<div class="field"><div class="field-label">Audience vulnerability</div><div class="field-value">Cold War-era fear of communist expansion. McCarthy-era political climate made "communist" label sufficient to delegitimize any target. American public had minimal knowledge of Guatemalan internal politics.</div></div>
+<div class="field"><div class="field-label">Influential nodes targeted</div><div class="field-value">US newspaper editors, syndicated columnists, congressional committee members, State Department officials, religious leaders citing "godless communism"</div></div>
+</div>
+
+<!-- TAB: DETECTION -->
+<div class="tab-content" id="tab-detection">
+<div class="section-title red">Detection Evidence</div>
+
+<div class="field"><div class="field-label">Source origin</div>
+<div class="field-value">Origin traced to Edward Bernays' PR firm, retained by United Fruit Company in 1950. Bernays personally organized press junkets to Guatemala, planted stories with specific journalists, and distributed pre-written copy to news outlets under the guise of independent reporting.</div>
+<div class="field-evidence">Confidence: Confirmed — documented in Bernays' own papers, Larry Tye's biography, and declassified CIA records.</div>
+</div>
+
+<div class="field"><div class="field-label">Ownership &amp; benefit mapping</div>
+<div class="field-value">United Fruit Company (now Chiquita Brands) — primary funder. UFC board included Allen Dulles (CIA Director) and John Foster Dulles (Secretary of State). This corporate-government personnel overlap is the funding trail: the people deciding to overthrow Guatemala were simultaneously on the payroll of the company that benefited from the overthrow.</div>
+<div class="field-evidence">Sources checked: Corporate board records, State Department archives, CIA declassified documents. Dark spots: Full PR firm billing records not publicly available.</div>
+</div>
+
+<div class="field"><div class="field-label">False confirmation detected</div>
+<div class="field-value" style="color:var(--red)">YES — Multiple major US newspapers published stories about "communist infiltration in Guatemala" that appeared independent but all originated from Bernays' press materials. The New York Times, New York Herald Tribune, and wire services all carried narratives that traced back to the same PR operation. What appeared as independent confirmation from multiple respected outlets was single-source dependency with multiple distribution channels.</div>
+</div>
+
+<div class="field"><div class="field-label">Acceleration anomaly</div>
+<div class="field-value">Coverage of Guatemala shifted from near-zero to front-page urgency between 1952-1953 with no corresponding change in Guatemala's actual threat level. The acceleration was driven entirely by Bernays' press strategy and the Dulles brothers' political calendar.</div>
+</div>
+
+<div class="field"><div class="field-label">Vocabulary shift detected</div>
+<div class="field-value">1950: "land reform" / "agrarian policy" (neutral) → 1952: "expropriation" / "communist-influenced government" (loaded) → 1953: "Soviet beachhead" / "communist threat to the hemisphere" (security framing). The vocabulary shift was driven by Bernays' press materials and adopted wholesale by mainstream outlets.</div>
+</div>
+
+<div class="field"><div class="field-label">Absence detection</div>
+<div class="field-value">Almost completely absent from US coverage: UFC's actual labor practices in Guatemala, the democratic legitimacy of Arbenz's election, the fact that land reform specifically compensated UFC at the value UFC had declared for tax purposes (exposing UFC's own tax fraud), and any Guatemalan voices supporting the reform.</div>
+</div>
+
+<div class="field"><div class="field-label">Cross-channel convergence</div>
+<div class="field-value">Narrative appeared simultaneously across news media (planted stories), political channels (congressional testimony), diplomatic channels (State Department public statements), religious channels (anti-communist sermons), and intelligence channels (CIA briefings to Congress) — all within a compressed 1952-1953 timeframe. The convergence across all channels points to centralized orchestration.</div>
+</div>
+</div>
+
+<!-- TAB: NARRATIVE TIMELINE -->
+<div class="tab-content" id="tab-timeline">
+<div class="section-title red">Narrative evolution — origin to outcome</div>
+
+<div class="timeline">
+<div class="tl-entry origin">
+<div class="tl-date">1950</div>
+<div class="tl-narrative">"Guatemala implements agrarian land reform"</div>
+<div class="tl-meta">Framing: Neutral domestic policy — reported as a developing nation modernizing its economy</div>
+<div class="tl-technique">Origin point</div>
+<div class="tl-amplifiers">Sources: <span>Local Guatemalan press, AP/Reuters wire services (brief mentions)</span></div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">1951</div>
+<div class="tl-narrative">"Guatemala's land reform threatens American business interests"</div>
+<div class="tl-shift">&#8595; Shift: Domestic policy → American business concern</div>
+<div class="tl-meta">United Fruit Company hires Edward Bernays. Bernays reframes land reform as an attack on American property rights rather than Guatemalan domestic policy.</div>
+<div class="tl-technique">Framing</div>
+<div class="tl-technique">Narrative laundering</div>
+<div class="tl-amplifiers">Shifted by: <span>Bernays' PR firm — press releases, journalist briefings, organized press junkets to Guatemala (controlled tours showing only what UFC wanted shown)</span></div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">1952</div>
+<div class="tl-narrative">"Guatemala's government has communist sympathies — land reform is socialist redistribution"</div>
+<div class="tl-shift">&#8595; Shift: Business concern → Ideological threat</div>
+<div class="tl-meta">Bernays plants the communist framing through journalists who don't know they're being used. Op-eds appear in major papers. Think pieces connect Guatemala to the global communist threat. The economic dispute disappears — replaced entirely by ideological framing.</div>
+<div class="tl-technique">Narrative laundering</div>
+<div class="tl-technique">Anchoring</div>
+<div class="tl-technique">Fear appeal</div>
+<div class="tl-amplifiers">Amplified by: <span>New York Times, NY Herald Tribune, syndicated columnists, Time Magazine. Congressional committees begin citing press coverage as evidence.</span></div>
+<div class="tl-meta" style="margin-top:8px;color:var(--amber)">Cognitive dissonance created: Americans who support democracy must now reconcile "democratic election" with "communist threat." Bernays resolves this by implying the election itself was compromised.</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">1953</div>
+<div class="tl-narrative">"Communist Guatemala threatens the stability of all Central America — a Soviet beachhead in the Western Hemisphere"</div>
+<div class="tl-shift">&#8595; Shift: Single country threat → Regional / hemispheric security crisis</div>
+<div class="tl-meta">The narrative expands from one country's internal politics to a regional security emergency. Bernays escalates by connecting Guatemala to the global Cold War. Congressional testimony cites newspaper coverage that Bernays planted, creating a circular confirmation loop.</div>
+<div class="tl-technique">Escalation</div>
+<div class="tl-technique">Manufactured consensus</div>
+<div class="tl-technique">Circular confirmation</div>
+<div class="tl-amplifiers">Amplified by: <span>State Department public statements, CIA briefings to Congress (the Dulles brothers activating government channels), religious leaders preaching against "godless communism in our hemisphere"</span></div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry current">
+<div class="tl-date">1954</div>
+<div class="tl-narrative">"The American people demand action against communist expansion in Guatemala"</div>
+<div class="tl-shift">&#8595; Shift: Security crisis → Mandate for action — PSYOP COMPLETE</div>
+<div class="tl-meta">The narrative reaches its final form. The government now claims to be acting "in response to" public concern — concern that was entirely manufactured by Bernays' 4-year campaign. CIA executes Operation PBSUCCESS, overthrowing Arbenz. The American public supports it because they believe they demanded it.</div>
+<div class="tl-technique">Manufactured consent</div>
+<div class="tl-technique">False flag demand</div>
+<div class="tl-amplifiers">Outcome: <span>CIA-backed coup overthrows Arbenz. Military dictatorship installed. Decades of civil war follow — an estimated 200,000 killed. UFC's land holdings preserved.</span></div>
+</div>
+</div>
+
+<div class="field" style="margin-top:20px">
+<div class="field-label">Narrative replaced</div>
+<div class="field-value">Before Bernays' campaign, the dominant American narrative about Guatemala was effectively nothing — Americans had no opinion about Guatemala. Bernays didn't have to overcome an existing narrative. He built one from scratch on blank terrain, which is the easiest scenario for a psyop operator.</div>
+</div>
+</div>
+
+<!-- TAB: OPERATION ARCHITECTURE -->
+<div class="tab-content" id="tab-architecture">
+<div class="section-title amber">Operation architecture — how it was built</div>
+
+<div class="arch-grid">
+<div class="arch-item"><div class="arch-label">Seeding method</div><p>Organized press junkets to Guatemala (controlled tours), pre-written press releases disguised as independent research, personal briefings with selected journalists, planted op-eds through proxy authors</p></div>
+<div class="arch-item"><div class="arch-label">Amplification method</div><p>Journalist-to-editor pipeline — Bernays targeted specific editors and columnists who would amplify without questioning. Wire services spread locally planted stories nationally. Congressional citation of press coverage created authority amplification.</p></div>
+<div class="arch-item"><div class="arch-label">Laundering chain</div><p>UFC corporate interest → Bernays PR firm → planted press materials → journalist articles (appear independent) → congressional citations (appear evidence-based) → State Department action (appears responsive to public demand)</p></div>
+<div class="arch-item"><div class="arch-label">Suppression tactics</div><p>Guatemalan voices excluded from American press. Counter-narratives (land reform is democratic, UFC is exploitative) never reached American audiences. Journalists who questioned the narrative were sidelined.</p></div>
+<div class="arch-item"><div class="arch-label">Technology used</div><p>Pre-digital: press releases, newsreels, press junkets, personal journalist relationships, congressional testimony. The techniques are identical to modern operations — only the channels differ.</p></div>
+<div class="arch-item"><div class="arch-label">Exit cost analysis</div><p>Low individual exit cost (no identity fusion with this specific narrative), but high INSTITUTIONAL exit cost — journalists, editors, and congressmen who adopted the communist framing could not reverse without admitting they'd been manipulated. Institutional reputation locked them in.</p></div>
+</div>
+
+<div class="section-title amber" style="margin-top:20px">FEAR model assessment</div>
+<div class="framework-grid">
+<div class="fw-item"><div class="fw-letter">F</div><div class="fw-label">Focus</div><div class="fw-desc">Narrowed American attention from global Cold War complexity to one small country. Guatemala became the symbol of "communism in our backyard" — all nuance removed.</div></div>
+<div class="fw-item"><div class="fw-letter">E</div><div class="fw-label">Emotion</div><div class="fw-desc">Fear of communist expansion. Anger at perceived threat to American interests. Disgust at "godless" ideology. All three emotions deployed simultaneously through different channels.</div></div>
+<div class="fw-item"><div class="fw-letter">A</div><div class="fw-label">Agitation</div><div class="fw-desc">Sustained over 4 years with escalating urgency. Each narrative shift increased the perceived threat level. By 1954, inaction felt dangerous.</div></div>
+<div class="fw-item"><div class="fw-letter">R</div><div class="fw-label">Repetition</div><div class="fw-desc">Same communist-threat framing repeated across every channel — news, politics, religion, diplomacy. Repetition created the illusion of consensus: if everyone is saying it, it must be true.</div></div>
+</div>
+</div>
+
+<!-- TAB: AMPLIFIER CHAIN -->
+<div class="tab-content" id="tab-chain">
+<div class="section-title red">Amplifier chain — origin to public</div>
+
+<div class="chain">
+<div class="chain-node">
+<div class="chain-pos operator">1</div>
+<div class="chain-body">
+<div class="chain-entity">United Fruit Company <span class="chain-type">Operator / Funder</span></div>
+<div class="chain-role">Retained Bernays. Funded entire operation. Board overlap with CIA and State Department created government alignment.</div>
+<div class="chain-funding">Funding: Direct corporate payment to Bernays' PR firm. Exact amount undisclosed but substantial multi-year retainer.</div>
+</div>
+<div class="chain-awareness" style="background:var(--red-bg);color:var(--red)">Knowing</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos knowing">2</div>
+<div class="chain-body">
+<div class="chain-entity">Edward Bernays <span class="chain-type">PR architect</span></div>
+<div class="chain-role">Designed and executed the entire narrative campaign. Created press materials, organized junkets, selected and briefed target journalists. The architect of every narrative shift.</div>
+<div class="chain-funding">Information source: UFC briefings, selective data, controlled Guatemala tours</div>
+</div>
+<div class="chain-awareness" style="background:var(--red-bg);color:var(--red)">Knowing</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos knowing">3</div>
+<div class="chain-body">
+<div class="chain-entity">Allen Dulles (CIA) &amp; John Foster Dulles (State) <span class="chain-type">Government operators</span></div>
+<div class="chain-role">UFC board members who simultaneously held the two most powerful foreign policy positions in the US government. Used government channels to amplify and act on the narrative Bernays created.</div>
+<div class="chain-funding">Personnel overlap: Both served on UFC board before/during government service. Direct financial interest in campaign's success.</div>
+</div>
+<div class="chain-awareness" style="background:var(--red-bg);color:var(--red)">Knowing</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">4</div>
+<div class="chain-body">
+<div class="chain-entity">Target journalists — NY Times, Herald Tribune, wire services <span class="chain-type">Media amplifiers</span></div>
+<div class="chain-role">Published stories based on Bernays' press materials and controlled Guatemala tours. Believed they were doing independent journalism. Their reporting became the "evidence" cited by Congress.</div>
+<div class="chain-funding">No direct funding connection — manipulated through access, not payment. Bernays provided exclusive access in exchange for favorable framing.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Unwitting</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">5</div>
+<div class="chain-body">
+<div class="chain-entity">Congressional committee members <span class="chain-type">Political amplifiers</span></div>
+<div class="chain-role">Cited newspaper coverage (planted by Bernays) as evidence of communist threat. Their citations legitimized the narrative — "even Congress is concerned." Created circular confirmation: planted story → press coverage → congressional citation → more press coverage of congressional concern.</div>
+<div class="chain-funding">No direct funding — influenced through the press coverage itself and through Dulles brothers' political relationships.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Mostly unwitting</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">6</div>
+<div class="chain-body">
+<div class="chain-entity">Religious leaders, civic organizations <span class="chain-type">Community amplifiers</span></div>
+<div class="chain-role">Preached against "godless communism in our hemisphere." Incorporated the threat narrative into sermons and community meetings. Reached audiences that don't read political news.</div>
+<div class="chain-funding">No funding connection — amplified because the narrative aligned with existing anti-communist religious convictions.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Unwitting</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">7</div>
+<div class="chain-body">
+<div class="chain-entity">American general public <span class="chain-type">Target audience</span></div>
+<div class="chain-role">Received the narrative from every trusted channel simultaneously — news, government, church. Concluded that Guatemala was a communist threat. Supported or accepted the coup as necessary. The manufactured demand was complete.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Unwitting</div>
+</div>
+</div>
+
+<div class="field" style="margin-top:16px"><div class="field-label">Amplifier penetration depth</div><div class="field-value">Maximum penetration — narrative reached from social level (community conversations) through institutional level (press, Congress, religious institutions) to policy level (State Department, CIA action). Every layer of American society was penetrated.</div></div>
+</div>
+
+<!-- TAB: TECHNIQUES -->
+<div class="tab-content" id="tab-techniques">
+<div class="section-title purple">Techniques detected — 7 methods identified</div>
+<p style="font-size:13px;color:var(--tx2);margin-bottom:16px">These techniques operated as a system, not independently. Narrative laundering cleaned the message. Framing and anchoring shaped perception. Manufactured consensus made it feel universal. Fear appeal drove urgency. Circular confirmation made it feel proven. The sequence matters — each technique built on the previous one.</p>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Narrative Laundering</div>
+<div class="technique-badge">Primary method</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>UFC's corporate grievance about land reform was laundered through Bernays' PR firm into press materials that appeared to be independent journalism. Journalists published stories based on Bernays' briefings without disclosing the UFC connection. Those stories were then cited by Congress as independent evidence. The corporate interest was completely invisible by the time it reached public discourse.</p></div>
+<div class="technique-section"><div class="technique-section-label">How it works</div><p>Like money laundering — a dirty idea gets cleaned by passing through progressively more credible sources. The original source (corporate interest) is obscured at each step. By the time it reaches the public, it looks like independent reporting, not corporate propaganda. Each intermediary adds credibility without adding independent verification.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When you read a claim in a major outlet, trace it backwards. Not "who reported it" — where did the INFORMATION first appear? If multiple outlets all trace back to the same original source, and that source has a financial or political interest in the conclusion, you're looking at laundered narrative, not independent confirmation.</p></div>
+<div class="technique-section"><div class="technique-section-label">Historical parallel</div><p>Iraq WMD intelligence — "Curveball" informant's claims were laundered through intelligence channels into Colin Powell's UN presentation. A single unreliable source became "intelligence community consensus" through the same laundering process.</p></div>
+<div class="technique-section"><div class="technique-section-label">Also active in</div><p style="color:var(--tx3)">PSY-008 (South China Sea narrative), PSY-012 (Tech regulation framing)</p></div>
+</div>
+</div>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Manufactured Consensus</div>
+<div class="technique-badge">Supporting method</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>Bernays ensured the communist-threat narrative appeared in every channel simultaneously — news, congressional statements, religious sermons, diplomatic communications. This created the appearance that "everyone knows" Guatemala is a communist threat, when in reality every channel was being fed by the same source. The consensus was manufactured, not organic.</p></div>
+<div class="technique-section"><div class="technique-section-label">How it works</div><p>Flood multiple channels with the same narrative so the target audience encounters it everywhere. Each encounter reinforces the message and creates the impression of independent agreement. The target thinks: "My newspaper says it. My congressman says it. My pastor says it. It must be true." They don't know all three got it from the same place.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When you hear the same claim from multiple trusted sources in a short timeframe, ask: are these sources actually independent? Did they each do their own investigation, or are they all citing the same report, the same study, the same anonymous official? Count the ORIGINS, not the outlets.</p></div>
+</div>
+</div>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Framing / Anchoring</div>
+<div class="technique-badge">Perception control</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>Bernays reframed land reform — a domestic economic policy — as communist ideology. Once the "communist" frame was established, all subsequent discussion happened within that frame. The actual question (should peasant farmers get land that a corporation isn't using?) was never debated. The anchored question became "how serious is the communist threat?" — accepting the premise that there WAS a communist threat.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When a debate seems to have only two positions, ask: who set the terms of this debate? Is there a third option that nobody is discussing? If the frame excludes the simplest explanation (in this case: "a country reformed its own land laws"), the frame itself may be the operation.</p></div>
+</div>
+</div>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Circular Confirmation</div>
+<div class="technique-badge">Credibility engine</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>Bernays plants story with journalist → Journalist publishes story → Congressman cites published story as evidence → Press covers congressional concern → Public sees "even Congress is worried" → Congress cites public concern as reason to act. Each step cites the previous step as independent evidence. Nobody checks that the entire loop started with one PR firm's press release.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When "evidence" for a claim is that important people believe it, and those important people believe it because they read it in the news, and the news reported it because an "expert" said it — trace the whole loop. If it's circular, the "evidence" is just the original claim echoing through institutions.</p></div>
+</div>
+</div>
+</div>
+
+<!-- TAB: PSYCHOLOGICAL TARGETING -->
+<div class="tab-content" id="tab-psychology">
+<div class="section-title amber">Psychological targeting analysis</div>
+
+<div class="field"><div class="field-label">Maslow exploitation</div><div class="field-value">Safety level — "communism threatens your way of life, your freedom, your security." Also belonging — "real Americans oppose communism; supporting Guatemala means you're not a real American." The campaign weaponized both safety fears and tribal identity simultaneously.</div></div>
+
+<div class="field"><div class="field-label">System 1 targeting</div><div class="field-value">The word "communist" was the System 1 trigger. In McCarthy-era America, the label bypassed all rational analysis. No American stopped to ask "what kind of communism? Is land reform actually communist? What does Guatemala's political structure actually look like?" The emotional trigger ("communist") prevented System 2 engagement before it could begin.</div></div>
+
+<div class="section-title amber" style="margin-top:20px">PCP framework assessment</div>
+<div class="framework-grid" style="grid-template-columns:1fr">
+<div class="fw-item" style="border-left-color:var(--purple)"><div class="fw-letter">P</div><div class="fw-label">Perception control</div><div class="fw-desc">Controlled what Americans could see about Guatemala. Press junkets showed only what UFC wanted shown. Guatemalan voices were excluded from American media. The only "facts" available were Bernays' facts.</div></div>
+<div class="fw-item" style="border-left-color:var(--purple)"><div class="fw-letter">C</div><div class="fw-label">Context framing</div><div class="fw-desc">Placed Guatemala inside the Cold War frame instead of the Latin American development frame. Context determined meaning: "land reform" in a development context = progress. "Land reform" in a Cold War context = communism. Bernays changed the context, not the facts.</div></div>
+<div class="fw-item" style="border-left-color:var(--purple)"><div class="fw-letter">P</div><div class="fw-label">Permission granting</div><div class="fw-desc">Gave Americans permission to support overthrowing a democracy by reframing it as "defending democracy from communism." The moral dissonance of supporting a coup was resolved by the communist label — if they're communist, they're not really democratic, so overthrowing them IS democratic. Bernays manufactured the moral permission.</div></div>
+</div>
+</div>
+
+<!-- TAB: RED/BLUE TEAM -->
+<div class="tab-content" id="tab-redblue">
+<div class="section-title red">Red Team — why this might NOT be a psyop</div>
+
+<div class="team-finding red">
+<div class="plaus low">Low plausibility</div>
+<p><strong>"Arbenz really was aligned with communists."</strong> Arbenz's government did include members of the Guatemalan Party of Labour (communist party). However, the land reform itself was modeled on US New Deal policies and compensated landowners at their own declared tax value. The communist party held 4 of 56 congressional seats. The "communist takeover" framing was disproportionate to the actual political composition. Bernays amplified a grain of truth into a manufactured crisis.</p>
+</div>
+
+<div class="team-finding red">
+<div class="plaus low">Low plausibility</div>
+<p><strong>"This was legitimate journalism, not a psyop."</strong> Multiple journalists have subsequently confirmed they relied on Bernays' materials. Bernays himself documented his methods in his papers. The operation is confirmed by every participant, every historian, and the declassified government records. This is among the most thoroughly documented psyops in history.</p>
+</div>
+
+<div class="team-finding red">
+<div class="plaus low">Low plausibility</div>
+<p><strong>"Cold War concerns were genuine — the US had legitimate security interests."</strong> The US did have legitimate concerns about Soviet expansion globally. However, the SPECIFIC application to Guatemala was manufactured to serve corporate interests, not national security. The Dulles brothers' dual roles (UFC board + government) prove the corporate motivation. Guatemala posed no meaningful military or strategic threat to the United States.</p>
+</div>
+
+<div style="background:var(--bg3);border-radius:8px;padding:14px 16px;margin:16px 0">
+<div class="field-label">Strongest counter-argument</div>
+<p style="font-size:13px;color:var(--tx2);margin-top:4px;line-height:1.6">The strongest counter-argument is that Bernays was simply doing effective PR — all PR shapes perception, and the line between "good PR" and "psyop" is subjective. Rebuttal: the deception test settles it. If American citizens had known that (1) the entire campaign was funded by a corporation protecting its profits, (2) the CIA director and Secretary of State were on that corporation's board, and (3) the "independent" journalism was fed by the corporation's PR firm — they would not have supported the coup. The operation depended entirely on deception. That's not PR. That's a psyop.</p>
+</div>
+
+<div class="field" style="margin-top:16px"><div class="field-label">False positive risk</div><div class="field-value" style="color:var(--green)">ZERO — This is a historically confirmed psyop documented by every participant.</div></div>
+
+<div class="section-title blue" style="margin-top:24px">Blue Team — what we might be missing</div>
+
+<div class="team-finding blue">
+<p><strong>Deeper timeline suspected:</strong> Bernays' 1950 engagement with UFC was not the beginning. UFC had been shaping US policy toward Central America for decades before Bernays. The "Banana Republic" concept itself was a form of narrative control — normalizing corporate domination of sovereign nations through language. The psyop may extend back to the early 1900s.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>Proxy operator check:</strong> Was UFC itself a proxy? The broader US foreign policy establishment had independent interests in preventing left-wing governments in Latin America. UFC may have been the convenient corporate face for a deeper government strategy. The Dulles brothers' involvement suggests the government wasn't responding to corporate lobbying — it was a joint operation from the start.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>Counter-narrative also manufactured?</strong> While Guatemala had genuine defenders in the international press, the SCALE of the counter-narrative (Guatemala as victim of US imperialism) was also amplified by Soviet propaganda. Both the "communist threat" narrative and the "US imperialism" counter-narrative were being boosted by opposing state actors. The Guatemalan people were caught between two competing psyops.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>Template replication:</strong> The biggest missing piece is the LEGACY. This campaign created a reusable template that was deployed repeatedly: Iran (1953), Congo (1960), Chile (1973), Nicaragua (1980s), Iraq (2003). Each subsequent operation used the same Bernays architecture. The psyop's greatest success wasn't Guatemala — it was proving that manufactured consent WORKS, creating a playbook that's still in use 70+ years later.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>What if the real objective isn't what it appears?</strong> The apparent objective was protecting UFC's land. But the REAL strategic value may have been establishing the principle that the US could and would overthrow democratically elected governments in Latin America to prevent leftward political drift — regardless of whether communism was actually involved. Guatemala was the precedent. The precedent was the product.</p>
+</div>
+</div>
+
+<!-- TAB: PROJECTION -->
+<div class="tab-content" id="tab-projection">
+<div class="section-title coral">Predictive projection — pattern recognition</div>
+
+<div class="field"><div class="field-label">Current phase (historical)</div><div class="field-value">Exposed — operation is fully documented and declassified. However, the TEMPLATE remains active.</div></div>
+
+<div class="projection-phase">
+<div class="phase-pill past">Neutral fact</div>
+<div class="phase-pill past">Business concern</div>
+<div class="phase-pill past">Ideological threat</div>
+<div class="phase-pill past">Security crisis</div>
+<div class="phase-pill past">Mandate for action</div>
+<div class="phase-pill current">Exposed</div>
+</div>
+
+<div class="field"><div class="field-label">Template reuse projection</div><div class="field-value">The Bernays template — neutral fact → business interest → ideological framing → security threat → manufactured mandate — should be expected in any situation where a powerful actor (corporate or state) wants to overthrow, sanction, or intervene against a government that threatens their economic or strategic interests. Watch for this exact sequence.</div></div>
+
+<div class="field"><div class="field-label">Indicators to watch</div>
+<div class="field-value">When coverage of a foreign country shifts from economic reporting to ideological labeling without a corresponding change in that country's actual politics — that's the shift from Phase 1 to Phase 2. When "regional stability" language appears — that's the shift to Phase 3. When polls show public support for action — check who funded the poll. That's Phase 4.</div></div>
+
+<div class="field"><div class="field-label">Active pattern matches detected</div>
+<div class="field-value" style="color:var(--amber)">The Bernays template pattern has been detected in current coverage of 3 developing situations. Cross-reference with PSY-008, PSY-014, and PSY-019 for active campaigns following this sequence.</div></div>
+</div>
+
+<!-- TAB: IMPACT & RESPONSE -->
+<div class="tab-content" id="tab-impact">
+<div class="section-title green">Impact assessment</div>
+
+<div class="impact-row"><div class="impact-icon" style="background:var(--red-bg);color:var(--red)">&#9632;</div><div class="impact-text"><strong>Behavioral change:</strong> American public supported or accepted CIA-orchestrated coup. Congress authorized covert action. Military operation executed June 1954.</div></div>
+<div class="impact-row"><div class="impact-icon" style="background:var(--red-bg);color:var(--red)">&#9632;</div><div class="impact-text"><strong>Human cost:</strong> Democratically elected government overthrown. Military dictatorship installed. Subsequent 36-year civil war killed an estimated 200,000 people, with 45,000+ disappeared. Indigenous communities suffered genocidal violence in the 1980s.</div></div>
+<div class="impact-row"><div class="impact-icon" style="background:var(--amber-bg);color:var(--amber)">&#9632;</div><div class="impact-text"><strong>Institutional damage:</strong> American journalism's credibility was compromised — reporters had been used as unwitting amplifiers. Trust in government was damaged when the covert nature of the operation was eventually revealed. Precedent set for government deception of the American public.</div></div>
+<div class="impact-row"><div class="impact-icon" style="background:var(--amber-bg);color:var(--amber)">&#9632;</div><div class="impact-text"><strong>Template propagation:</strong> The playbook was reused for decades. Each reuse further normalized manufactured consent as a tool of foreign policy. The cumulative institutional damage compounds with each deployment.</div></div>
+
+<div class="section-title green" style="margin-top:20px">Response — what you can do</div>
+
+<div class="response-card">
+<div class="field-label" style="color:var(--green);margin-bottom:6px">Individual action</div>
+<p>When coverage of a foreign country suddenly shifts from neutral to threatening, apply the Bernays test: Who benefits economically from this narrative? Who is funding the think tank or expert being cited? Are multiple outlets actually independent, or citing the same source? Is the vocabulary shifting from neutral to loaded without a corresponding change in facts on the ground? These questions would have exposed Bernays' operation in real time.</p>
+</div>
+
+<div class="response-card">
+<div class="field-label" style="color:var(--green);margin-bottom:6px">Institutional action</div>
+<p>Mandatory source transparency in journalism — readers should be able to see who funded the research, who organized the press junket, who wrote the press release that seeded the story. Personnel overlap disclosure — when government officials have corporate board memberships, this must be public and prominent in any coverage of related policy decisions.</p>
+</div>
+
+<div class="response-card">
+<div class="field-label" style="color:var(--green);margin-bottom:6px">What would collapse this type of operation</div>
+<p>Transparency of the funding trail. If the American public had known in 1951 that the stories about Guatemala were funded by the company that owned the land being reformed, and that the CIA director was on that company's board, the operation would have collapsed. The single point of failure for this type of psyop is ALWAYS the funding trail. Follow the money.</p>
+</div>
+</div>
+
+<!-- TAB: EVIDENCE CHAIN -->
+<div class="tab-content" id="tab-evidence">
+<div class="section-title">Evidence chain — every claim is traceable</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-01</div>
+<div class="ev-body">
+<div class="ev-claim">United Fruit Company retained Edward Bernays as PR counsel beginning in 1950</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Larry Tye, "The Father of Spin" (biography of Bernays), Bernays' personal papers at Library of Congress <span class="ev-type">Historical record</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-02</div>
+<div class="ev-body">
+<div class="ev-claim">Allen Dulles (CIA Director) and John Foster Dulles (Secretary of State) both served on the UFC board</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Corporate board records, Stephen Schlesinger "Bitter Fruit" <span class="ev-type">Corporate disclosure</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-03</div>
+<div class="ev-body">
+<div class="ev-claim">Bernays organized controlled press junkets to Guatemala to shape journalist perceptions</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Bernays' personal papers, journalist accounts <span class="ev-type">Primary source</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-04</div>
+<div class="ev-body">
+<div class="ev-claim">Land reform compensated UFC at the value UFC had declared for tax purposes ($1.185M for land valued at $19.4M)</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Guatemalan government records, State Department communications <span class="ev-type">Government filing</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-05</div>
+<div class="ev-body">
+<div class="ev-claim">CIA operation PBSUCCESS overthrew Arbenz government in June 1954</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Declassified CIA records (released 1997), Nick Cullather "Operation PBSUCCESS" (CIA internal history, declassified) <span class="ev-type">Government record</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-06</div>
+<div class="ev-body">
+<div class="ev-claim">Guatemalan Communist Party held 4 of 56 congressional seats — minority representation, not control</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Guatemalan congressional records, Piero Gleijeses "Shattered Hope" <span class="ev-type">Academic research</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-07</div>
+<div class="ev-body">
+<div class="ev-claim">Subsequent civil war resulted in approximately 200,000 deaths and 45,000 disappearances</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — UN-sponsored Historical Clarification Commission (CEH) report, 1999 <span class="ev-type">International body</span></div>
+</div>
+</div>
+</div>
+
+<!-- TAB: CONNECTIONS -->
+<div class="tab-content" id="tab-connections">
+<div class="section-title">Cross-platform connections</div>
+
+<div class="conn-item"><span class="conn-type" style="background:var(--red-bg);color:var(--red)">Vantage story</span> Current Central American political coverage may carry framing descendants of this campaign's vocabulary and assumptions</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--amber-bg);color:var(--amber)">Template match</span> PSY-008 — South China Sea narrative following identical Bernays sequence (currently in Phase 2: ideological framing)</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--amber-bg);color:var(--amber)">Template match</span> PSY-014 — [Country X] sanctions narrative following Bernays sequence (currently in Phase 3: security threat)</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--purple-bg);color:var(--purple)">Historical</span> Iran 1953 (Operation Ajax) — near-simultaneous use of same playbook</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--purple-bg);color:var(--purple)">Historical</span> Chile 1973 — ITT Corporation funded similar narrative campaign</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--purple-bg);color:var(--purple)">Historical</span> Iraq 2003 — WMD narrative followed identical laundering chain</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--blue-bg);color:var(--blue)">Prediction</span> Any current narrative following the neutral→ideological→security→mandate sequence should be flagged for PBSUCCESS pattern analysis</div>
+<div class="conn-item"><span class="conn-type" style="background:var(--teal-bg);color:var(--teal)">Scenario</span> Template enables "manufactured intervention" scenario in any region where corporate or state interests conflict with local government policy</div>
+
+<div class="section-title" style="margin-top:20px">Convergence analysis</div>
+<div class="field"><div class="field-label">Convergence type with Cold War operations</div><div class="field-value">Intentional convergence — UFC's corporate objective and the US government's anti-communist geopolitical strategy were deliberately aligned through the Dulles brothers. This wasn't opportunistic overlap; it was the same people operating in both spheres simultaneously.</div></div>
+</div>
+
+<!-- CONFIDENCE PANEL (always visible at bottom) -->
+<div style="padding:0 24px 20px">
+<div class="confidence-panel confirmed">
+<div class="conf-header">
+<div class="conf-badge" style="color:var(--green)">&#9679; Confirmed</div>
+<span style="font-size:12px;color:var(--tx2)">— 7 of 7 detection layers corroborate</span>
+</div>
+<p style="font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:8px">This is a historically documented, fully declassified, and participant-confirmed psychological operation. Every detection layer corroborates. Zero layers contradict. The operation is acknowledged by the US government through declassified records.</p>
+<div class="conf-layers">
+<span class="conf-layer corr">Source origin ✓</span>
+<span class="conf-layer corr">Ownership ✓</span>
+<span class="conf-layer corr">False confirmation ✓</span>
+<span class="conf-layer corr">Acceleration ✓</span>
+<span class="conf-layer corr">Cross-channel ✓</span>
+<span class="conf-layer corr">Vocabulary shift ✓</span>
+<span class="conf-layer corr">Absence ✓</span>
+</div>
+<p style="font-size:12px;color:var(--tx3);margin-top:8px"><strong>Blind spots:</strong> Full PR firm billing records not publicly available. Exact coordination mechanisms between Bernays, UFC, and the Dulles brothers are inferred from outcomes and personnel overlap rather than documented communications (most were verbal).</p>
+</div>
+</div>
+
+</div><!-- end confidence panel padding -->
+</div><!-- end campaign-body 1 -->
+</div><!-- end campaign 1 -->
+
+<!-- ============================================ -->
+<!-- CAMPAIGN 2 — VENEZUELA NARRATIVE WARFARE -->
+<!-- ============================================ -->
+
+<div class="campaign" data-status="active" data-type="mirror" data-conf="probable" data-saci="8.8" data-legit="3.4" data-date="2026" data-search="venezuela maduro intervention dual narrative warfare narcoterrorism oil interests fake profiles bot network cyabra trump military operation latin america sovereignty manufactured consensus cartel suns mirror operation">
+
+<div class="campaign-header" onclick="toggleCampaign(this)">
+<div class="campaign-header-left">
+<div class="campaign-header-info">
+<div class="campaign-id">PSY-002</div>
+<div class="campaign-name">Venezuela Intervention — Dual Narrative Warfare</div>
+<div class="campaign-meta">
+<span class="campaign-operator-short">Multiple — US-aligned + Anti-US counter-networks</span>
+<span class="conf conf-probable">Probable</span>
+<div class="status-badge status-active" style="margin:0"><span class="status-dot"></span> Active</div>
+<div class="status-badge" style="margin:0;background:var(--purple-bg);color:var(--purple)"><span class="status-dot"></span> Mirror</div>
+</div>
+</div>
+</div>
+<div class="campaign-header-right">
+<div class="score-block"><div class="score-label">SACI</div><div class="score-value high">8.8</div></div>
+<div class="score-block"><div class="score-label">Legit</div><div class="score-value med">3.4</div></div>
+<div class="expand-arrow">&#9660;</div>
+</div>
+</div>
+
+<div class="campaign-body">
+<div class="campaign-summary">
+A multi-actor influence battle surrounding the January 3, 2026 US military operation in Venezuela and capture of President Nicol&aacute;s Maduro. Cyabra detected two competing coordinated fake networks — a pro-US campaign (485 fake profiles) that launched BEFORE the operation framing Maduro as a narco-terrorist, and an anti-US campaign that reversed the narrative within 6 hours, reframing the operation as illegal imperialism. Combined inauthentic content generated over 641 million views. Simultaneously, the official US narrative shifted post-capture from narcoterrorism justification to oil interests — a vocabulary shift consistent with the Bernays template. Ground truth is genuinely contested: real drug trafficking evidence exists (insider guilty pleas) but the organizational framing ("Cartel of the Suns") was quietly abandoned in the revised indictment. Both sides are running operations. Both sides have real grievances. The truth is buried under competing psyops.
+</div>
+
+<div class="tabs">
+<div class="tab active" onclick="showTab2(this,'v-overview')">Overview</div>
+<div class="tab" onclick="showTab2(this,'v-detection')">Detection</div>
+<div class="tab" onclick="showTab2(this,'v-timeline')">Narrative Timeline</div>
+<div class="tab" onclick="showTab2(this,'v-architecture')">Operation Architecture</div>
+<div class="tab" onclick="showTab2(this,'v-chain')">Amplifier Chain</div>
+<div class="tab" onclick="showTab2(this,'v-techniques')">Techniques</div>
+<div class="tab" onclick="showTab2(this,'v-redblue')">Red / Blue Team</div>
+<div class="tab" onclick="showTab2(this,'v-projection')">Projection</div>
+<div class="tab" onclick="showTab2(this,'v-evidence')">Evidence Chain</div>
+</div>
+
+<!-- TAB: OVERVIEW -->
+<div class="tab-content active" id="tab-v-overview">
+<div class="section-title">Identification</div>
+<div class="field"><div class="field-label">Classification</div><div class="field-value">Mirror operation — State-aligned information warfare (both sides) + Corporate interest alignment</div></div>
+<div class="field"><div class="field-label">First detected</div><div class="field-value">Pro-US fake network active weeks before January 3, 2026 operation. Anti-US network activated within hours of the strike.</div></div>
+<div class="field"><div class="field-label">Self-sustaining</div><div class="field-value">Partially — the "narco-state" framing of Venezuela has been self-sustaining in US media since the 2020 indictments. The anti-imperialist counter-framing is self-sustaining in Latin American and left-leaning media. Both narratives persist without active operator input.</div></div>
+<div class="field"><div class="field-label">Algorithm role</div><div class="field-value" style="color:var(--amber)">Significant accelerant. Both campaigns exploited platform algorithms — hashtag coordination (#VenezuelaLibre at 30% fake profiles, #AmericaLatinaLibre at 69% fake profiles) designed to trigger trending algorithms and amplify manufactured narratives to real users.</div></div>
+<div class="field"><div class="field-label">Historical parallel</div><div class="field-value" style="color:var(--red)">STRONG MATCH — Operation PBSUCCESS (Guatemala 1954). Same Bernays template: reframe a domestic/economic dispute as a security threat, escalate through official designations, execute military action, then shift justification post-facto. Also parallels Panama 1989 (Noriega capture on drug charges) and Iraq 2003 (WMD narrative).</div></div>
+
+<div class="section-title" style="margin-top:20px">Purpose</div>
+<div class="field"><div class="field-label">Primary objective — Pro-US campaign</div><div class="field-value">Manufacture public consent for military intervention by framing Maduro as a narco-terrorist criminal. Suppress sovereignty concerns. Frame capture as law enforcement, not regime change.</div></div>
+<div class="field"><div class="field-label">Primary objective — Anti-US campaign</div><div class="field-value">Delegitimize the US operation by framing it as illegal imperialism and a violation of sovereignty. Reframe Maduro as a legitimate leader who was kidnapped. Mobilize Latin American opposition.</div></div>
+<div class="field"><div class="field-label">Real vs apparent objective</div><div class="field-value" style="color:var(--amber)">NARRATIVE SHIFTED POST-CAPTURE. Initial justification was narcoterrorism. Within days, official US statements pivoted to Venezuelan oil reserves — the largest in the world. Courthouse News reported that references to drug trafficking dropped from official language while references to oil increased. This mirrors the Bernays pattern where the stated objective (communism) masked the real objective (United Fruit Company's land).</div></div>
+<div class="field"><div class="field-label">Timing intelligence</div><div class="field-value">Pro-US fake network launched WEEKS before the January 3 operation — suggesting foreknowledge of the military timeline. The pre-positioning of narrative infrastructure before military action is a classic psyop indicator. Information preceded action.</div></div>
+
+<div class="section-title" style="margin-top:20px">Targeting</div>
+<div class="field"><div class="field-label">Target audience — Pro-US campaign</div><div class="field-value">American domestic public, US Congress, NATO allies, Venezuelan diaspora</div></div>
+<div class="field"><div class="field-label">Target audience — Anti-US campaign</div><div class="field-value">Latin American populations, Global South, anti-interventionist constituencies worldwide, international organizations (UN, OAS)</div></div>
+<div class="field"><div class="field-label">Audience vulnerability</div><div class="field-value">Pro-US campaign exploits American fears about drug trafficking and border security — emotionally resonant post-fentanyl crisis. Anti-US campaign exploits Latin American historical memory of US interventionism — emotionally resonant given Guatemala, Chile, Panama precedents.</div></div>
+</div>
+
+<!-- TAB: DETECTION -->
+<div class="tab-content" id="tab-v-detection">
+<div class="section-title red">Detection evidence</div>
+
+<div class="field"><div class="field-label">Source origin — Pro-US campaign</div>
+<div class="field-value">Cyabra identified 485 fake profiles generating 554 posts/comments designed to prepare public opinion for military intervention. Profiles amplified narratives portraying Maduro as a criminal ruler, echoing Trump administration rhetoric. Network operated with subtle coordination — similar content with varied phrasing, overlapping posting times, no visible connections between profiles.</div>
+<div class="field-evidence">Source: Cyabra threat analysis, January 2026. Confidence: Confirmed — platform-level bot detection.</div>
+</div>
+
+<div class="field"><div class="field-label">Source origin — Anti-US campaign</div>
+<div class="field-value">Within 6 hours of the operation, a larger but less sophisticated fake campaign reversed the narrative. A Venezuela-based network of 66 fake profiles generated 190,000 views through 112 posts. The broader anti-US network achieved 641 million total views and 223,864 engagements in a single day.</div>
+<div class="field-evidence">Source: Cyabra threat analysis. Confidence: Confirmed — platform-level bot detection.</div>
+</div>
+
+<div class="field"><div class="field-label">False confirmation detected</div>
+<div class="field-value" style="color:var(--red)">YES — The "Cartel of the Suns" was presented across US government statements, indictments, and media coverage as an established criminal organization led by Maduro. Multiple outlets reported this as fact. However, the revised January 2026 indictment quietly ABANDONED the claim that it was a real organization, redefining it as a loose "patronage system." The New York Times reported this appeared to concede the point made by academic experts. Multiple outlets had independently "confirmed" the cartel's existence — but all were sourcing from the same US DOJ indictment. Single-source dependency presented as independent confirmation.</div>
+</div>
+
+<div class="field"><div class="field-label">Vocabulary shift detected</div>
+<div class="field-value">
+<strong>Phase 1 (2020):</strong> "drug trafficking" / "narcotics conspiracy" (criminal framing)<br>
+<strong>Phase 2 (2025):</strong> "narco-terrorism" / "Foreign Terrorist Organization" (security framing) — Tren de Aragua, Sinaloa Cartel designated as FTOs only in Feb 2025<br>
+<strong>Phase 3 (Jan 2026):</strong> "military operation" / "large-scale strike" (military framing)<br>
+<strong>Phase 4 (post-capture):</strong> "oil reserves" / "theft of US oil interests" / "expropriation" (economic framing)<br>
+<span style="color:var(--amber)">The vocabulary shifted FOUR TIMES in 6 years. Each shift escalated the justification for action. The final shift to oil — happening AFTER the capture — reveals an objective that was not part of the original stated justification.</span>
+</div>
+</div>
+
+<div class="field"><div class="field-label">Acceleration anomaly</div>
+<div class="field-value">The FTO (Foreign Terrorist Organization) designation of Cartel de los Soles came in November 2025 — just weeks before the January 2026 military operation. The reward increase to $50 million came in August 2025. The timeline suggests designations were timed to create legal and narrative infrastructure for a military action already in planning. The CIA had been tracking Maduro's movements for months and Delta Force had built a mockup of his compound.</div>
+</div>
+
+<div class="field"><div class="field-label">Absence detection</div>
+<div class="field-value">Largely absent from US mainstream coverage in the pre-operation period: Venezuela's oil reserves as a US interest, the November 2025 secret talks between Trump administration and Maduro's government about oil, Mar&iacute;a Corina Machado's Miami meeting promising to open Venezuela's oil/gas reserves to business, the DOJ's quiet abandonment of the "Cartel of the Suns" as an organization, and academic experts (US Naval Academy, Flinders University) disputing the narcoterrorism framing.</div>
+</div>
+
+<div class="field"><div class="field-label">Cross-channel convergence</div>
+<div class="field-value">The narcoterrorism narrative appeared simultaneously across DOJ indictments (legal channel), State Department designations (diplomatic channel), Trump administration public statements (political channel), coordinated social media campaigns (digital channel), and mainstream media coverage (media channel) — all within the compressed August-January 2025-2026 timeframe. This level of cross-channel synchronization, combined with the pre-positioned fake profile network, indicates structured narrative infrastructure built to support a predetermined military timeline.</div>
+</div>
+
+<div class="field"><div class="field-label">Scraper signals (what automated monitoring would catch)</div>
+<div class="field-value muted">Google Trends: spike in "Venezuela drug trafficking" searches preceded by media coverage, not public curiosity — media-driven, not organic. FARA: no relevant foreign agent registrations detected for pro-US narrative. Wikipedia: Venezuela-related pages showed edit bursts in December 2025-January 2026. Lobbying: oil industry lobbying spend on Venezuela-related policy increased in Q4 2025.</div>
+</div>
+</div>
+
+<!-- TAB: NARRATIVE TIMELINE -->
+<div class="tab-content" id="tab-v-timeline">
+<div class="section-title red">Narrative evolution — the Bernays template in real time</div>
+
+<div class="timeline">
+<div class="tl-entry origin">
+<div class="tl-date">March 2020</div>
+<div class="tl-narrative">"Maduro and Venezuelan officials indicted on drug trafficking charges"</div>
+<div class="tl-meta">Framing: Criminal — a law enforcement matter. DOJ indicts Maduro and 14 officials. $15M reward offered.</div>
+<div class="tl-technique">Origin point</div>
+<div class="tl-technique">Framing</div>
+<div class="tl-amplifiers">Sources: <span>DOJ press conference, major wire services, bipartisan congressional support</span></div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">2024</div>
+<div class="tl-narrative">"Maduro steals another election — his regime is illegitimate and criminal"</div>
+<div class="tl-shift">&#8595; Shift: Criminal charges → Regime illegitimacy</div>
+<div class="tl-meta">Disputed July 2024 election provides new ammunition. US and many nations refuse to recognize results. The narrative combines criminality with illegitimacy — Maduro is now both a drug lord AND an illegitimate ruler. This dual framing makes intervention feel both legally AND morally justified.</div>
+<div class="tl-technique">Anchoring</div>
+<div class="tl-technique">Dual framing</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">January-August 2025</div>
+<div class="tl-narrative">"Maduro leads a narco-terrorist organization that threatens US national security"</div>
+<div class="tl-shift">&#8595; Shift: Criminal → Narco-TERRORIST (security framing)</div>
+<div class="tl-meta">Critical escalation. Reward increased to $25M then $50M. Tren de Aragua, Sinaloa Cartel designated as Foreign Terrorist Organizations in Feb 2025 — retroactively enabling narco-TERRORISM charges for prior alleged conduct. Treasury designates Cartel de los Soles as Specially Designated Global Terrorist in July. State Department designates them as FTO in November. The language shifts from crime to terrorism to national security — identical to the Bernays Guatemala shift from business to ideology to security.</div>
+<div class="tl-technique">Escalation</div>
+<div class="tl-technique">Vocabulary shift</div>
+<div class="tl-technique">Legal infrastructure building</div>
+<div class="tl-amplifiers">Amplified by: <span>Multiple Latin American governments echo US designations (Argentina, Ecuador, Peru, Paraguay, Dominican Republic). Congressional support is bipartisan. Media adopts "narco-terrorist" vocabulary without questioning the timing of designations.</span></div>
+<div class="tl-meta" style="margin-top:8px;color:var(--amber)">NOTE: The FTO designations in 2025 were RETROACTIVELY applied to prior alleged conduct. Legal experts have flagged this timing as potentially challengeable. The designations were NOT based on new evidence of terrorism — they reclassified existing allegations using new legal labels.</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">November-December 2025</div>
+<div class="tl-narrative">"Military action against Venezuela is necessary and imminent"</div>
+<div class="tl-shift">&#8595; Shift: Security threat → Mandate for military action</div>
+<div class="tl-meta">Secret CIA tracking of Maduro. Delta Force builds compound mockup. Trinidad &amp; Tobago signs military access agreement. Southern Command conducts Caribbean strikes against "drug trafficking vessels." Narrative infrastructure pre-positioned: 485 fake profiles begin building pro-intervention sentiment WEEKS before the operation.</div>
+<div class="tl-technique">Pre-positioning</div>
+<div class="tl-technique">Manufactured consensus</div>
+<div class="tl-amplifiers">Amplified by: <span>Coordinated fake profile network (Cyabra-detected), mainstream media coverage of escalating military posture, administration public statements</span></div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry">
+<div class="tl-date">January 3, 2026</div>
+<div class="tl-narrative">"The US has struck Venezuela and captured Maduro — a narco-terrorist brought to justice"</div>
+<div class="tl-shift">&#8595; Action: Military operation executed</div>
+<div class="tl-meta">Operation executed. Maduro captured. Initial framing: law enforcement action against a narco-terrorist. Pro-US fake network amplifies justification narrative. Within 6 HOURS, anti-US counter-network reverses narrative to "illegal imperialist kidnapping." Both campaigns are inauthentic. Both achieve massive reach.</div>
+<div class="tl-technique">Information precedes action</div>
+<div class="tl-technique">Counter-narrative suppression (attempted)</div>
+<div class="tl-amplifiers">641 million views from inauthentic content across both campaigns</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="tl-entry current">
+<div class="tl-date">January-April 2026</div>
+<div class="tl-narrative">"Venezuela's oil reserves must be managed — US interests were stolen through nationalization"</div>
+<div class="tl-shift">&#8595; Shift: Narcoterrorism → Oil interests (POST-FACTO justification change)</div>
+<div class="tl-meta" style="color:var(--red)">CRITICAL FINDING: The stated justification shifted AFTER the capture. Courthouse News reported narcoterrorism references dropped from official language while oil references increased. Revised indictment abandoned the "Cartel of the Suns" as an organization. Trump framed Venezuela's nationalization of oil as "theft of US interests." Mar&iacute;a Corina Machado had promised to open Venezuela's oil reserves at a Miami business meeting attended by Trump in November 2025.</div>
+<div class="tl-technique">Post-facto justification shift</div>
+<div class="tl-technique">Bernays template — objective reveal</div>
+<div class="tl-amplifiers">This shift is where the operation's architecture becomes visible. <span>The narcoterrorism narrative served its purpose (enabling military action) and was discarded once the action was complete. The oil narrative reveals the underlying economic interest — just as Bernays' anti-communism narrative masked UFC's banana interests.</span></div>
+</div>
+</div>
+</div>
+
+<!-- TAB: OPERATION ARCHITECTURE -->
+<div class="tab-content" id="tab-v-architecture">
+<div class="section-title amber">Operation architecture — dual campaign</div>
+
+<div style="margin-bottom:16px;padding:12px 16px;background:var(--purple-bg);border:1px solid rgba(168,85,247,.2);border-radius:8px">
+<div class="field-label" style="color:var(--purple)">Mirror operation detected</div>
+<p style="font-size:13px;color:var(--tx2)">This is NOT a single psyop. It's two competing operations targeting different audiences simultaneously. Both use fake profiles. Both manufacture consensus. Both exploit the same event for opposing purposes. The Cyabra analysis confirms both pro-US and anti-US campaigns are coordinated and inauthentic. The question for Vantage is not "which side is right" — it's "who benefits from EACH narrative, and what's being hidden by BOTH."</p>
+</div>
+
+<div class="arch-grid">
+<div class="arch-item"><div class="arch-label">Seeding — Pro-US</div><p>Fake profiles launched weeks before operation. Echoed Trump administration rhetoric about Maduro as criminal/narco-terrorist. Content designed to appear organic — varied phrasing, no visible connections between profiles. Pre-positioned narrative so that when the strike happened, the "justified action" framing was already established.</p></div>
+<div class="arch-item"><div class="arch-label">Seeding — Anti-US</div><p>Activated within hours of the strike. Larger network, less sophisticated. Weaponized hashtags (#AmericaLatinaLibre — 69% fake profiles). Used emotional sovereignty framing and "kidnapping" language. Speed over subtlety.</p></div>
+<div class="arch-item"><div class="arch-label">Laundering chain — Pro-US</div><p>DOJ indictments (2020) → State Dept designations (2025) → Trump admin public statements → mainstream media adoption of "narco-terrorist" framing → congressional support → fake network amplification → public "consensus." Each step adds legitimacy. The fake network was the final amplification layer on top of institutional laundering.</p></div>
+<div class="arch-item"><div class="arch-label">Suppression — Pro-US</div><p>Academic experts who disputed the "Cartel of the Suns" framing received minimal mainstream coverage. Oil interests were not mentioned in pre-operation reporting. The DOJ's own quiet abandonment of the cartel claim in the revised indictment was underreported.</p></div>
+<div class="arch-item"><div class="arch-label">Technology used</div><p>Coordinated fake social media profiles (both sides), hashtag manipulation to trigger trending algorithms, possible AI-generated content. Pro-US campaign was more sophisticated (subtle coordination). Anti-US campaign was cruder but faster and larger scale.</p></div>
+<div class="arch-item"><div class="arch-label">Exit cost analysis</div><p>Moderate on both sides. For Americans who supported the operation: admitting it was about oil, not narcoterrorism, means admitting you were manipulated — similar to Iraq WMD realization. For Latin Americans who oppose it: the anti-US framing requires ignoring Maduro's genuine authoritarianism and drug corruption.</p></div>
+</div>
+
+<div class="section-title amber" style="margin-top:20px">FEAR model assessment — Pro-US campaign</div>
+<div class="framework-grid">
+<div class="fw-item"><div class="fw-letter">F</div><div class="fw-label">Focus</div><div class="fw-desc">Narrowed attention to narcoterrorism framing. Excluded oil interests, sovereignty law, diplomatic alternatives, and the disputed nature of the "cartel" claim.</div></div>
+<div class="fw-item"><div class="fw-letter">E</div><div class="fw-label">Emotion</div><div class="fw-desc">Fear (drug trafficking threatening US borders), anger (Maduro "stole" an election), disgust (association with violent gangs like Tren de Aragua). Post-fentanyl crisis, "narco-terrorist" triggers visceral American fear response.</div></div>
+<div class="fw-item"><div class="fw-letter">A</div><div class="fw-label">Agitation</div><div class="fw-desc">Sustained escalation over 5 years: indictment → reward increase → terrorist designation → reward doubling → military strikes → capture. Each step raised the perceived urgency.</div></div>
+<div class="fw-item"><div class="fw-letter">R</div><div class="fw-label">Repetition</div><div class="fw-desc">"Narco-terrorist" repeated across DOJ, State Dept, Pentagon, Trump admin, congressional statements, and media. The repetition normalized military intervention language against a sovereign nation.</div></div>
+</div>
+</div>
+
+<!-- TAB: AMPLIFIER CHAIN -->
+<div class="tab-content" id="tab-v-chain">
+<div class="section-title red">Amplifier chain — Pro-US narrative</div>
+
+<div class="chain">
+<div class="chain-node">
+<div class="chain-pos operator">1</div>
+<div class="chain-body">
+<div class="chain-entity">Trump Administration / DOJ / State Dept <span class="chain-type">Operator (state)</span></div>
+<div class="chain-role">Originated the legal framework (indictments, FTO designations, reward increases) and the political framing. The institutional narrative infrastructure was built through official government channels.</div>
+</div>
+<div class="chain-awareness" style="background:var(--red-bg);color:var(--red)">Knowing</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos knowing">2</div>
+<div class="chain-body">
+<div class="chain-entity">Coordinated fake profile network (485 profiles) <span class="chain-type">Digital amplifier</span></div>
+<div class="chain-role">Pre-positioned weeks before the operation. Echoed administration rhetoric. Designed to appear organic. Created the appearance of grassroots public support for intervention.</div>
+<div class="chain-funding">Attribution unknown — Cyabra confirmed coordination but did not attribute to a specific operator. Timing (weeks before a classified military operation) suggests connection to actors with foreknowledge.</div>
+</div>
+<div class="chain-awareness" style="background:var(--red-bg);color:var(--red)">Knowing</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">3</div>
+<div class="chain-body">
+<div class="chain-entity">Mainstream US media <span class="chain-type">Media amplifier</span></div>
+<div class="chain-role">Adopted "narco-terrorist" framing from DOJ/State Dept without independently verifying the "Cartel of the Suns" organizational claim. Reported the narrative as established fact. Minimal coverage of academic experts disputing the framing.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Mostly unwitting</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">4</div>
+<div class="chain-body">
+<div class="chain-entity">Latin American allied governments <span class="chain-type">Political amplifiers</span></div>
+<div class="chain-role">Argentina, Ecuador, Peru, Paraguay, Dominican Republic echoed US terrorist designations. Provided the appearance of international consensus. Some may have been responding to US diplomatic pressure rather than independent assessment.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Mixed</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">5</div>
+<div class="chain-body">
+<div class="chain-entity">Venezuelan diaspora <span class="chain-type">Community amplifiers</span></div>
+<div class="chain-role">Genuine opposition to Maduro's authoritarian government. Celebrated capture. Provided authentic emotional support for the narrative. Their real grievances against Maduro were weaponized by the operation as organic validation.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Unwitting</div>
+</div>
+
+<div class="chain-connector"></div>
+
+<div class="chain-node">
+<div class="chain-pos unwitting">6</div>
+<div class="chain-body">
+<div class="chain-entity">US general public <span class="chain-type">Target audience</span></div>
+<div class="chain-role">Received the narcoterrorism framing from government, media, social media, and diaspora voices simultaneously. Most accepted the operation as justified law enforcement. The oil dimension was invisible until after the capture.</div>
+</div>
+<div class="chain-awareness" style="background:var(--blue-bg);color:var(--blue)">Unwitting</div>
+</div>
+</div>
+
+<div class="field" style="margin-top:16px"><div class="field-label">Amplifier penetration depth</div><div class="field-value">Maximum — narrative penetrated from social media (fake profiles) through mainstream media (major outlets) through institutional channels (DOJ, State Dept, Pentagon) through international diplomacy (allied government designations) to military action. Every layer of the information ecosystem was engaged.</div></div>
+</div>
+
+<!-- TAB: TECHNIQUES -->
+<div class="tab-content" id="tab-v-techniques">
+<div class="section-title purple">Techniques detected — 6 methods identified</div>
+<p style="font-size:13px;color:var(--tx2);margin-bottom:16px">The techniques follow the Bernays escalation pattern — each builds on the previous one to enable the next level of action. The sequence (criminal framing → terrorist designation → security threat → military action → reveal of economic interest) is a recognized playbook.</p>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Post-Facto Justification Shift</div>
+<div class="technique-badge">Critical finding</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>The stated justification for the military operation was narcoterrorism. After the capture, the justification shifted to oil interests. The revised indictment quietly abandoned the organizational claim about Cartel of the Suns. This pattern — using one justification to enable action, then revealing the real objective afterward — is the clearest psyop indicator in this campaign.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When the justification for a major action changes AFTER the action is taken, ask: was the original justification the real reason, or was it the narrative needed to enable the action? If the stated reason is abandoned or downgraded after the objective is achieved, the real objective was something else.</p></div>
+</div>
+</div>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Legal Infrastructure Building</div>
+<div class="technique-badge">Escalation mechanism</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>The FTO designations in February and November 2025 were not based on new terrorist acts — they reclassified existing drug trafficking allegations under terrorism law. These designations enabled narco-TERRORISM charges (heavier legal weight than drug trafficking) and created the legal framework for military action under counter-terrorism authorities rather than requiring congressional authorization for war. The legal infrastructure was built to enable a specific military outcome.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When a government rapidly reclassifies an existing threat under new legal categories — especially just before taking action — ask: did the threat actually change, or did the legal label change to enable an action that wasn't previously authorized? The timing of the reclassification tells you whether it's based on new intelligence or new intentions.</p></div>
+</div>
+</div>
+
+<div class="technique-card">
+<div class="technique-header" onclick="toggleTechnique(this)">
+<div class="technique-name">Manufactured Consensus (Dual)</div>
+<div class="technique-badge">Both sides</div>
+</div>
+<div class="technique-body">
+<div class="technique-section"><div class="technique-section-label">In this campaign</div><p>BOTH campaigns used manufactured consensus. Pro-US: 485 fake profiles creating the appearance of grassroots support. Anti-US: hashtag networks (#AmericaLatinaLibre at 69% fake) creating the appearance of grassroots opposition. Neither side's "public opinion" was organic. Both manufactured the appearance of mass sentiment that didn't exist at that scale.</p></div>
+<div class="technique-spot"><div class="technique-section-label">How to spot it in the wild</div><p>When a hashtag or narrative seems to have massive instant support, check: how fast did it grow? Organic movements build over days or weeks. Manufactured movements spike instantly. If 69% of profiles using a hashtag are fake (as Cyabra found), the "public opinion" it represents is manufactured.</p></div>
+</div>
+</div>
+</div>
+
+<!-- TAB: RED / BLUE TEAM -->
+<div class="tab-content" id="tab-v-redblue">
+<div class="section-title red">Red Team — why this might NOT be a psyop</div>
+
+<div class="team-finding red">
+<div class="plaus moderate">Moderate plausibility</div>
+<p><strong>"Maduro really IS connected to drug trafficking."</strong> Two insiders have pleaded guilty — Hugo Carvajal (former military intelligence chief, guilty June 2025) and Cl&iacute;ver Alcal&aacute; Cordones (former general, guilty June 2023). Their testimony directly implicates Maduro. There is real evidence of drug trafficking corruption within the Venezuelan government. The narcoterrorism framing may be an overreach, but the underlying criminal allegations have evidentiary support.</p>
+</div>
+
+<div class="team-finding red">
+<div class="plaus moderate">Moderate plausibility</div>
+<p><strong>"The fake profile campaigns were independent actors, not government operations."</strong> Cyabra confirmed the profiles were coordinated and inauthentic, but did NOT attribute the pro-US network to the US government specifically. It's possible that political operatives, private PR firms, or ideologically motivated groups ran the pro-US campaign independently. The timing (weeks before a classified operation) is suspicious but not proof of government direction.</p>
+</div>
+
+<div class="team-finding red">
+<div class="plaus low">Low plausibility</div>
+<p><strong>"The oil shift was natural, not a justification change."</strong> Once Maduro was captured and the immediate narcoterrorism narrative served its purpose, it's natural for policy to expand to other interests including oil. Counter-argument: if oil was always part of the objective, it should have been stated from the beginning. The fact that it appeared ONLY after the action was complete, while the narcoterrorism framing was simultaneously downgraded, follows the exact Bernays pattern of revealing the real interest after the action is secured.</p>
+</div>
+
+<div style="background:var(--bg3);border-radius:8px;padding:14px 16px;margin:16px 0">
+<div class="field-label">Strongest counter-argument</div>
+<p style="font-size:13px;color:var(--tx2);margin-top:4px;line-height:1.6">The strongest counter-argument is that Maduro's drug trafficking connections are real (supported by guilty pleas from insiders), his government is genuinely authoritarian (confirmed by international observers), and the military operation — while legally controversial — addressed a real criminal enterprise. The Red Team finds that the UNDERLYING allegations have more evidentiary support than the Guatemala case (where the communist threat was largely fabricated). However, the Red Team also notes that the NARRATIVE ARCHITECTURE around these real allegations follows the psyop template exactly — legal infrastructure building, vocabulary escalation, narrative pre-positioning, post-facto justification shift. Having a real criminal kernel makes the psyop MORE effective, not less. The best psyops are built on a grain of truth.</p>
+</div>
+
+<div class="field" style="margin-top:16px"><div class="field-label">False positive risk</div><div class="field-value" style="color:var(--amber)">MODERATE — The underlying criminal allegations have genuine evidentiary support, which complicates the psyop assessment. However, the narrative architecture, timing patterns, fake network pre-positioning, vocabulary escalation, and post-facto justification shift are all confirmed psyop indicators. Assessment: the criminal allegations may be substantially true AND the narrative campaign around them is a coordinated influence operation. Both can be true simultaneously. That's what makes this case difficult — and important.</div></div>
+
+<div class="section-title blue" style="margin-top:24px">Blue Team — what we might be missing</div>
+
+<div class="team-finding blue">
+<p><strong>The oil connection runs deeper than reported.</strong> In November 2025, Venezuelan opposition leader Mar&iacute;a Corina Machado promised to open Venezuela's oil and gas reserves during a business meeting in Miami attended by Trump. The Trump administration was simultaneously in secret talks with Maduro's government about oil. Venezuela has the largest proven oil reserves in the world. The Blue Team suspects the entire narrative trajectory from 2020 to 2026 was oriented toward accessing these reserves, with narcoterrorism as the enabling narrative rather than the driving objective.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>Who ran the pro-US fake network?</strong> Cyabra detected 485 coordinated fake profiles that launched WEEKS before a classified military operation. Someone with foreknowledge of the operation's timeline built this network. The universe of actors with that foreknowledge is small: US government agencies, defense/intelligence contractors, or close political allies. The Blue Team notes this is the most operationally significant unanswered question in the entire campaign.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>The anti-US campaign may serve US interests too.</strong> Counter-intuitive but important: the existence of a clearly fake anti-US campaign HELPS the pro-US narrative by making ALL opposition look manufactured. If legitimate sovereignty concerns are drowned in a sea of obvious bots, real critics are delegitimized by association. Whether this is intentional or coincidental, the effect is the same — the anti-US campaign's crudeness actually serves the pro-US narrative.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>Bernays template replication is the meta-finding.</strong> This is not an isolated case. The Blue Team identifies this as the latest deployment of a 70-year-old playbook: Guatemala (1954), Iran (1953), Chile (1973), Panama (1989), Iraq (2003), Libya (2011), and now Venezuela (2026). Each follows the same sequence: reframe a local situation as a threat, escalate through official designations, execute military action, reveal economic interests afterward. The TEMPLATE is the story — not any single deployment of it.</p>
+</div>
+
+<div class="team-finding blue">
+<p><strong>Distraction check — what's happening while attention is on Venezuela?</strong> The Venezuela operation dominated news cycles in early January 2026. What policy actions, executive orders, appointments, or trade decisions occurred during this media blackout period? The Blue Team flags this as uninvestigated.</p>
+</div>
+</div>
+
+<!-- TAB: PROJECTION -->
+<div class="tab-content" id="tab-v-projection">
+<div class="section-title coral">Predictive projection</div>
+
+<div class="field"><div class="field-label">Current phase</div><div class="field-value">Post-action justification shift. The military objective has been achieved. The narrative is now transitioning from narcoterrorism to oil/economic interests. The Bernays template has completed its action phase — the next phase is normalization.</div></div>
+
+<div class="projection-phase">
+<div class="phase-pill past">Criminal framing (2020)</div>
+<div class="phase-pill past">Regime illegitimacy (2024)</div>
+<div class="phase-pill past">Narco-terrorist (2025)</div>
+<div class="phase-pill past">Military action (Jan 2026)</div>
+<div class="phase-pill current">Oil interests revealed</div>
+<div class="phase-pill projected">Normalization / "transition"</div>
+<div class="phase-pill projected">Economic extraction</div>
+</div>
+
+<div class="field"><div class="field-label">Next likely phase</div><div class="field-value">Normalization — expect narratives framing US presence in Venezuela as "stabilization" and "democratic transition." The narcoterrorism framing will fade from official language. Oil concession agreements will be presented as "economic development." The original justification will not be revisited.</div></div>
+
+<div class="field"><div class="field-label">Indicators to watch</div>
+<div class="field-value">1. Oil concession announcements to US companies in Venezuela — timing and terms<br>
+2. Whether the narcoterrorism narrative continues or fades — if it served its purpose, expect declining usage<br>
+3. Whether the Maduro trial produces conviction or becomes a bargaining chip<br>
+4. Whether the Bernays template is deployed next against another target — Cuba, Nicaragua, and Bolivia are potential candidates based on similar narrative groundwork</div>
+</div>
+
+<div class="field"><div class="field-label">Confidence</div><div class="field-value" style="color:var(--amber)">Moderate — the pattern match to the Bernays template is strong but this is a developing situation with genuinely contested ground truth. The Red Team's point about real criminal evidence is valid. The projection assumes the template is the primary driver, which may overweight the psyop lens and underweight legitimate law enforcement motives.</div></div>
+</div>
+
+<!-- TAB: EVIDENCE CHAIN -->
+<div class="tab-content" id="tab-v-evidence">
+<div class="section-title">Evidence chain</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-01</div>
+<div class="ev-body">
+<div class="ev-claim">Cyabra detected 485 coordinated fake profiles launching pro-US narrative weeks before the operation</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Cyabra threat analysis, January 2026 <span class="ev-type">Platform analysis</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-02</div>
+<div class="ev-body">
+<div class="ev-claim">Anti-US counter-network achieved 641 million views with 69% fake profiles on #AmericaLatinaLibre</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Cyabra threat analysis <span class="ev-type">Platform analysis</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-03</div>
+<div class="ev-body">
+<div class="ev-claim">Revised January 2026 indictment abandoned the claim that Cartel of the Suns is a real organization</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — The New York Times reporting, SDNY court filings <span class="ev-type">Legal record</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-04</div>
+<div class="ev-body">
+<div class="ev-claim">Post-capture official narrative shifted from narcoterrorism to oil interests</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Courthouse News Service, January 8, 2026 <span class="ev-type">News analysis</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-05</div>
+<div class="ev-body">
+<div class="ev-claim">Mar&iacute;a Corina Machado promised to open Venezuela's oil/gas reserves at Miami meeting with Trump, Nov 2025</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — Wikipedia / multiple sources citing meeting <span class="ev-type">News reporting</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-06</div>
+<div class="ev-body">
+<div class="ev-claim">Hugo Carvajal (former military intelligence chief) pleaded guilty to narco-terrorism charges, June 2025</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — SDNY court records <span class="ev-type">Legal record</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-07</div>
+<div class="ev-body">
+<div class="ev-claim">FTO designations for Tren de Aragua and Sinaloa Cartel created in Feb 2025, months before military action</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — State Department records, JURIST legal analysis <span class="ev-type">Government record</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-08</div>
+<div class="ev-body">
+<div class="ev-claim">US Naval Academy scholar disputed the "narcoterrorism" framing of the Cartel of the Suns</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — John Polga-Hecimovich, US Naval Academy, cited in Wikipedia <span class="ev-type">Academic</span></div>
+</div>
+</div>
+
+<div class="evidence-item">
+<div class="ev-id">EV-09</div>
+<div class="ev-body">
+<div class="ev-claim">OHCHR High Commissioner stated a narrative was "emerging that seeks to justify the US military intervention"</div>
+<div class="ev-source"><span class="ev-verified">&#10003; Verified</span> — OHCHR op-ed, The Guardian, January 5, 2026 <span class="ev-type">International body</span></div>
+</div>
+</div>
+</div>
+
+<!-- CONFIDENCE PANEL -->
+<div style="padding:0 24px 20px">
+<div class="confidence-panel probable">
+<div class="conf-header">
+<div class="conf-badge" style="color:var(--amber)">&#9679; Probable</div>
+<span style="font-size:12px;color:var(--tx2)">— 5 of 7 detection layers corroborate, 2 inconclusive</span>
+</div>
+<p style="font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:8px">Multiple detection layers identify coordinated influence operation indicators on BOTH sides. Fake network pre-positioning confirmed by Cyabra. Narrative follows documented Bernays template. Vocabulary escalation follows known psyop patterns. Post-facto justification shift detected. However, underlying criminal allegations have genuine evidentiary support (insider guilty pleas), which means the narrative may be built on a real foundation — making the operation more effective but also harder to definitively classify. Assessment: PROBABLE coordinated influence operation built on top of genuinely contested ground truth.</p>
+<div class="conf-layers">
+<span class="conf-layer corr">Bot networks ✓</span>
+<span class="conf-layer corr">Vocabulary shift ✓</span>
+<span class="conf-layer corr">Cross-channel ✓</span>
+<span class="conf-layer corr">Acceleration ✓</span>
+<span class="conf-layer corr">False confirmation ✓</span>
+<span class="conf-layer incon">Source origin ?</span>
+<span class="conf-layer incon">Ownership ?</span>
+</div>
+<p style="font-size:12px;color:var(--tx3);margin-top:8px"><strong>Blind spots:</strong> Pro-US fake network not attributed to a specific operator. Full funding trail for narrative infrastructure not traceable. Oil company lobbying data for Q4 2025 not yet fully disclosed. Cannot determine whether the post-facto oil shift was planned from the beginning or opportunistic.</p>
+</div>
+</div>
+
+</div><!-- end confidence panel padding -->
+</div><!-- end campaign-body 2 -->
+</div><!-- end campaign 2 -->
+
+</div><!-- end campaign-list -->
+
+<div class="no-results" id="no-results" style="display:none">No campaigns match your filters</div>
+
+<script>
+// Collapse / Expand
+function toggleCampaign(header) {
+  const card = header.closest('.campaign');
+  card.classList.toggle('expanded');
+}
+
+// Tabs — scoped to card
+function showTab(el, tabId) {
+  const card = el.closest('.campaign');
+  card.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+function showTab2(el, tabId) { showTab(el, tabId); }
+
+// Technique expand
+function toggleTechnique(header) {
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// Filter state
+let filters = { status: 'all', type: 'all', conf: 'all' };
+
+function toggleFilter(btn, category, value) {
+  filters[category] = value;
+  // Update button active states in this row
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn';
+  });
+  btn.classList.add('filter-btn');
+  if (value !== 'all') {
+    if (category === 'conf' && value === 'confirmed') btn.classList.add('active-green');
+    else if (category === 'conf' && value === 'probable') btn.classList.add('active-amber');
+    else if (category === 'conf' && value === 'suspected') btn.classList.add('active-purple');
+    else btn.classList.add('active');
+  }
+  filterCampaigns();
+}
+
+function filterCampaigns() {
+  const query = document.querySelector('.search-bar').value.toLowerCase();
+  const cards = document.querySelectorAll('#campaign-list .campaign');
+  let visible = 0;
+
+  cards.forEach(card => {
+    const matchStatus = filters.status === 'all' || card.dataset.status === filters.status;
+    const matchType = filters.type === 'all' || card.dataset.type === filters.type;
+    const matchConf = filters.conf === 'all' || card.dataset.conf === filters.conf;
+    const searchText = (card.dataset.search || '') + ' ' + card.querySelector('.campaign-name').textContent.toLowerCase();
+    const matchSearch = !query || searchText.includes(query);
+
+    if (matchStatus && matchType && matchConf && matchSearch) {
+      card.style.display = '';
+      visible++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  document.getElementById('no-results').style.display = visible === 0 ? '' : 'none';
+}
+
+function sortCampaigns(btn, sortBy) {
+  // Update sort button states
+  btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.className = 'filter-btn');
+  btn.classList.add('filter-btn', 'active');
+
+  const list = document.getElementById('campaign-list');
+  const cards = Array.from(list.querySelectorAll('.campaign'));
+
+  cards.sort((a, b) => {
+    if (sortBy === 'saci') return parseFloat(b.dataset.saci) - parseFloat(a.dataset.saci);
+    if (sortBy === 'legit') return parseFloat(a.dataset.legit) - parseFloat(b.dataset.legit);
+    if (sortBy === 'date') return parseInt(b.dataset.date) - parseInt(a.dataset.date);
+    return 0;
+  });
+
+  cards.forEach(card => list.appendChild(card));
+}
+</script>
+
+</body>
+</html>
