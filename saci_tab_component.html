@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vantage — SACI Tab Component</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0b0d;--bg2:#111318;--bg3:#181b22;--bg4:#1e222b;
+--tx:#e4e4e7;--tx2:#a1a1aa;--tx3:#71717a;
+--bdr:#27272a;--bdr2:#3f3f46;
+--red:#ef4444;--red-bg:rgba(239,68,68,.08);
+--blue:#3b82f6;--blue-bg:rgba(59,130,246,.08);
+--amber:#f59e0b;--amber-bg:rgba(245,158,11,.08);
+--green:#22c55e;--green-bg:rgba(34,197,94,.08);
+--purple:#a855f7;--purple-bg:rgba(168,85,247,.08);
+--teal:#14b8a6;--teal-bg:rgba(20,184,166,.08);
+--cyan:#06b6d4;--cyan-bg:rgba(6,182,212,.08);
+--font:'DM Sans',system-ui,sans-serif;
+--mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.6;padding:20px}
+
+/* DEMO CARD SHELL */
+.demo-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3);margin:24px 0 8px}
+.demo-label:first-child{margin-top:0}
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center}
+.card-title{font-size:14px;font-weight:600}
+.card-subtitle{font-size:11px;color:var(--tx3);margin-top:2px}
+.card-tabs{display:flex;border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none}
+.card-tabs::-webkit-scrollbar{display:none}
+.card-tab{padding:10px 16px;font-size:11px;font-weight:500;color:var(--tx3);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+.card-tab:hover{color:var(--tx2)}
+.card-tab.active{color:var(--tx);border-bottom-color:var(--red)}
+.card-tab-content{display:none;padding:16px 18px}
+.card-tab-content.active{display:block}
+
+/* ============================
+   SACI TAB — REUSABLE COMPONENT
+   ============================ */
+.saci-tab{padding:0}
+
+/* SACI Header Bar */
+.saci-header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--bdr)}
+.saci-combined-num{font-size:24px;font-weight:700}
+.saci-combined-label{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3)}
+.saci-pills{display:flex;gap:3px}
+.saci-pill{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px}
+.saci-activity{display:flex;gap:12px;margin-left:auto}
+.saci-activity-item{text-align:center}
+.saci-activity-val{font-size:13px;font-weight:700}
+.saci-activity-label{font-size:8px;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em}
+.saci-activity-trend{font-size:9px;font-weight:600}
+
+/* SACI Score Bars */
+.saci-scores{padding:12px 18px;border-bottom:1px solid var(--bdr)}
+.saci-score-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.saci-score-row:last-child{margin-bottom:0}
+.saci-letter{font-size:11px;font-weight:700;width:12px}
+.saci-dim{font-size:10px;color:var(--tx3);width:80px}
+.saci-bar-track{flex:1;height:6px;border-radius:3px;background:var(--bg4);overflow:hidden}
+.saci-bar-fill{height:100%;border-radius:3px;transition:width .5s ease-out}
+.saci-num{font-size:11px;font-weight:700;width:20px;text-align:right}
+.saci-reason{font-size:9px;color:var(--tx3);padding-left:100px;margin-top:-2px;margin-bottom:6px;line-height:1.3}
+.saci-def{font-size:9px;color:var(--tx2);padding-left:100px;margin-top:-2px;margin-bottom:2px;line-height:1.3;opacity:.7;font-style:italic}
+
+/* SACI Charts */
+.saci-charts{padding:14px 18px}
+.saci-chart-section{margin-bottom:14px}
+.saci-chart-section:last-child{margin-bottom:0}
+.saci-chart-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:4px}
+.saci-chart-wrap{position:relative;height:80px}
+.saci-chart-wrap canvas{width:100%!important;height:100%!important}
+.saci-chart-x{display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.2);margin-top:2px}
+.saci-chart-legend{display:flex;gap:10px;margin-top:4px}
+.saci-chart-legend-item{display:flex;align-items:center;gap:3px;font-size:9px;color:var(--tx3)}
+.saci-chart-legend-dot{width:8px;height:2px;border-radius:1px}
+.saci-chart-insight{font-size:10px;color:var(--tx2);line-height:1.4;padding:6px 8px;background:var(--red-bg);border-left:2px solid rgba(239,68,68,.3);border-radius:0 4px 4px 0;margin-top:6px}
+
+/* SACI Sources */
+.saci-sources{padding:12px 18px;border-top:1px solid var(--bdr)}
+.saci-sources-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:8px}
+.saci-src-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.saci-src-name{font-size:10px;color:var(--tx2);width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saci-src-bar-bg{flex:1;height:4px;border-radius:2px;background:var(--bg4);overflow:hidden}
+.saci-src-bar{height:100%;border-radius:2px}
+.saci-src-count{font-size:9px;color:var(--tx3);width:28px;text-align:right}
+.saci-src-tag{font-size:7px;font-weight:700;padding:1px 4px;border-radius:2px;letter-spacing:.03em}
+.saci-src-same{background:rgba(239,68,68,.1);color:var(--red)}
+.saci-src-indep{background:rgba(34,197,94,.1);color:var(--green)}
+
+/* SACI Phase */
+.saci-phase{padding:10px 18px;border-top:1px solid var(--bdr)}
+.saci-phase-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:5px}
+.saci-phase-track{display:flex;gap:2px}
+.saci-phase-step{height:5px;border-radius:2px;flex:1}
+.saci-phase-step.done{background:rgba(239,68,68,.45)}
+.saci-phase-step.now{background:var(--red);box-shadow:0 0 5px rgba(239,68,68,.35)}
+.saci-phase-step.later{background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.08)}
+.saci-phase-names{display:flex;gap:2px;margin-top:3px}
+.saci-phase-name{flex:1;font-size:7px;color:var(--tx3);text-align:center;line-height:1.2}
+.saci-phase-name.active{color:var(--red);font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- =====================================
+     CONTEXT 1: PSYOPS CAMPAIGN CARD
+     Full SACI with all charts
+     ===================================== -->
+<div class="demo-label">Psyops campaign card — full SACI tab</div>
+<div class="card">
+<div class="card-header">
+<div><div class="card-title">PSY-002 Venezuela — Dual Narrative Warfare</div><div class="card-subtitle">Probable | Active | Mirror operation</div></div>
+</div>
+<div class="card-tabs">
+<div class="card-tab" onclick="switchTab(this,'psyop-overview')">Overview</div>
+<div class="card-tab" onclick="switchTab(this,'psyop-detection')">Detection</div>
+<div class="card-tab active" onclick="switchTab(this,'psyop-saci')">SACI</div>
+<div class="card-tab" onclick="switchTab(this,'psyop-timeline')">Timeline</div>
+<div class="card-tab" onclick="switchTab(this,'psyop-techniques')">Techniques</div>
+<div class="card-tab" onclick="switchTab(this,'psyop-redblue')">Red / Blue</div>
+</div>
+<div class="card-tab-content" id="tab-psyop-overview"><div style="padding:8px;color:var(--tx3);font-size:12px">Overview tab content...</div></div>
+<div class="card-tab-content" id="tab-psyop-detection"><div style="padding:8px;color:var(--tx3);font-size:12px">Detection tab content...</div></div>
+<div class="card-tab-content active" id="tab-psyop-saci">
+
+<!-- SACI TAB START -->
+<div class="saci-tab">
+
+<!-- Header bar with combined score, pills, and activity stats -->
+<div class="saci-header">
+<div>
+<div class="saci-combined-num" style="color:var(--red)">8.8</div>
+<div class="saci-combined-label">SACI combined</div>
+</div>
+<div class="saci-pills">
+<span class="saci-pill" style="background:var(--red-bg);color:var(--red)">S 9</span>
+<span class="saci-pill" style="background:var(--amber-bg);color:var(--amber)">A 10</span>
+<span class="saci-pill" style="background:var(--purple-bg);color:var(--purple)">C 8</span>
+<span class="saci-pill" style="background:var(--blue-bg);color:var(--blue)">I 8</span>
+</div>
+<div class="saci-activity">
+<div class="saci-activity-item"><div class="saci-activity-val" style="color:var(--red)">1.2K</div><div class="saci-activity-label">Stories</div><div class="saci-activity-trend" style="color:var(--red)">+340/wk</div></div>
+<div class="saci-activity-item"><div class="saci-activity-val">641M</div><div class="saci-activity-label">Inauth views</div><div class="saci-activity-trend" style="color:var(--red)">Confirmed</div></div>
+<div class="saci-activity-item"><div class="saci-activity-val">6yr</div><div class="saci-activity-label">Duration</div><div class="saci-activity-trend" style="color:var(--tx3)">2020-now</div></div>
+</div>
+</div>
+
+<!-- Score bars with reasoning -->
+<div class="saci-scores">
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--red)">S</span><span class="saci-dim">Sentiment</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:90%;background:var(--red)"></div></div><span class="saci-num" style="color:var(--red)">9</span></div>
+<div class="saci-def">How emotionally charged is the campaign? Higher means the content is designed to trigger fear, anger, or outrage rather than inform.</div>
+<div class="saci-reason">Both sides weaponizing fear and outrage — emotional hijacking from all directions</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--amber)">A</span><span class="saci-dim">Audience</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:100%;background:var(--amber)"></div></div><span class="saci-num" style="color:var(--amber)">10</span></div>
+<div class="saci-def">How many people are being reached? Higher means the narrative has penetrated mainstream channels and is reaching mass audiences.</div>
+<div class="saci-reason">641M inauthentic views confirmed — global reach across Americas and international bodies</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--purple)">C</span><span class="saci-dim">Coordination</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:80%;background:var(--purple)"></div></div><span class="saci-num" style="color:var(--purple)">8</span></div>
+<div class="saci-def">How organized is the operation? Higher means evidence of coordinated timing, identical messaging, fake networks, or centralized orchestration.</div>
+<div class="saci-reason">Cyabra confirmed coordinated fake networks on both sides — 485 pro-US, 69% fake on key hashtags</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--blue)">I</span><span class="saci-dim">Impact</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:80%;background:var(--blue)"></div></div><span class="saci-num" style="color:var(--blue)">8</span></div>
+<div class="saci-def">Is it actually changing behavior? Higher means the campaign has produced real-world effects — policy shifts, military action, market moves, or public behavior change.</div>
+<div class="saci-reason">Military operation executed — sovereign leader captured, global narrative reversed in 6 hours</div>
+</div>
+
+<!-- Phase tracker -->
+<div class="saci-phase">
+<div class="saci-phase-label">Narrative phase (Bernays template)</div>
+<div class="saci-phase-track">
+<div class="saci-phase-step done"></div>
+<div class="saci-phase-step done"></div>
+<div class="saci-phase-step done"></div>
+<div class="saci-phase-step done"></div>
+<div class="saci-phase-step now"></div>
+<div class="saci-phase-step later"></div>
+</div>
+<div class="saci-phase-names">
+<div class="saci-phase-name">Criminal</div>
+<div class="saci-phase-name">Illegitimate</div>
+<div class="saci-phase-name">Narco-terror</div>
+<div class="saci-phase-name">Military action</div>
+<div class="saci-phase-name active">Oil revealed</div>
+<div class="saci-phase-name">Normalization</div>
+</div>
+</div>
+
+<!-- Line charts -->
+<div class="saci-charts">
+<div class="saci-chart-section">
+<div class="saci-chart-label">Story coverage + counter-narrative</div>
+<div class="saci-chart-wrap"><canvas id="c-psyop-1"></canvas></div>
+<div class="saci-chart-x"><span>Jan 25</span><span>Jul 25</span><span>Jan 26</span><span>Apr 26</span></div>
+<div class="saci-chart-legend">
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--red)"></div>Pro-intervention</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--blue)"></div>Counter-narrative</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--cyan)"></div>Neutral / factual</div>
+</div>
+</div>
+
+<div class="saci-chart-section">
+<div class="saci-chart-label">Engagement — total vs inauthentic</div>
+<div class="saci-chart-wrap"><canvas id="c-psyop-2"></canvas></div>
+<div class="saci-chart-x"><span>Jan 25</span><span>Jul 25</span><span>Jan 26</span><span>Apr 26</span></div>
+<div class="saci-chart-legend">
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--amber)"></div>Total engagement</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--red);opacity:.5"></div>Inauthentic (est.)</div>
+</div>
+</div>
+
+<div class="saci-chart-section">
+<div class="saci-chart-label">Sentiment toward target</div>
+<div class="saci-chart-wrap"><canvas id="c-psyop-3"></canvas></div>
+<div class="saci-chart-x"><span>Jan 25</span><span>Jul 25</span><span>Jan 26</span><span>Apr 26</span></div>
+<div class="saci-chart-legend">
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--red)"></div>Negative / hostile</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--green)"></div>Positive / sympathetic</div>
+</div>
+</div>
+
+<div class="saci-chart-section">
+<div class="saci-chart-label">Source diversity vs single-source dependency</div>
+<div class="saci-chart-wrap"><canvas id="c-psyop-4"></canvas></div>
+<div class="saci-chart-x"><span>Jan 25</span><span>Jul 25</span><span>Jan 26</span><span>Apr 26</span></div>
+<div class="saci-chart-legend">
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--teal)"></div>Unique sources</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--purple);opacity:.5"></div>Single-source %</div>
+</div>
+<div class="saci-chart-insight">80%+ of outlets citing same DOJ indictment by Q4 2025 — apparent consensus was single-source dependency across 40+ outlets</div>
+</div>
+</div>
+
+<!-- Source convergence bars -->
+<div class="saci-sources">
+<div class="saci-sources-label">Source convergence — independent vs same-source</div>
+<div class="saci-src-row"><span class="saci-src-name">DOJ Indictment</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:100%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">Origin</span></div>
+<div class="saci-src-row"><span class="saci-src-name">Fox News</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:78%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">87</span><span class="saci-src-tag saci-src-same">Same src</span></div>
+<div class="saci-src-row"><span class="saci-src-name">CNN</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:60%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">64</span><span class="saci-src-tag saci-src-same">Same src</span></div>
+<div class="saci-src-row"><span class="saci-src-name">AP / Reuters</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:55%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">58</span><span class="saci-src-tag saci-src-same">Same src</span></div>
+<div class="saci-src-row"><span class="saci-src-name">NPR</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:36%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">38</span><span class="saci-src-tag saci-src-same">Same src</span></div>
+<div class="saci-src-row"><span class="saci-src-name">Courthouse News</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:12%;background:rgba(34,197,94,.4)"></div></div><span class="saci-src-count">12</span><span class="saci-src-tag saci-src-indep">Indep</span></div>
+<div class="saci-src-row"><span class="saci-src-name">OHCHR</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:4%;background:rgba(34,197,94,.4)"></div></div><span class="saci-src-count">4</span><span class="saci-src-tag saci-src-indep">Indep</span></div>
+</div>
+
+</div>
+<!-- SACI TAB END -->
+
+</div>
+<div class="card-tab-content" id="tab-psyop-timeline"><div style="padding:8px;color:var(--tx3);font-size:12px">Timeline tab content...</div></div>
+<div class="card-tab-content" id="tab-psyop-techniques"><div style="padding:8px;color:var(--tx3);font-size:12px">Techniques tab content...</div></div>
+<div class="card-tab-content" id="tab-psyop-redblue"><div style="padding:8px;color:var(--tx3);font-size:12px">Red/Blue tab content...</div></div>
+</div>
+
+<!-- =====================================
+     CONTEXT 2: STORY CARD (All Stories)
+     Compact SACI — scores + one chart + sources
+     ===================================== -->
+<div class="demo-label">Story card — SACI psyops signal tab (compact)</div>
+<div class="card">
+<div class="card-header">
+<div><div class="card-title">Venezuela: Trump Signals Long-Term US Presence</div><div class="card-subtitle">Reuters | Apr 25, 2026</div></div>
+</div>
+<div class="card-tabs">
+<div class="card-tab" onclick="switchTab(this,'story-summary')">Summary</div>
+<div class="card-tab" onclick="switchTab(this,'story-analysis')">Analysis</div>
+<div class="card-tab active" onclick="switchTab(this,'story-saci')">SACI Signal</div>
+<div class="card-tab" onclick="switchTab(this,'story-red')">Red Team</div>
+</div>
+<div class="card-tab-content" id="tab-story-summary"><div style="padding:8px;color:var(--tx3);font-size:12px">Summary content...</div></div>
+<div class="card-tab-content" id="tab-story-analysis"><div style="padding:8px;color:var(--tx3);font-size:12px">Analysis content...</div></div>
+<div class="card-tab-content active" id="tab-story-saci">
+
+<div class="saci-tab">
+<div class="saci-header">
+<div>
+<div class="saci-combined-num" style="color:var(--amber)">6.5</div>
+<div class="saci-combined-label">SACI signal</div>
+</div>
+<div class="saci-pills">
+<span class="saci-pill" style="background:var(--red-bg);color:var(--red)">S 7</span>
+<span class="saci-pill" style="background:var(--amber-bg);color:var(--amber)">A 8</span>
+<span class="saci-pill" style="background:var(--purple-bg);color:var(--purple)">C 5</span>
+<span class="saci-pill" style="background:var(--blue-bg);color:var(--blue)">I 6</span>
+</div>
+<div class="saci-activity">
+<div class="saci-activity-item"><div class="saci-activity-val">47</div><div class="saci-activity-label">Related</div><div class="saci-activity-trend" style="color:var(--amber)">+12/wk</div></div>
+</div>
+</div>
+
+<div class="saci-scores">
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--red)">S</span><span class="saci-dim">Sentiment</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:70%;background:var(--red)"></div></div><span class="saci-num" style="color:var(--red)">7</span></div>
+<div class="saci-def">How emotionally charged is this content? Higher means it's designed to make you react before you think.</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--amber)">A</span><span class="saci-dim">Audience</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:80%;background:var(--amber)"></div></div><span class="saci-num" style="color:var(--amber)">8</span></div>
+<div class="saci-def">How many people is this reaching? Higher means mass distribution across mainstream channels.</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--purple)">C</span><span class="saci-dim">Coordination</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:50%;background:var(--purple)"></div></div><span class="saci-num" style="color:var(--purple)">5</span></div>
+<div class="saci-def">Does this look organized? Higher means signs of coordinated timing, identical messaging, or fake amplification networks.</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--blue)">I</span><span class="saci-dim">Impact</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:60%;background:var(--blue)"></div></div><span class="saci-num" style="color:var(--blue)">6</span></div>
+<div class="saci-def">Is this actually changing anything? Higher means real-world effects — policy shifts, public behavior, or market movements.</div>
+</div>
+
+<div class="saci-charts">
+<div class="saci-chart-section">
+<div class="saci-chart-label">Coverage trend (4 weeks)</div>
+<div class="saci-chart-wrap"><canvas id="c-story-1"></canvas></div>
+<div class="saci-chart-legend">
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--red)"></div>This narrative</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--cyan)"></div>Neutral coverage</div>
+</div>
+</div>
+</div>
+
+<div class="saci-sources">
+<div class="saci-sources-label">This story's source chain</div>
+<div class="saci-src-row"><span class="saci-src-name">State Dept briefing</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:90%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">Origin</span></div>
+<div class="saci-src-row"><span class="saci-src-name">Reuters</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:70%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">1st</span><span class="saci-src-tag saci-src-same">Same src</span></div>
+<div class="saci-src-row"><span class="saci-src-name">BBC</span><div class="saci-src-bar-bg"><div class="saci-src-bar" style="width:50%;background:rgba(239,68,68,.4)"></div></div><span class="saci-src-count">2nd</span><span class="saci-src-tag saci-src-same">Same src</span></div>
+
+<div style="margin-top:8px;padding:6px 8px;background:var(--amber-bg);border-left:2px solid rgba(245,158,11,.3);border-radius:0 4px 4px 0">
+<div style="font-size:9px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Psyops advisory</div>
+<div style="font-size:10px;color:var(--tx2);line-height:1.4">This story's primary source traces to a State Dept briefing connected to Campaign PSY-002. The framing may reflect the campaign's narrative rather than independent reporting. 3 outlets are citing the same source.</div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="card-tab-content" id="tab-story-red"><div style="padding:8px;color:var(--tx3);font-size:12px">Red Team content...</div></div>
+</div>
+
+<!-- =====================================
+     CONTEXT 3: DAILY BRIEF CARD
+     Minimal SACI — header bar only
+     ===================================== -->
+<div class="demo-label">Daily brief card — SACI signal (minimal)</div>
+<div class="card">
+<div class="card-header">
+<div><div class="card-title">Latin America — Daily Brief</div><div class="card-subtitle">Apr 28, 2026</div></div>
+</div>
+<div class="card-tabs">
+<div class="card-tab" onclick="switchTab(this,'brief-summary')">Summary</div>
+<div class="card-tab active" onclick="switchTab(this,'brief-saci')">SACI Signal</div>
+</div>
+<div class="card-tab-content" id="tab-brief-summary"><div style="padding:8px;color:var(--tx3);font-size:12px">Brief summary content...</div></div>
+<div class="card-tab-content active" id="tab-brief-saci">
+
+<div class="saci-tab">
+<div class="saci-header">
+<div>
+<div class="saci-combined-num" style="color:var(--red)">7.5</div>
+<div class="saci-combined-label">Region SACI</div>
+</div>
+<div class="saci-pills">
+<span class="saci-pill" style="background:var(--red-bg);color:var(--red)">S 8</span>
+<span class="saci-pill" style="background:var(--amber-bg);color:var(--amber)">A 9</span>
+<span class="saci-pill" style="background:var(--purple-bg);color:var(--purple)">C 6</span>
+<span class="saci-pill" style="background:var(--blue-bg);color:var(--blue)">I 7</span>
+</div>
+<div class="saci-activity">
+<div class="saci-activity-item"><div class="saci-activity-val" style="color:var(--red)">2</div><div class="saci-activity-label">Active ops</div></div>
+<div class="saci-activity-item"><div class="saci-activity-val">156</div><div class="saci-activity-label">Stories</div><div class="saci-activity-trend" style="color:var(--red)">+45/wk</div></div>
+</div>
+</div>
+
+<div class="saci-scores">
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--red)">S</span><span class="saci-dim">Sentiment</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:80%;background:var(--red)"></div></div><span class="saci-num" style="color:var(--red)">8</span></div>
+<div class="saci-def">How emotionally charged is coverage in this region? Higher means narratives are triggering fear or anger rather than informing.</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--amber)">A</span><span class="saci-dim">Audience</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:90%;background:var(--amber)"></div></div><span class="saci-num" style="color:var(--amber)">9</span></div>
+<div class="saci-def">How many people are being reached by flagged narratives in this region? Higher means mass exposure.</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--purple)">C</span><span class="saci-dim">Coordination</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:60%;background:var(--purple)"></div></div><span class="saci-num" style="color:var(--purple)">6</span></div>
+<div class="saci-def">How organized are the influence operations in this region? Higher means evidence of coordination across outlets or fake networks.</div>
+<div class="saci-score-row"><span class="saci-letter" style="color:var(--blue)">I</span><span class="saci-dim">Impact</span><div class="saci-bar-track"><div class="saci-bar-fill" style="width:70%;background:var(--blue)"></div></div><span class="saci-num" style="color:var(--blue)">7</span></div>
+<div class="saci-def">Are the operations in this region producing real-world effects? Higher means policy, military, or behavioral changes are happening.</div>
+</div>
+
+<div class="saci-charts">
+<div class="saci-chart-section">
+<div class="saci-chart-label">Region narrative activity (8 weeks)</div>
+<div class="saci-chart-wrap"><canvas id="c-brief-1"></canvas></div>
+<div class="saci-chart-legend">
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--red)"></div>Flagged narratives</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--cyan)"></div>Clean coverage</div>
+<div class="saci-chart-legend-item"><div class="saci-chart-legend-dot" style="background:var(--amber)"></div>Engagement</div>
+</div>
+<div class="saci-chart-insight">2 active psyops operations affecting this region — PSY-001 template legacy + PSY-002 active. 45 new stories this week, 62% traced to same-source dependency.</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function switchTab(el, tabId) {
+  const card = el.closest('.card');
+  card.querySelectorAll('.card-tab').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.card-tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+const gridC = 'rgba(255,255,255,.03)';
+function opts(sugMax) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    animation:{duration:700,easing:'easeOutQuart'},
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(17,19,24,.95)',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleFont:{family:'DM Sans',size:10},bodyFont:{family:'DM Sans',size:10},padding:6,cornerRadius:4}},
+    scales:{
+      x:{display:false},
+      y:{display:true,position:'right',grid:{color:gridC,drawBorder:false},ticks:{color:'rgba(255,255,255,.15)',font:{size:8,family:'DM Sans'},maxTicksLimit:3},suggestedMax:sugMax,beginAtZero:true}
+    },
+    elements:{point:{radius:0,hoverRadius:3},line:{tension:.35,borderWidth:1.5}}
+  };
+}
+
+const eventMarkers = [
+  {idx:0,color:'#f59e0b'},{idx:1,color:'#f59e0b'},{idx:6,color:'#f59e0b'},
+  {idx:10,color:'#ef4444'},{idx:11,color:'#ef4444'},{idx:12,color:'#ef4444'},{idx:14,color:'#a855f7'}
+];
+const evtPlugin = {
+  id:'evt',
+  afterDraw(chart){
+    const m=chart.getDatasetMeta(0);if(!m||!m.data)return;
+    const ctx=chart.ctx,yA=chart.scales.y;
+    eventMarkers.forEach(ev=>{
+      if(ev.idx>=m.data.length)return;
+      const x=m.data[ev.idx].x;
+      ctx.save();ctx.beginPath();ctx.setLineDash([2,3]);ctx.strokeStyle=ev.color+'30';ctx.lineWidth=.5;
+      ctx.moveTo(x,yA.top);ctx.lineTo(x,yA.bottom);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(x,yA.top+3,2,0,Math.PI*2);ctx.fillStyle=ev.color;ctx.fill();ctx.restore();
+    });
+  }
+};
+
+const mo = ['J','F','M','A','M','J','J','A','S','O','N','D','J','F','M','A'];
+
+new Chart(document.getElementById('c-psyop-1'),{
+  type:'line',
+  data:{labels:mo,datasets:[
+    {label:'Pro',data:[15,18,14,16,20,22,35,48,42,55,80,120,420,180,95,70],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.05)',fill:true},
+    {label:'Counter',data:[8,6,7,5,8,10,12,15,18,20,25,30,380,220,110,85],borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.05)',fill:true},
+    {label:'Neutral',data:[40,35,38,42,30,28,25,22,18,15,12,10,60,40,55,65],borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.04)',fill:true,borderDash:[3,2]}
+  ]},options:opts(450),plugins:[evtPlugin]
+});
+
+new Chart(document.getElementById('c-psyop-2'),{
+  type:'line',
+  data:{labels:mo,datasets:[
+    {label:'Total',data:[2,2.5,2,3,4,5,8,12,10,14,22,35,641,120,45,30],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.05)',fill:true},
+    {label:'Inauthentic',data:[.2,.3,.2,.4,.5,.8,1.5,3,2,4,8,18,148,28,5,3],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.03)',fill:true,borderDash:[3,2]}
+  ]},options:opts(680),plugins:[evtPlugin]
+});
+
+new Chart(document.getElementById('c-psyop-3'),{
+  type:'line',
+  data:{labels:mo,datasets:[
+    {label:'Negative',data:[55,52,54,56,58,62,68,75,72,78,85,88,92,70,65,68],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.05)',fill:true},
+    {label:'Positive',data:[12,14,13,11,10,8,7,5,6,4,3,2,35,45,28,20],borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.05)',fill:true}
+  ]},options:opts(100),plugins:[evtPlugin]
+});
+
+new Chart(document.getElementById('c-psyop-4'),{
+  type:'line',
+  data:{labels:mo,datasets:[
+    {label:'Sources',data:[28,30,26,32,25,22,18,15,14,12,10,8,42,35,30,28],borderColor:'#14b8a6',backgroundColor:'rgba(20,184,166,.05)',fill:true},
+    {label:'Single-src %',data:[30,28,32,35,40,48,55,62,65,72,80,85,78,60,45,40],borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,.04)',fill:true,borderDash:[3,2]}
+  ]},options:opts(100),plugins:[evtPlugin]
+});
+
+const storyWeeks = ['W1','W2','W3','W4','W5','W6','W7','W8'];
+new Chart(document.getElementById('c-story-1'),{
+  type:'line',
+  data:{labels:['W-4','W-3','W-2','W-1'],datasets:[
+    {label:'This narrative',data:[8,12,18,22],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.05)',fill:true},
+    {label:'Neutral',data:[15,14,10,8],borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.04)',fill:true,borderDash:[3,2]}
+  ]},options:opts(30)
+});
+
+new Chart(document.getElementById('c-brief-1'),{
+  type:'line',
+  data:{labels:storyWeeks,datasets:[
+    {label:'Flagged',data:[20,25,22,35,42,55,70,80],borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.05)',fill:true},
+    {label:'Clean',data:[45,42,48,40,35,30,28,32],borderColor:'#06b6d4',backgroundColor:'rgba(6,182,212,.04)',fill:true,borderDash:[3,2]},
+    {label:'Engagement',data:[5,8,6,12,18,25,40,55],borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.03)',fill:true}
+  ]},options:opts(100)
+});
+</script>
+
+</body>
+</html>
