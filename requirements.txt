@@ -2,4 +2,4 @@ flask
 newspaper4k
 trafilatura
 json5
-sentry-sdk
+sentry-sdk[flask]
