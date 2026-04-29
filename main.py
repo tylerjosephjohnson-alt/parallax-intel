@@ -4340,8 +4340,6 @@ if __name__ == "__main__":
     scraper_thread.start()
     print("Background scheduler ENABLED — auto-scrape + brief at 7 AM AZ")
 
-   @app.route('/sentry-test')
-def sentry_test():
-    1/0
+  
 
-division_by_zero = 1 / 0
+
