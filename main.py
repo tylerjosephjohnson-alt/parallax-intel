@@ -1,12 +1,3 @@
-import sentry_sdk
-
-sentry_sdk.init(
-    dsn="https://e46dd7d454de59b8837e4f6d00356d0b@o4511299308552192.ingest.us.sentry.io/4511303567540224",
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    send_default_pii=True,
-)
-
 """
 Parallax — Replit auto-runner
 Paste this as main.py in a new Replit Python project.
