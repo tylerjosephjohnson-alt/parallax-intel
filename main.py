@@ -1,5 +1,5 @@
 import sentry_sdk
-sentry_sdk.init(dsn="https://e46dd7d454de59b8837e4f6d00356d0b@o4511299308552192.ingest.us.sentry.io/4511303567540224")
+sentry_sdk.init(dsn="https://e46dd7d454de59b8837e4f6d00356d0b@o4511299308552192.ingest.us.sentry.io/4511303567540224", traces_sample_rate=1.0)
 
 """
 Parallax — Replit auto-runner
