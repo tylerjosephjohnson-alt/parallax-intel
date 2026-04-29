@@ -4344,4 +4344,4 @@ if __name__ == "__main__":
 def sentry_test():
     1/0
 
-
+division_by_zero = 1 / 0
