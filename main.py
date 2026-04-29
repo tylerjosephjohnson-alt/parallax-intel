@@ -13,10 +13,6 @@ Paste this as main.py in a new Replit Python project.
 Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
 The Flask server serves the app + stories.json.
 The background thread runs the scraper every 30 minutes.
-@app.route('/sentry-test')
-def sentry_test():
-    division_by_zero = 1 / 0
-
 @app.route('/test-claude')
 def test_claude():
     try:
