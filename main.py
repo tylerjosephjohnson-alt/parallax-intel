@@ -4334,10 +4334,11 @@ if __name__ == "__main__":
     scraper_thread.start()
     print("Background scheduler ENABLED — auto-scrape + brief at 7 AM AZ")
 
+   @app.route('/sentry-test')
+def sentry_test():
+    1/0
+
     # Start web server
     port = int(os.environ.get("PORT", 8080))
     print(f"Web server starting on port {port}")
     app.run(host="0.0.0.0", port=port, debug=False)
-@app.route('/sentry-test')
-def sentry_test():
-    1/0
