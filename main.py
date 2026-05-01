@@ -4314,6 +4314,274 @@ Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every predic
         json.dump(pred_data, f, indent=2)
     print(f"[PREDICTIONS] Saved predictions.json")
     return pred_data
+
+# ── PSYOPS DETECTION ENGINE (v1) ──────────────────────────────────────
+# Two-call architecture: Scanner (~$1-2) then Deep Dive (~$2-3)
+# NEVER auto-trigger — Tyler must approve
+
+PSYOPS_SCAN_FILE = os.path.join(VOLUME_PATH, 'psyops_scan.json') if 'VOLUME_PATH' in dir() else 'psyops_scan.json'
+PSYOPS_DETAILS_FILE = os.path.join(VOLUME_PATH, 'psyops_details.json') if 'VOLUME_PATH' in dir() else 'psyops_details.json'
+PSYOPS_FILE = os.path.join(VOLUME_PATH, 'psyops.json') if 'VOLUME_PATH' in dir() else 'psyops.json'
+
+def call_claude_psyops(prompt, max_tokens=8000):
+    """Psyops-specific Claude caller with 300s timeout for large JSON responses"""
+    if not ANTHROPIC_API_KEY: return None
+    payload = json.dumps({
+        "model": MODEL, "max_tokens": max_tokens,
+        "messages": [{"role":"user","content":prompt}]
+    }).encode()
+    req = Request("https://api.anthropic.com/v1/messages", data=payload,
+        headers={"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,
+                 "anthropic-version":"2023-06-01"}, method="POST")
+    try:
+        with urlopen(req, timeout=300) as r:
+            resp = json.loads(r.read().decode())
+            text = resp.get("content", [{}])[0].get("text", "")
+            text = text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                if text.endswith("```"):
+                    text = text[:-3]
+                text = text.strip()
+            return text
+    except Exception as e:
+        print(f"[PSYOPS] Claude call failed: {e}")
+        return None
+
+PSYOPS_SCANNER_PROMPT = """You are Vantage's Information Operations Scanner — a detection system that identifies active psychological operations, coordinated inauthentic behavior, and narrative manipulation campaigns worldwide.
+
+## YOUR MISSION
+Scan the current global information environment and identify 3-5 active or recently active information operations, propaganda campaigns, or coordinated narrative manipulation efforts. Cover ALL actors — Western, Russian, Chinese, Iranian, domestic, corporate. No sacred cows. Both sides are red and blue.
+
+## CRITICAL DEFINITIONS
+- Psyop: Coordinated + deceptive effort to influence. Key: COORDINATED + DECEPTIVE.
+- Propaganda: Open, attributable persuasion with a known sender. Label correctly.
+- Organic convergence: Independent sources covering the same newsworthy story. NORMAL.
+- CIB: Networks acting in concert while pretending to be independent.
+
+## ANTI-PARANOIA GUARDRAILS
+1. THREE-INDICATOR MINIMUM from at least TWO categories before flagging coordination
+2. ORGANIC EXPLANATION CHECK first
+3. PROPORTIONALITY — extraordinary claims need extraordinary evidence
+4. CUI BONO IS NOT PROOF
+5. HANLON'S RAZOR — lazy journalism is not a psyop
+
+## DETECTION LAYERS
+1. Source Origin 2. Ownership Mapping 3. Narrative Timeline 4. Technique ID 5. False Confirmation 6. Convergence Typing 7. Acceleration Anomaly 8. Vocabulary Tracking 9. Absence Detection 10. Cross-Channel Patterns 11. Algorithm-as-Operator
+
+## SACI SCORING (0.0-1.0 each, higher = more concerning)
+S — Source Integrity: transparency and independence of sources
+A — Actor Alignment: evidence of deliberate actor involvement
+C — Coordination Indicators: temporal, linguistic, network patterns
+I — Information Integrity: accuracy and contextualization of claims
+
+## LEGITIMACY SCORING (5 factors, 0.0-1.0 each, 1.0 = most manipulative)
+1. Origin Transparency 2. Intent Transparency 3. Information Manipulation 4. Trust Exploitation 5. Deception Dependency
+
+## CONFIDENCE LEVELS
+CONFIRMED — technical evidence or official acknowledgment
+PROBABLE — strong circumstantial evidence, known TTPs
+SUSPECTED — pattern matches playbooks, some indicators, gaps in evidence
+INDICATORS ONLY — anomalies detected, insufficient to characterize
+
+## TECHNIQUES TO CHECK FOR
+firehose, strategic_ambiguity, wedge_amplification, astroturfing, narrative_laundering, hack_and_leak, emotional_hijacking, manufactured_consensus, anchoring, controlled_opposition, source_seeding
+
+## OUTPUT: Valid JSON only. No markdown, no backticks, no preamble.
+{
+  "scan_timestamp": "ISO-8601",
+  "campaigns": [
+    {
+      "campaign_id": "PSY-XXX",
+      "campaign_name": "Short name",
+      "status": "active|dormant|concluded|emerging",
+      "type": "state_operation|corporate_campaign|partisan_operation|foreign_influence|domestic_manipulation|algorithmic_amplification",
+      "confidence": "confirmed|probable|suspected|indicators_only",
+      "confidence_reasoning": "Why this level",
+      "region": "Primary region",
+      "regions_involved": [],
+      "summary": "2-3 sentence summary",
+      "operators": [{"name":"","type":"state|non-state|corporate|political|unknown","role":"primary_operator|amplifier|beneficiary","evidence_strength":"strong|moderate|circumstantial"}],
+      "targets": [],
+      "narratives": {"primary":"","counter":"","evolution":""},
+      "techniques_detected": [],
+      "saci_scores": {"source_integrity":0.0,"actor_alignment":0.0,"coordination_indicators":0.0,"information_integrity":0.0,"overall":0.0},
+      "legitimacy_scores": {"origin_transparency":0.0,"intent_transparency":0.0,"information_manipulation":0.0,"trust_exploitation":0.0,"deception_dependency":0.0,"overall":0.0},
+      "indicators": {"temporal":[],"linguistic":[],"network":[],"content":[]},
+      "organic_check": "",
+      "key_evidence": [],
+      "first_appearance": "",
+      "current_phase": "seeding|amplification|mainstream_adoption|counter_narrative_phase|dormant",
+      "deep_dive_priority": "high|medium|low",
+      "deep_dive_reason": ""
+    }
+  ],
+  "absence_signals": [{"topic":"","last_seen":"","significance":""}],
+  "meta": {"scan_scope":"","limitations":"","recommended_focus":""}
+}
+
+REMEMBER: Evidence chain for every claim. Both sides red and blue. Overclaiming destroys credibility."""
+
+
+PSYOPS_DEEP_DIVE_PROMPT_TEMPLATE = """You are Vantage's Deep Analysis Engine — a 7-pass intelligence analysis system.
+
+## SCANNER RESULTS TO ANALYZE
+{scanner_results}
+
+## 7-PASS ANALYSIS
+Run ALL passes on each campaign:
+1. NARRATIVE ANALYST — Map full narrative ecosystem, origins, evolution, gaps, convergence
+2. FINANCIAL INVESTIGATOR — Funding, ownership, lobbying, FARA, financial beneficiaries
+3. NETWORK MAPPER — Platform spread, account behavior, cross-platform coordination, topology
+4. TECHNIQUE PROFILER — Which manipulation playbooks are being used, with evidence
+5. RED TEAM — For EVERY actor: what are they doing to manipulate, what narratives, what techniques, what outcome sought
+6. BLUE TEAM — For EVERY actor: vulnerabilities, hidden facts, audience gaps, counter-narrative opportunities
+7. SYNTHESIS — Overall assessment, cross-campaign connections, predictions, watch indicators
+
+## MANDATORY RULES
+- BOTH SIDES ARE RED AND BLUE — analyze Western ops with same rigor as adversary ops
+- Evidence chain for every claim
+- Anti-paranoia: organic first, coordination only when organic insufficient
+- Never claim more certainty than evidence supports
+- If scanner flagged SUSPECTED but deep dive finds no evidence, DOWNGRADE
+
+## OUTPUT: Valid JSON only. No markdown, no backticks, no preamble.
+{{
+  "analysis_timestamp": "ISO-8601",
+  "campaigns": [
+    {{
+      "campaign_id": "PSY-XXX",
+      "campaign_name": "",
+      "updated_confidence": "confirmed|probable|suspected|indicators_only",
+      "confidence_change_reason": "",
+      "narrative_analysis": {{"dominant_narrative":"","counter_narratives":[],"narrative_origin":"","narrative_evolution":[],"narrative_gaps":[],"drift_from_facts":""}},
+      "financial_investigation": {{"funding_sources":[],"ownership_connections":[],"lobbying_connections":[],"financial_beneficiaries":[]}},
+      "network_map": {{"spread_pattern":"","network_type":"hub_and_spoke|mesh|cascade|hybrid","key_amplifiers":[],"bot_indicators":"","cross_platform_coordination":""}},
+      "techniques_detected": [{{"technique":"","evidence":"","confidence":"high|medium|low","actor_using":""}}],
+      "operation_architecture": {{"seeding_method":"","amplification_method":"","laundering_path":"","suppression_tactics":"","technology_used":"","exit_costs":""}},
+      "red_team": [{{"actor":"","narratives_pushing":[],"information_suppressing":[],"target_audience":"","desired_outcome":"","techniques":[],"sophistication":"low|medium|high|state-level","resources_deployed":[]}}],
+      "blue_team": [{{"actor":"","vulnerabilities":[],"hidden_facts":[],"audience_gaps":[],"counter_narrative_opportunities":[],"prediction":""}}],
+      "psychological_targeting": {{"maslow_level":"","system_targeted":"system_1|system_2|both","biases_exploited":[],"emotional_triggers":[]}},
+      "self_sustaining_assessment": {{"is_self_sustaining":false,"mechanisms":[],"organic_adoption_level":"none|low|medium|high"}},
+      "algorithm_role": {{"amplification_detected":false,"platforms_involved":[],"engagement_optimization":""}},
+      "saci_scores": {{"source_integrity":0.0,"source_integrity_reasoning":"","actor_alignment":0.0,"actor_alignment_reasoning":"","coordination_indicators":0.0,"coordination_reasoning":"","information_integrity":0.0,"information_integrity_reasoning":"","overall":0.0}},
+      "legitimacy_scores": {{"origin_transparency":0.0,"intent_transparency":0.0,"information_manipulation":0.0,"trust_exploitation":0.0,"deception_dependency":0.0,"overall":0.0,"reasoning":""}},
+      "impact_assessment": {{"reach":"","mainstream_penetration":"","behavioral_impact":"","severity":"low|medium|high|critical"}},
+      "evidence_chain": [{{"evidence_id":"E-001","claim":"","source":"","verification_status":"verified|partially_verified|unverified"}}],
+      "projection": {{"next_7_days":"","next_30_days":"","escalation_risk":"low|medium|high","watch_indicators":[]}},
+      "connections_to_other_campaigns": []
+    }}
+  ],
+  "cross_campaign_analysis": {{"related_campaigns":[],"common_actors":[],"pattern_assessment":"","global_information_environment":""}},
+  "meta": {{"passes_completed":7,"analysis_scope":"","limitations":"","analyst_confidence":"","recommended_monitoring":[]}}
+}}"""
+
+
+@app.route('/trigger-psyops')
+def trigger_psyops():
+    """Trigger psyops detection scan. COSTS MONEY. Two-call: Scanner then Deep Dive."""
+    mode = request.args.get('mode', 'full')  # full, scan_only, deep_dive_only
+    focus = request.args.get('focus', '')  # optional region/topic focus
+
+    print(f"[PSYOPS] Trigger received — mode={mode}, focus={focus}")
+
+    if mode in ('full', 'scan_only'):
+        # Call 1: Scanner
+        scanner_prompt = PSYOPS_SCANNER_PROMPT
+        if focus:
+            scanner_prompt += f"\n\n## FOCUS AREA\nPrioritize campaigns related to: {focus}"
+
+        print("[PSYOPS] Running Scanner...")
+        scan_result = call_claude_psyops(scanner_prompt, max_tokens=6000)
+        if not scan_result:
+            return jsonify({"status": "error", "error": "Scanner call failed"}), 500
+
+        try:
+            scan_data = json.loads(scan_result)
+        except json.JSONDecodeError as e:
+            print(f"[PSYOPS] Scanner JSON parse failed: {e}")
+            print(f"[PSYOPS] Raw output (first 500): {scan_result[:500]}")
+            return jsonify({"status": "error", "error": f"Scanner JSON parse failed: {str(e)}", "raw_preview": scan_result[:200]}), 500
+
+        # Save scanner results
+        with open(PSYOPS_SCAN_FILE, 'w') as f:
+            json.dump(scan_data, f, indent=2, ensure_ascii=False)
+        print(f"[PSYOPS] Scanner complete — {len(scan_data.get('campaigns', []))} campaigns found")
+
+        if mode == 'scan_only':
+            # Merge scan into combined psyops.json
+            combined = {"scan": scan_data, "details": None, "last_updated": scan_data.get("scan_timestamp", "")}
+            with open(PSYOPS_FILE, 'w') as f:
+                json.dump(combined, f, indent=2, ensure_ascii=False)
+            return jsonify({"status": "ok", "mode": "scan_only", "campaigns_found": len(scan_data.get("campaigns", []))})
+
+    if mode in ('full', 'deep_dive_only'):
+        # Load scanner results if deep_dive_only
+        if mode == 'deep_dive_only':
+            try:
+                with open(PSYOPS_SCAN_FILE, 'r') as f:
+                    scan_data = json.load(f)
+            except FileNotFoundError:
+                return jsonify({"status": "error", "error": "No scanner results found. Run scan first."}), 404
+
+        # Call 2: Deep Dive
+        deep_prompt = PSYOPS_DEEP_DIVE_PROMPT_TEMPLATE.format(
+            scanner_results=json.dumps(scan_data, indent=2)
+        )
+        if focus:
+            deep_prompt += f"\n\n## FOCUS AREA\nPrioritize analysis of campaigns related to: {focus}"
+
+        print("[PSYOPS] Running Deep Dive...")
+        deep_result = call_claude_psyops(deep_prompt, max_tokens=8000)
+        if not deep_result:
+            # Save what we have (scan only)
+            combined = {"scan": scan_data, "details": None, "last_updated": scan_data.get("scan_timestamp", ""), "deep_dive_error": "Deep dive call failed"}
+            with open(PSYOPS_FILE, 'w') as f:
+                json.dump(combined, f, indent=2, ensure_ascii=False)
+            return jsonify({"status": "partial", "error": "Deep dive call failed, scan results saved", "campaigns_found": len(scan_data.get("campaigns", []))})
+
+        try:
+            deep_data = json.loads(deep_result)
+        except json.JSONDecodeError as e:
+            print(f"[PSYOPS] Deep Dive JSON parse failed: {e}")
+            print(f"[PSYOPS] Raw output (first 500): {deep_result[:500]}")
+            # Save scan results even if deep dive parsing fails
+            combined = {"scan": scan_data, "details": None, "last_updated": scan_data.get("scan_timestamp", ""), "deep_dive_error": f"JSON parse failed: {str(e)}"}
+            with open(PSYOPS_FILE, 'w') as f:
+                json.dump(combined, f, indent=2, ensure_ascii=False)
+            return jsonify({"status": "partial", "error": f"Deep dive JSON parse failed: {str(e)}", "raw_preview": deep_result[:200]})
+
+        # Save deep dive results
+        with open(PSYOPS_DETAILS_FILE, 'w') as f:
+            json.dump(deep_data, f, indent=2, ensure_ascii=False)
+        print(f"[PSYOPS] Deep Dive complete — {len(deep_data.get('campaigns', []))} campaigns analyzed")
+
+        # Merge into combined psyops.json
+        combined = {
+            "scan": scan_data,
+            "details": deep_data,
+            "last_updated": deep_data.get("analysis_timestamp", scan_data.get("scan_timestamp", ""))
+        }
+        with open(PSYOPS_FILE, 'w') as f:
+            json.dump(combined, f, indent=2, ensure_ascii=False)
+
+        return jsonify({
+            "status": "ok",
+            "mode": mode,
+            "campaigns_scanned": len(scan_data.get("campaigns", [])),
+            "campaigns_analyzed": len(deep_data.get("campaigns", []))
+        })
+
+    return jsonify({"status": "error", "error": f"Unknown mode: {mode}"}), 400
+
+
+@app.route('/psyops.json')
+def serve_psyops():
+    """Serve psyops detection results"""
+    try:
+        return send_file(PSYOPS_FILE, mimetype="application/json")
+    except FileNotFoundError:
+        return jsonify({"scan": None, "details": None, "last_updated": None, "message": "No psyops scan has been run yet"})
 if __name__ == "__main__":
     print("Parallax starting...")
     print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
