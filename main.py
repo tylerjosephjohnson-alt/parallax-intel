@@ -3355,7 +3355,35 @@ def run_scraper():
     absence_alerts = check_absence_detection(all_articles)
     if absence_alerts:
         print(f"  Absence alerts: {len(absence_alerts)} underreported events detected")
-
+# 4d. Archive old stories before overwriting — preserve previous stories
+    try:
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, "r") as old_f:
+                old_data = json.load(old_f)
+            old_stories = old_data.get("stories", [])
+            if old_stories:
+                archive_file = os.path.join(DATA_DIR, "stories_archive.json")
+                archive = []
+                if os.path.exists(archive_file):
+                    try:
+                        with open(archive_file, "r") as af:
+                            archive = json.load(af)
+                    except:
+                        archive = []
+                # Add old stories with archive timestamp, avoid duplicates by headline
+                archived_headlines = {s.get("headline", "") for s in archive}
+                for s in old_stories:
+                    if s.get("headline", "") not in archived_headlines:
+                        s["archived_at"] = utc_now().isoformat()
+                        s["archived_from"] = old_data.get("generated_at", "unknown")
+                        archive.insert(0, s)
+                # Keep last 200 archived stories
+                archive = archive[:200]
+                with open(archive_file, "w") as af:
+                    json.dump(archive, af, indent=2, ensure_ascii=False)
+                print(f"  Archived {len(old_stories)} old stories ({len(archive)} total in archive)")
+    except Exception as e:
+        print(f"  Warning: Story archive failed: {e} — continuing with save")
     # 5. Write output
     output = {
         "generated_at": utc_now().isoformat(),
@@ -4582,6 +4610,14 @@ def serve_psyops():
         return send_file(PSYOPS_FILE, mimetype="application/json")
     except FileNotFoundError:
         return jsonify({"scan": None, "details": None, "last_updated": None, "message": "No psyops scan has been run yet"})
+@app.route('/stories-archive.json')
+def stories_archive():
+    """Serve archived stories from previous scrapes"""
+    archive_file = os.path.join(DATA_DIR, "stories_archive.json")
+    try:
+        return send_file(archive_file, mimetype="application/json")
+    except FileNotFoundError:
+        return jsonify([])
 if __name__ == "__main__":
     print("Parallax starting...")
     print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
