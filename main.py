@@ -4373,7 +4373,15 @@ def call_claude_psyops(prompt, max_tokens=8000):
                 text = text.strip()
             return text
     except Exception as e:
+        error_detail = ""
+        if hasattr(e, 'read'):
+            try:
+                error_detail = e.read().decode()
+            except:
+                pass
         print(f"[PSYOPS] Claude call failed: {e}")
+        if error_detail:
+            print(f"[PSYOPS] API error body: {error_detail[:500]}")
         return None
 
 PSYOPS_SCANNER_PROMPT = """You are Vantage's Information Operations Scanner — a detection system that identifies active psychological operations, coordinated inauthentic behavior, and narrative manipulation campaigns worldwide.
