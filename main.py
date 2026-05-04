@@ -14,7 +14,7 @@ def test_claude():
 
 
 Requirements (install in Replit shell):
-  pip install newspaper4k trafilatura
+  pip install newspaper4k trafilatur
   pip install spacy && python -m spacy download en_core_web_sm  # optional but recommended
 """
 
@@ -4328,8 +4328,8 @@ Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every predic
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
-    try:
-        pred_data = json.loads(result)
+    try
+        pred_data = json.loads(resut)
     except:
         try:
             pred_data = json5.loads(result)
@@ -4533,6 +4533,7 @@ def trigger_psyops():
             return jsonify({"status": "error", "error": "Scanner call failed"}), 500
 
         try:
+                        scan_result = re.sub(r',\s*}', '}', re.sub(r',\s*]', ']', scan_result))
             scan_data = json.loads(scan_result)
         except json.JSONDecodeError as e:
             print(f"[PSYOPS] Scanner JSON parse failed: {e}")
@@ -4577,6 +4578,7 @@ def trigger_psyops():
             return jsonify({"status": "partial", "error": "Deep dive call failed, scan results saved", "campaigns_found": len(scan_data.get("campaigns", []))})
 
         try:
+                        deep_result = re.sub(r',\s*}', '}', re.sub(r',\s*]', ']', deep_result))
             deep_data = json.loads(deep_result)
         except json.JSONDecodeError as e:
             print(f"[PSYOPS] Deep Dive JSON parse failed: {e}")
@@ -4640,10 +4642,15 @@ if __name__ == "__main__":
     scraper_thread = threading.Thread(target=scheduler, daemon=True)
     scraper_thread.start()
     print("Background scheduler ENABLED — auto-scrape + brief at 7 AM AZ")
-
     # Start Flask server
+<<<<<<< HEAD
+        port = int(os.environ.get('PORT', 5000))
+        port = int(os.environ.get('PORT', 5000))
+            app.run(host='0.0.0.0', port=port)
+=======
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+>>>>>>> 98b45b896f55d6e2e82bacba964011db96da435f
   
 
 
