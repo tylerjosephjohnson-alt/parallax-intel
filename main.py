@@ -4328,8 +4328,8 @@ Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every predic
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
-    try
-        pred_data = json.loads(resut)
+    try:
+        pred_data = json.loads(result)
     except:
         try:
             pred_data = json5.loads(result)
