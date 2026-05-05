@@ -4533,11 +4533,7 @@ def trigger_psyops():
             return jsonify({"status": "error", "error": "Scanner call failed"}), 500
 
         try:
-            scan_result = re.sub(r',\s*}', '}', re.sub(r',\s*]', ']', scan_result))
-            scan_data = json.loads(scan_result)
-        except json.JSONDecodeError as e:
-            print(f"[PSYOPS] Scanner JSON parse failed: {e}")
-            print(f"[PSYOPS] Raw output (first 500): {scan_result[:500]}")
+            scan_data = json5.loads(scan_result)
             return jsonify({"status": "error", "error": f"Scanner JSON parse failed: {str(e)}", "raw_preview": scan_result[:200]}), 500
 
         # Save scanner results
@@ -4578,9 +4574,7 @@ def trigger_psyops():
             return jsonify({"status": "partial", "error": "Deep dive call failed, scan results saved", "campaigns_found": len(scan_data.get("campaigns", []))})
 
         try:
-            deep_result = re.sub(r',\s*}', '}', re.sub(r',\s*]', ']', deep_result))
-            deep_data = json.loads(deep_result)
-        except json.JSONDecodeError as e:
+            deep_data = json5.loads(deep_result)
             print(f"[PSYOPS] Deep Dive JSON parse failed: {e}")
             print(f"[PSYOPS] Raw output (first 500): {deep_result[:500]}")
             # Save scan results even if deep dive parsing fails
