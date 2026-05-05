@@ -1,4 +1,4 @@
-"""
+""" 
 Parallax — Replit auto-runner
 Paste this as main.py in a new Replit Python project.
 Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
@@ -4576,6 +4576,7 @@ def trigger_psyops():
 
         try:
             deep_data = json5.loads(deep_result)
+        except Exception as e:
             print(f"[PSYOPS] Deep Dive JSON parse failed: {e}")
             print(f"[PSYOPS] Raw output (first 500): {deep_result[:500]}")
             # Save scan results even if deep dive parsing fails
