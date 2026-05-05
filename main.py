@@ -4534,7 +4534,9 @@ def trigger_psyops():
 
         try:
             scan_data = json5.loads(scan_result)
-            except Exception as e:
+        except Exception as e:
+            return jsonify({"status": "error", "error": f"Scanner JSON parse failed: {str(e)}", "raw_preview": scan_result[:200]})
+
         # Save scanner results
         with open(PSYOPS_SCAN_FILE, 'w') as f:
             json.dump(scan_data, f, indent=2, ensure_ascii=False)
