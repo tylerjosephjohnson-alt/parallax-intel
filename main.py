@@ -4528,7 +4528,7 @@ def trigger_psyops():
             scanner_prompt += f"\n\n## FOCUS AREA\nPrioritize campaigns related to: {focus}"
 
         print("[PSYOPS] Running Scanner...")
-        scan_result = call_claude_psyops(scanner_prompt, max_tokens=6000)
+        scan_result = call_claude_psyops(scanner_prompt, max_tokens=10000)
         if not scan_result:
             return jsonify({"status": "error", "error": "Scanner call failed"}), 500
 
