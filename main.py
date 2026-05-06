@@ -4532,6 +4532,7 @@ def trigger_psyops():
         if not scan_result:
             return jsonify({"status": "error", "error": "Scanner call failed"}), 500
 
+        print(f"[PSYOPS] Raw scan_result length: {len(scan_result)}, first 500: {scan_result[:500]}")
         try:
             scan_data = json5.loads(scan_result)
         except Exception as e:
