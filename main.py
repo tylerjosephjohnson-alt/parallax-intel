@@ -4533,6 +4533,13 @@ def trigger_psyops():
             return jsonify({"status": "error", "error": "Scanner call failed"}), 500
 
         print(f"[PSYOPS] Raw scan_result length: {len(scan_result)}, first 500: {scan_result[:500]}")
+
+        # Extract JSON object from Claude response (handles preamble text, markdown fences, etc.)
+        first_brace = scan_result.find('{')
+        last_brace = scan_result.rfind('}')
+        if first_brace >= 0 and last_brace > first_brace:
+            scan_result = scan_result[first_brace:last_brace+1]
+
         try:
             scan_data = json5.loads(scan_result)
         except Exception as e:
@@ -4574,6 +4581,13 @@ def trigger_psyops():
             with open(PSYOPS_FILE, 'w') as f:
                 json.dump(combined, f, indent=2, ensure_ascii=False)
             return jsonify({"status": "partial", "error": "Deep dive call failed, scan results saved", "campaigns_found": len(scan_data.get("campaigns", []))})
+
+
+        # Extract JSON object from deep dive response
+        first_brace_dd = deep_result.find('{')
+        last_brace_dd = deep_result.rfind('}')
+        if first_brace_dd >= 0 and last_brace_dd > first_brace_dd:
+            deep_result = deep_result[first_brace_dd:last_brace_dd+1]
 
         try:
             deep_data = json5.loads(deep_result)
