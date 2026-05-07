@@ -1,193 +1,115 @@
-/* =========================================
-   PSYOPS ENGINE — JavaScript
-   Vantage Geopolitical Intelligence Platform
-   ========================================= */
+// Psyops Detection Engine - Data-driven renderer
+// Fetches /psyops.json and renders campaign cards dynamically
 
-/* --- Collapse / Expand campaign cards --- */
-function psyopToggleCard(header) {
-  var card = header.closest('.psyop-card');
-  if (card) card.classList.toggle('expanded');
-}
-
-/* --- Tab switching (scoped to the card) --- */
-function psyopSwitchTab(el, tabId) {
-  var card = el.closest('.psyop-card');
-  if (!card) return;
-  var tabs = card.querySelectorAll('.psyop-tab');
-  var panes = card.querySelectorAll('.psyop-tab-content');
-  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-  for (var i = 0; i < panes.length; i++) panes[i].classList.remove('active');
-  el.classList.add('active');
-  var target = document.getElementById(tabId);
-  if (target) target.classList.add('active');
-}
-
-/* --- Technique card expand/collapse --- */
-function psyopToggleTechnique(header) {
-  var body = header.nextElementSibling;
-  if (body) body.classList.toggle('open');
-}
-
-/* --- Filter state --- */
-var psyopFilters = { status: 'all', type: 'all', conf: 'all' };
-
-function psyopSetFilter(btn, category, value) {
-  psyopFilters[category] = value;
-  var row = btn.parentElement;
-  var btns = row.querySelectorAll('.psyops-filter-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('pf-active');
-  if (value !== 'all') btn.classList.add('pf-active');
-  psyopApplyFilters();
-}
-
-function psyopApplyFilters() {
-  var searchEl = document.querySelector('.psyops-search');
-  var query = searchEl ? searchEl.value.toLowerCase() : '';
-  var list = document.getElementById('psyop-list');
-  if (!list) return;
-  var cards = list.querySelectorAll('.psyop-card');
-  var visible = 0;
-
-  for (var i = 0; i < cards.length; i++) {
-    var c = cards[i];
-    var matchStatus = psyopFilters.status === 'all' || c.getAttribute('data-status') === psyopFilters.status;
-    var matchType = psyopFilters.type === 'all' || c.getAttribute('data-type') === psyopFilters.type;
-    var matchConf = psyopFilters.conf === 'all' || c.getAttribute('data-conf') === psyopFilters.conf;
-    var searchText = (c.getAttribute('data-search') || '') + ' ' + (c.querySelector('.psyop-name') ? c.querySelector('.psyop-name').textContent.toLowerCase() : '');
-    var matchSearch = !query || searchText.indexOf(query) !== -1;
-
-    if (matchStatus && matchType && matchConf && matchSearch) {
-      c.style.display = '';
-      visible++;
-    } else {
-      c.style.display = 'none';
-    }
-  }
-
-  var empty = document.getElementById('psyops-empty');
-  if (empty) empty.style.display = visible === 0 ? '' : 'none';
-}
-
-/* --- Sort --- */
-function psyopSort(btn, sortBy) {
-  var row = btn.parentElement;
-  var btns = row.querySelectorAll('.psyops-filter-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('pf-active');
-  btn.classList.add('pf-active');
-
-  var list = document.getElementById('psyop-list');
-  if (!list) return;
-  var cards = Array.prototype.slice.call(list.querySelectorAll('.psyop-card'));
-
-  cards.sort(function(a, b) {
-    if (sortBy === 'saci') return parseFloat(b.getAttribute('data-saci') || 0) - parseFloat(a.getAttribute('data-saci') || 0);
-    if (sortBy === 'legit') return parseFloat(a.getAttribute('data-legit') || 0) - parseFloat(b.getAttribute('data-legit') || 0);
-    if (sortBy === 'date') return parseInt(b.getAttribute('data-date') || 0) - parseInt(a.getAttribute('data-date') || 0);
-    return 0;
-  });
-
-  for (var i = 0; i < cards.length; i++) list.appendChild(cards[i]);
-}
-
-/* --- SACI Line Chart Renderer --- */
-/* Requires Chart.js loaded before this script */
-function psyopRenderLineChart(canvasId, datasets, labels, sugMax, eventMarkers) {
-  var canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  if (typeof Chart === 'undefined') return;
-
-  var colorMap = {
-    red: '#ef4444',
-    blue: '#3b82f6',
-    cyan: '#06b6d4',
-    amber: '#f59e0b',
-    green: '#22c55e',
-    purple: '#a855f7',
-    teal: '#14b8a6'
-  };
-
-  var chartDatasets = [];
-  for (var i = 0; i < datasets.length; i++) {
-    var ds = datasets[i];
-    var c = colorMap[ds.color] || ds.color;
-    chartDatasets.push({
-      label: ds.label,
-      data: ds.data,
-      borderColor: c,
-      backgroundColor: c.replace(')', ',.05)').replace('rgb', 'rgba'),
-      fill: true,
-      borderWidth: 1.5,
-      borderDash: ds.dashed ? [3, 2] : [],
-      tension: 0.35,
-      pointRadius: 0,
-      pointHoverRadius: 3
+function psyopsInit() {
+  var container = document.getElementById('psyops-campaign-list');
+  if (!container) return;
+  container.innerHTML = '<div style="color:#888;padding:20px;">Loading scanner data...</div>';
+  fetch('/psyops.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.scan || !data.scan.campaigns || data.scan.campaigns.length === 0) {
+        container.innerHTML = '<div class="placeholder">Detection Engine - Awaiting first scan</div>';
+        return;
+      }
+      renderPsyopsCampaigns(data.scan.campaigns, container);
+      var ts = document.getElementById('psyops-scan-timestamp');
+      if (ts) ts.textContent = 'Last scan: ' + (data.scan.scan_timestamp || 'Unknown');
+    })
+    .catch(function(err) {
+      container.innerHTML = '<div class="placeholder">Scanner offline</div>';
     });
-  }
+}
 
-  var evtPlugin = null;
-  if (eventMarkers && eventMarkers.length > 0) {
-    evtPlugin = {
-      id: 'psyopEvents',
-      afterDraw: function(chart) {
-        var meta = chart.getDatasetMeta(0);
-        if (!meta || !meta.data) return;
-        var ctx = chart.ctx;
-        var yA = chart.scales.y;
-        for (var j = 0; j < eventMarkers.length; j++) {
-          var ev = eventMarkers[j];
-          if (ev.idx >= meta.data.length) continue;
-          var x = meta.data[ev.idx].x;
-          ctx.save();
-          ctx.beginPath();
-          ctx.setLineDash([2, 3]);
-          ctx.strokeStyle = (colorMap[ev.color] || ev.color) + '30';
-          ctx.lineWidth = 0.5;
-          ctx.moveTo(x, yA.top);
-          ctx.lineTo(x, yA.bottom);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.beginPath();
-          ctx.arc(x, yA.top + 3, 2, 0, Math.PI * 2);
-          ctx.fillStyle = colorMap[ev.color] || ev.color;
-          ctx.fill();
-          ctx.restore();
-        }
-      }
-    };
-  }
+function renderPsyopsCampaigns(campaigns, container) {
+  container.innerHTML = '';
+  campaigns.forEach(function(c) {
+    var card = document.createElement('div');
+    card.className = 'psyop-card';
+    var confClass = 'psyop-conf-' + (c.confidence || 'suspected');
+    var statusClass = 'psyop-status-' + (c.status || 'unknown');
+    var saci = c.saci_scores || {};
+    var saciOverall = saci.overall ? Math.round(saci.overall * 100) : '--';
+    var saciLevel = saci.overall >= 0.7 ? 'high' : saci.overall >= 0.4 ? 'med' : 'low';
+    var operators = (c.operators || []).map(function(o) { return o.name; }).join(', ') || 'Unknown';
+    var regions = (c.regions_involved || []).join(', ') || c.region || 'Unknown';
+    var narratives = c.narratives || {};
+    var techniques = c.techniques_detected || [];
+    var targets = c.targets || [];
 
-  new Chart(canvas, {
-    type: 'line',
-    data: { labels: labels, datasets: chartDatasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 600, easing: 'easeOutQuart' },
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(17,19,24,.95)',
-          borderColor: 'rgba(255,255,255,.1)',
-          borderWidth: 1,
-          titleFont: { family: 'DM Sans', size: 9 },
-          bodyFont: { family: 'DM Sans', size: 9 },
-          padding: 5,
-          cornerRadius: 4
-        }
-      },
-      scales: {
-        x: { display: false },
-        y: {
-          display: true,
-          position: 'right',
-          grid: { color: 'rgba(255,255,255,.03)', drawBorder: false },
-          ticks: { color: 'rgba(255,255,255,.15)', font: { size: 8, family: 'DM Sans' }, maxTicksLimit: 3 },
-          suggestedMax: sugMax || undefined,
-          beginAtZero: true
-        }
-      }
-    },
-    plugins: evtPlugin ? [evtPlugin] : []
+    var html = '<div class="psyop-hdr" onclick="psyopToggleCard(this)">';
+    html += '<div class="psyop-hdr-left">';
+    html += '<div class="psyop-hdr-info">';
+    html += '<span class="psyop-id">' + c.campaign_id + '</span>';
+    html += '<span class="psyop-name">' + c.campaign_name + '</span>';
+    html += '</div>';
+    html += '<div class="psyop-meta">';
+    html += '<span class="psyop-operator">' + operators + '</span>';
+    html += '<span class="psyop-conf ' + confClass + '">' + (c.confidence || 'Unknown').toUpperCase() + '</span>';
+    html += '<span class="psyop-status ' + statusClass + '"><span class="psyop-status-dot"></span>' + (c.status || 'unknown').toUpperCase() + '</span>';
+    html += '</div></div>';
+    html += '<div class="psyop-hdr-right">';
+    html += '<div class="psyop-score"><div class="psyop-score-label">SACI</div>';
+    html += '<div class="psyop-score-val psyop-score-' + saciLevel + '">' + saciOverall + '</div></div>';
+    html += '<div class="psyop-arrow">&#9660;</div></div></div>';
+
+    html += '<div class="psyop-body">';
+    html += '<div class="psyop-summary">' + (c.summary || '') + '</div>';
+
+    html += '<div class="psyop-tabs">';
+    html += '<button class="psyop-tab active" onclick="psyopSwitchTab(this,\'overview\')">Overview</button>';
+    html += '<button class="psyop-tab" onclick="psyopSwitchTab(this,\'narratives\')">Narratives</button>';
+    html += '<button class="psyop-tab" onclick="psyopSwitchTab(this,\'techniques\')">Techniques</button>';
+    html += '<button class="psyop-tab" onclick="psyopSwitchTab(this,\'saci\')">SACI</button>';
+    html += '</div>';
+
+    html += '<div class="psyop-tab-content" data-tab="overview" style="display:block"><div class="psyop-section">';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Type:</span> <span class="psyop-field-value">' + (c.type || '') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Region:</span> <span class="psyop-field-value">' + regions + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Targets:</span> <span class="psyop-field-value">' + (Array.isArray(targets) ? targets.join(', ') : targets) + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Phase:</span> <span class="psyop-field-value">' + (c.current_phase || '') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Confidence:</span> <span class="psyop-field-value">' + (c.confidence_reasoning || '') + '</span></div>';
+    html += '</div></div>';
+
+    html += '<div class="psyop-tab-content" data-tab="narratives" style="display:none"><div class="psyop-section">';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Primary:</span> <span class="psyop-field-value">' + (narratives.primary || 'N/A') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Counter:</span> <span class="psyop-field-value">' + (narratives.counter || 'N/A') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Evolution:</span> <span class="psyop-field-value">' + (narratives.evolution || 'N/A') + '</span></div>';
+    html += '</div></div>';
+
+    html += '<div class="psyop-tab-content" data-tab="techniques" style="display:none"><div class="psyop-section">';
+    techniques.forEach(function(t) { html += '<div class="psyop-field"><span class="psyop-field-value">' + t + '</span></div>'; });
+    html += '</div></div>';
+
+    html += '<div class="psyop-tab-content" data-tab="saci" style="display:none"><div class="psyop-section">';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Source Integrity:</span> <span class="psyop-field-value">' + (saci.source_integrity ? Math.round(saci.source_integrity * 100) + '%' : '--') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Actor Alignment:</span> <span class="psyop-field-value">' + (saci.actor_alignment ? Math.round(saci.actor_alignment * 100) + '%' : '--') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Coordination:</span> <span class="psyop-field-value">' + (saci.coordination_indicators ? Math.round(saci.coordination_indicators * 100) + '%' : '--') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Info Integrity:</span> <span class="psyop-field-value">' + (saci.information_integrity ? Math.round(saci.information_integrity * 100) + '%' : '--') + '</span></div>';
+    html += '<div class="psyop-field"><span class="psyop-field-label">Overall:</span> <span class="psyop-field-value psyop-score-' + saciLevel + '">' + saciOverall + '%</span></div>';
+    html += '</div></div>';
+
+    html += '</div>';
+    card.innerHTML = html;
+    container.appendChild(card);
   });
+}
+
+function psyopToggleCard(hdr) {
+  hdr.closest('.psyop-card').classList.toggle('expanded');
+}
+
+function psyopSwitchTab(btn, tabName) {
+  var body = btn.closest('.psyop-body');
+  body.querySelectorAll('.psyop-tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+  body.querySelectorAll('.psyop-tab-content').forEach(function(tc) {
+    tc.style.display = tc.getAttribute('data-tab') === tabName ? 'block' : 'none';
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', psyopsInit);
+} else {
+  psyopsInit();
 }
