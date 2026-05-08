@@ -4328,9 +4328,6 @@ Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every predic
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
-    try:
-        pred_data = json.loads(result)
-    except:
 
     # Extract JSON object from predictions response
     first_brace = result.find('{')
@@ -4338,6 +4335,9 @@ Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every predic
     if first_brace >= 0 and last_brace > first_brace:
         result = result[first_brace:last_brace+1]
 
+    try:
+        pred_data = json.loads(result)
+    except:
         try:
             pred_data = json5.loads(result)
         except Exception as e:
