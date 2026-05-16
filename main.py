@@ -4169,8 +4169,6 @@ def serve_market_signals():
     except Exception as e:
         return jsonify({"error": str(e), "signals": []}), 500
 
-if __name__ == "__main__":
-
 SCENARIOS_FILE = os.path.join(DATA_DIR, 'scenarios.json')
 
 @app.route('/scenarios.json')
@@ -4339,7 +4337,6 @@ Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be gr
         json.dump(scn_data, f, indent=2)
     print(f"[SCENARIOS] Saved scenarios.json with {len(scn_data.get('scenarios', []))} scenarios")
     return scn_data
-# Append this block to main.py BEFORE if __name__ == "__main__":
 
 PREDICTIONS_FILE = os.path.join(DATA_DIR, 'predictions.json')
 
