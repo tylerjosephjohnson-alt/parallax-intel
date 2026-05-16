@@ -4435,7 +4435,7 @@ def generate_predictions():
 
 {brief_context}
 
-Generate 20-30 intelligence predictions organized by timeframe. Use the CURRENT geopolitical situation to make specific, falsifiable predictions.
+Generate 12-15 intelligence predictions organized by timeframe. Use the CURRENT geopolitical situation to make specific, falsifiable predictions.
 
 IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Another example: "bbl (barrel of oil)" then just "bbl" after. This is plain text, not HTML. Text inside parentheses for acronym expansion does NOT count toward any length or word limits.
 
@@ -4501,7 +4501,7 @@ Respond ONLY with valid JSON. No markdown, no backticks.
 
 REQUIRED PREDICTION CATEGORIES - you MUST include predictions from ALL of these domains:
 
-ECONOMIC (at least 4):
+ECONOMIC (at least 2):
 - Oil/commodity price targets with specific numbers
 - Currency movements (rial, ruble, euro, yuan)
 - Recession predictions for specific economies
@@ -4509,24 +4509,24 @@ ECONOMIC (at least 4):
 - Trade balance shifts from tariffs or sanctions
 - Sanctions cascade effects
 
-MILITARY (at least 3):
+MILITARY (at least 2):
 - Escalation or de-escalation probabilities
 - Weapons deployment or capability demonstrations
 - Alliance shifts (who joins or leaves coalitions)
 - Proxy force activation (Hezbollah, Houthis, Wagner)
 
-POLITICAL (at least 3):
+POLITICAL (at least 2):
 - Regime stability assessments
 - Election or governance changes
 - Alliance fractures (NATO, GCC, EU cohesion)
 - New sanctions or sanctions relief
 
-HUMANITARIAN (at least 2):
+HUMANITARIAN (at least 1):
 - Refugee flow triggers with numbers
 - Food security thresholds (IPC phases)
 - Medical system collapse indicators
 
-CYBER AND TECHNOLOGY (at least 3):
+CYBER AND TECHNOLOGY (at least 1):
 - AI regulatory changes by country or bloc
 - Cyber attacks on critical infrastructure
 - Compute supply chain disruptions (GPU, chips, TSMC)
@@ -4534,14 +4534,14 @@ CYBER AND TECHNOLOGY (at least 3):
 - Export control expansions (US-China tech restrictions)
 - Autonomous weapons development signals
 
-CORPORATE RISK (at least 2):
+CORPORATE RISK (at least 1):
 - Supply chain disruptions by specific industry
 - Tariff exposure impact on specific sectors
 - Energy cost impact on operations and data centers
 - M&A windows created by crisis
 - Consumer sentiment and boycott risk
 
-FINANCIAL MARKET (at least 2):
+FINANCIAL MARKET (at least 1):
 - Equity index movements (S&P, DAX, Nikkei)
 - Bond yield shifts
 - Credit rating changes for sovereigns
@@ -4567,7 +4567,7 @@ Every prediction must include a market_impact object with:
 - asset_impacts: array of specific assets with direction (up/down/flat), magnitude (percentage range), and mechanism (why this asset moves)
 Connect every geopolitical prediction to its financial consequence. Be specific with ticker symbols and percentage ranges -- someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
 
-    result = call_gemini(prompt, max_tokens=16000)
+    result = call_gemini(prompt, max_tokens=32000)
     print(f"[PREDICTIONS] Gemini returned: {len(result) if result else 0} chars")
     if result:
         print(f"[PREDICTIONS] First 500: {result[:500]}")
@@ -4591,10 +4591,21 @@ Connect every geopolitical prediction to its financial consequence. Be specific 
         print(f"[PREDICTIONS] json.loads failed: {e1}")
         # Try to repair truncated JSON by closing open brackets
         repaired = result
-        open_braces = repaired.count('{') - repaired.count('}')
-        open_brackets = repaired.count('[') - repaired.count(']')
-        if open_braces > 0 or open_brackets > 0:
-            print(f"[PREDICTIONS] Repairing: {open_brackets} unclosed [ and {open_braces} unclosed {{ }}")
+        # Find last complete prediction object by finding last "}," before truncation
+        last_complete = repaired.rfind('},')
+        if last_complete > 0:
+            # Cut at last complete object, close the arrays/objects
+            repaired = repaired[:last_complete+1]
+            # Count remaining unclosed brackets
+            open_braces = repaired.count('{') - repaired.count('}')
+            open_brackets = repaired.count('[') - repaired.count(']')
+            print(f"[PREDICTIONS] Truncation repair: cut at char {last_complete}, closing {open_brackets} [ and {open_braces} {{ }}")
+            repaired += ']' * open_brackets
+            repaired += '}' * open_braces
+        else:
+            open_braces = repaired.count('{') - repaired.count('}')
+            open_brackets = repaired.count('[') - repaired.count(']')
+            print(f"[PREDICTIONS] Simple repair: closing {open_brackets} [ and {open_braces} {{ }}")
             repaired = repaired.rstrip().rstrip(',')
             repaired += ']' * open_brackets
             repaired += '}' * open_braces
