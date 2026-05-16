@@ -1,19 +1,9 @@
 """ 
-Parallax — Replit auto-runner
+Parallax -- Replit auto-runner
 Paste this as main.py in a new Replit Python project.
 Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
 The Flask server serves the app + stories.json.
 The background thread runs the scraper every 30 minutes.
-
-@app.route('/test-gemini')
-def test_gemini_endpoint():
-    """Test Gemini API with a simple call — costs nothing."""
-    try:
-        result = call_gemini("Say hello in exactly 3 words.", max_tokens=50)
-        return jsonify({"status": "ok", "result": result[:200] if result else "empty", "gemini_key_set": bool(GEMINI_API_KEY)})
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e), "gemini_key_set": bool(GEMINI_API_KEY)})
-
 @app.route('/test-claude')
 def test_claude():
     try:
@@ -35,33 +25,33 @@ from urllib.error import URLError
 from urllib.parse import urlencode
 import xml.etree.ElementTree as ET
 
-# ── Full article extraction — graceful fallback if not installed ──
+# ── Full article extraction -- graceful fallback if not installed ──
 try:
     import newspaper
     NEWSPAPER4K = True
-    print("newspaper4k available — full article extraction enabled")
+    print("newspaper4k available -- full article extraction enabled")
 except ImportError:
     NEWSPAPER4K = False
-    print("newspaper4k not installed — using RSS descriptions only")
+    print("newspaper4k not installed -- using RSS descriptions only")
     print("  Install with: pip install newspaper4k")
 
 try:
     import trafilatura
     TRAFILATURA = True
-    print("trafilatura available — used as fallback extractor")
+    print("trafilatura available -- used as fallback extractor")
 except ImportError:
     TRAFILATURA = False
 
-# ── Named entity extraction — optional accuracy boost ──
+# ── Named entity extraction -- optional accuracy boost ──
 try:
     import spacy
     try:
         NLP = spacy.load("en_core_web_sm")
         SPACY = True
-        print("spaCy NER available — entity extraction enabled")
+        print("spaCy NER available -- entity extraction enabled")
     except OSError:
         SPACY = False
-        print("spaCy model not found — run: python -m spacy download en_core_web_sm")
+        print("spaCy model not found -- run: python -m spacy download en_core_web_sm")
 except ImportError:
     SPACY = False
 
@@ -75,9 +65,9 @@ except ImportError:
 # CONFIG
 # ─────────────────────────────────────────────
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-SCRAPE_INTERVAL_MINUTES = 1440  # v43: once daily (was 720 twice-daily) — cost reduction
+SCRAPE_INTERVAL_MINUTES = 1440  # v43: once daily (was 720 twice-daily) -- cost reduction
 BRIEF_HOUR_UTC       = 12  # 12:00 UTC = 5:00 AM Arizona (MST)at 05:00 UTC
-# v35: Persistent data directory — use /data volume on Railway, cwd locally
+# v35: Persistent data directory -- use /data volume on Railway, cwd locally
 DATA_DIR = os.environ.get("DATA_DIR") or ("/data" if os.path.isdir("/data") else ".")
 try:
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -87,60 +77,11 @@ BRIEF_FILE           = os.path.join(DATA_DIR, "brief.json")
 BRIEF_ARCHIVE_FILE   = os.path.join(DATA_DIR, "briefs_archive.json")
 MAX_STORIES = 20
 HOURS_LOOKBACK = 48
-CLUSTER_MIN_SOURCES = 3  # v43: raised from 2 — fewer clusters qualify, less Claude calls
+CLUSTER_MIN_SOURCES = 3  # v43: raised from 2 -- fewer clusters qualify, less Claude calls
 MODEL = "claude-sonnet-4-6"
-
-# ── Gemini Free Tier — zero-cost alternative to Claude for development/testing ──
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-GEMINI_MODEL = "gemini-2.5-flash"
-
-def call_gemini(prompt, max_tokens=8000):
-    """Call Google Gemini API — FREE tier. Drop-in replacement for call_claude_atlas."""
-    if not GEMINI_API_KEY:
-        print("[GEMINI] No GEMINI_API_KEY set — falling back to Claude")
-        return call_claude_atlas(prompt, max_tokens)
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
-    payload = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.3}
-    }).encode()
-    req = Request(url, data=payload,
-        headers={"Content-Type": "application/json"}, method="POST")
-    try:
-        with urlopen(req, timeout=300) as r:
-            resp = json.loads(r.read())
-            candidates = resp.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    text = parts[0].get("text", "")
-                    if text:
-                        # Strip markdown fences
-                        text = text.strip()
-                        if text.startswith("```"):
-                            text = text.split("\n", 1)[-1]
-                            if text.endswith("```"):
-                                text = text[:-3]
-                            text = text.strip()
-                        return text
-            print(f"[GEMINI] Empty response: {json.dumps(resp)[:300]}")
-            return None
-    except Exception as e:
-        err_body = ""
-        try:
-            if hasattr(e, 'read'):
-                err_body = e.read().decode('utf-8', errors='replace')[:500]
-        except:
-            pass
-        print(f"[GEMINI] Error: {type(e).__name__}: {e}")
-        if err_body:
-            print(f"[GEMINI] Body: {err_body}")
-        return None
-
-
 DATA_FILE            = os.path.join(DATA_DIR, "stories.json")
 
-# FRED economic data series — real indicators for overlay context
+# FRED economic data series -- real indicators for overlay context
 # Free data from Federal Reserve Economic Data. Each key is a display name,
 # each value is the FRED series ID. To fetch, the scraper uses fetch_fred(series_id).
 FRED_SERIES = {
@@ -247,7 +188,7 @@ RSS_FEEDS = [
     # ── Independent / regional journalists ──
     # US national security / intelligence
     {"url": "https://seymourhersh.substack.com/feed",             "source": "Seymour Hersh",   "lean": "independent", "role": "regional"},
-    {"url": "https://www.emptywheel.net/feed/",                   "source": "Emptywheel",      "lean": "independent", "role": "regional"},   # Marcy Wheeler — legal/intel
+    {"url": "https://www.emptywheel.net/feed/",                   "source": "Emptywheel",      "lean": "independent", "role": "regional"},   # Marcy Wheeler -- legal/intel
     {"url": "https://kenklippenstein.substack.com/feed",          "source": "Ken Klippenstein","lean": "independent", "role": "regional"},   # leaked US gov docs
     {"url": "https://leefang.substack.com/feed",                  "source": "Lee Fang",        "lean": "independent", "role": "regional"},   # corporate/lobbying
     {"url": "https://thedeadhand.substack.com/feed",              "source": "The Dead Hand",   "lean": "independent", "role": "regional"},   # nuclear/arms control
@@ -260,7 +201,7 @@ RSS_FEEDS = [
     {"url": "https://richardmedhurst.substack.com/feed",          "source": "Richard Medhurst","lean": "independent", "role": "regional"},   # UK/Middle East
     {"url": "https://electronicintifada.net/rss.xml",             "source": "Electronic Intifada","lean": "independent", "role": "regional"}, # Palestine primary source
     # OSINT specialists (individual accounts)
-    {"url": "https://blackbirdgroup.substack.com/feed",           "source": "Black Bird Group","lean": "osint", "role": "regional"},          # Pasi Paroinen — Baltic
+    {"url": "https://blackbirdgroup.substack.com/feed",           "source": "Black Bird Group","lean": "osint", "role": "regional"},          # Pasi Paroinen -- Baltic
     {"url": "https://navalgazing.net/feed",                       "source": "Naval Gazing",    "lean": "osint", "role": "regional"},          # naval / shipping OSINT
     # Financial / corporate intelligence
     {"url": "https://www.globalwitness.org/en/press-releases/rss/","source": "Global Witness", "lean": "independent", "role": "regional"},   # resource corruption
@@ -333,22 +274,22 @@ RSS_FEEDS = [
     {"url": "https://thetrace.org/feed",                            "source": "The Trace",                "role": "investigative"},
     {"url": "https://coreysdigs.com/feed",                          "source": "Corey Lynn",               "role": "investigative"},
 
-    # ── v97: Corporate — Energy ─────────────────────────────────────
+    # ── v97: Corporate -- Energy ─────────────────────────────────────
     {"url": "https://corporate.exxonmobil.com/news/newsroom/rss",   "source": "ExxonMobil",               "role": "corporate-energy"},
     {"url": "https://www.shell.com/media/news-and-media-releases.rss","source": "Shell",                   "role": "corporate-energy"},
     {"url": "https://www.bp.com/en/global/corporate/news-and-insights.rss","source": "BP",                "role": "corporate-energy"},
     {"url": "https://opec.org/opec_web/en/press_room/rss.xml",      "source": "OPEC",                     "role": "multilateral-energy"},
 
-    # ── v97: Corporate — Defense ────────────────────────────────────
+    # ── v97: Corporate -- Defense ────────────────────────────────────
     {"url": "https://news.lockheedmartin.com/rss",                  "source": "Lockheed Martin",          "role": "corporate-defense"},
     {"url": "https://palantir.com/blog/rss",                        "source": "Palantir",                 "role": "corporate-defense-tech"},
 
-    # ── v97: Corporate — Finance ────────────────────────────────────
+    # ── v97: Corporate -- Finance ────────────────────────────────────
     {"url": "https://www.goldmansachs.com/insights/rss",            "source": "Goldman Sachs",            "role": "corporate-finance"},
     {"url": "https://www.federalreserve.gov/feeds/press_all.xml",   "source": "Federal Reserve",          "role": "official-finance"},
     {"url": "https://www.imf.org/en/News/rss",                      "source": "IMF",                      "role": "multilateral-finance"},
 
-    # ── v97: Corporate — Retail/Supply Chain ────────────────────────
+    # ── v97: Corporate -- Retail/Supply Chain ────────────────────────
     {"url": "https://corporate.walmart.com/newsroom/rss",           "source": "Walmart Corporate",        "role": "corporate-retail"},
     {"url": "https://www.aboutamazon.com/rss",                      "source": "Amazon News",              "role": "corporate-tech-retail"},
 
@@ -384,7 +325,7 @@ RSS_FEEDS = [
 
 # ── Key Figures Tracking List ────────────────────────────────────────
 KEY_FIGURES = [
-    # Tier 1 — Heads of State
+    # Tier 1 -- Heads of State
     {"name": "Donald Trump",       "role": "US President",               "domain": "policy"},
     {"name": "Xi Jinping",         "role": "China President",            "domain": "strategic"},
     {"name": "Vladimir Putin",     "role": "Russia President",           "domain": "strategic"},
@@ -392,21 +333,21 @@ KEY_FIGURES = [
     {"name": "Ali Khamenei",      "role": "Iran Supreme Leader",        "domain": "conflict"},
     {"name": "Volodymyr Zelensky","role": "Ukraine President",          "domain": "conflict"},
     {"name": "Benjamin Netanyahu","role": "Israel PM",                  "domain": "conflict"},
-    # Tier 2 — Economic Power Brokers
+    # Tier 2 -- Economic Power Brokers
     {"name": "Jerome Powell",     "role": "Federal Reserve Chair",      "domain": "finance"},
     {"name": "Jamie Dimon",       "role": "JPMorgan CEO",               "domain": "finance"},
     {"name": "Larry Fink",        "role": "BlackRock CEO",              "domain": "finance"},
     {"name": "Warren Buffett",    "role": "Berkshire Hathaway CEO",     "domain": "finance"},
-    # Tier 3 — Energy Controllers
+    # Tier 3 -- Energy Controllers
     {"name": "Darren Woods",      "role": "ExxonMobil CEO",             "domain": "energy"},
     {"name": "Amin Nasser",       "role": "Saudi Aramco CEO",           "domain": "energy"},
     {"name": "Chris Wright",      "role": "DOE Secretary/Liberty Energy","domain": "energy-policy"},
-    # Tier 4 — Defense / Tech
+    # Tier 4 -- Defense / Tech
     {"name": "Alex Karp",         "role": "Palantir CEO",               "domain": "defense-tech"},
     {"name": "Elon Musk",         "role": "Tesla/SpaceX/X",             "domain": "tech-defense"},
     {"name": "Jim Taiclet",       "role": "Lockheed Martin CEO",        "domain": "defense"},
     {"name": "Palmer Luckey",     "role": "Anduril Founder",            "domain": "defense-tech"},
-    # Tier 5 — Retail / Supply Chain
+    # Tier 5 -- Retail / Supply Chain
     {"name": "Doug McMillon",     "role": "Walmart CEO",                "domain": "consumer"},
     {"name": "Andy Jassy",        "role": "Amazon CEO",                 "domain": "tech-logistics"},
     {"name": "Jeff Bezos",        "role": "Amazon/Blue Origin founder", "domain": "tech-defense"},
@@ -428,7 +369,7 @@ SOURCE_TIERS = {
     "MSF": 0, "ReliefWeb": 0, "HRW": 0, "Amnesty": 0,
 
     # ── Tier 1: Wire services (independent news confirmation) ──────
-    # Cleanest news confirmation layer. NOT truth arbiters —
+    # Cleanest news confirmation layer. NOT truth arbiters --
     # they confirm that events happened, not what they mean.
     "Reuters": 1, "AP": 1, "AFP": 1,
 
@@ -451,7 +392,7 @@ SOURCE_TIERS = {
     "Bluesky/bellingcat": 2, "Bluesky/emptywheel": 2,
 
     # ── Tier 3: Mainstream press (coverage, not verification) ──────
-    # Concentrated ownership — tracked for coverage gaps and framing.
+    # Concentrated ownership -- tracked for coverage gaps and framing.
     # Used to note what mainstream IS or ISN'T covering.
     # NEVER used to verify claims.
     "BBC": 3, "DW": 3, "The Guardian": 3, "Bloomberg": 3, "FT": 3,
@@ -493,7 +434,7 @@ def get_source_tier(source_name):
 # Sources that provide corroboration above social/unverified level.
 # Tier 1-2: wire/quality press (already in SOURCE_TIERS)
 # Intel tier: OSINT verification orgs, investigative journalism, think tanks,
-#             primary document publishers — these independently confirm facts
+#             primary document publishers -- these independently confirm facts
 #             through different methodologies than wire services
 
 
@@ -513,7 +454,7 @@ ACTOR_INTERESTS = {
             "NATO expansion and forward military presence",
             "Access to energy corridors and chokepoints",
             "Preventing peer competitors (China, Russia) from regional dominance",
-            "Arms industry revenue — $800B+ annual defence budget",
+            "Arms industry revenue -- $800B+ annual defence budget",
         ],
         "narrative_tools": [
             "Framing adversary actions as unprovoked aggression",
@@ -526,7 +467,7 @@ ACTOR_INTERESTS = {
             "Iraq WMD fabrication": "legitimacy of intelligence community",
             "NSA mass surveillance": "rule-of-law credibility",
             "CIA regime change ops": "democracy promotion credibility",
-            "Ukraine biolabs narrative": "unclear — few primary docs",
+            "Ukraine biolabs narrative": "unclear -- few primary docs",
         },
         "known_disinfo_ops": ["Operation Mockingbird (historical)", "Rewards for Justice (current)", "GEC counter-disinfo programmes"],
         "financial_beneficiaries": ["Raytheon", "Lockheed Martin", "Boeing Defense", "General Dynamics", "Northrop Grumman"],
@@ -535,11 +476,11 @@ ACTOR_INTERESTS = {
     # ── Russia ─────────────────────────────────────────────────────
     "Russia": {
         "structural_interests": [
-            "Buffer states on western border — NATO exclusion zone",
+            "Buffer states on western border -- NATO exclusion zone",
             "Gas pipeline revenue and European energy dependence",
             "Black Sea and Mediterranean naval access",
             "Preventing ICC prosecution of senior officials",
-            "Domestic legitimacy narrative — great power restoration",
+            "Domestic legitimacy narrative -- great power restoration",
         ],
         "narrative_tools": [
             "NATO expansion as existential threat framing",
@@ -553,7 +494,7 @@ ACTOR_INTERESTS = {
             "MH17 downing": "full ICC and international liability",
             "Bucha massacre": "war crimes prosecution chain",
             "Navalny assassination": "direct Kremlin order chain",
-            "Nord Stream sabotage": "who actually did it — contested",
+            "Nord Stream sabotage": "who actually did it -- contested",
         },
         "known_disinfo_ops": ["Doppelganger (EU DisinfoLab documented)", "Secondary Infektion", "GRU Unit 29155 active measures", "Internet Research Agency (troll farms)"],
         "financial_beneficiaries": ["Gazprom", "Rosneft", "Rostec (arms)", "Wagner/Africa Corps successors", "Russian oligarch network (Rotenberg, Sechin, Kovalchuk)"],
@@ -562,11 +503,11 @@ ACTOR_INTERESTS = {
     # ── China ──────────────────────────────────────────────────────
     "China": {
         "structural_interests": [
-            "Taiwan reunification — CCP legitimacy depends on it",
-            "South China Sea control — 40% of global trade",
+            "Taiwan reunification -- CCP legitimacy depends on it",
+            "South China Sea control -- 40% of global trade",
             "Belt and Road debt leverage over developing nations",
-            "Technology decoupling prevention — semiconductor access",
-            "Iran as oil supplier — 90% of Iran oil exports to China",
+            "Technology decoupling prevention -- semiconductor access",
+            "Iran as oil supplier -- 90% of Iran oil exports to China",
             "Undermining USD hegemony via yuan internationalisation",
         ],
         "narrative_tools": [
@@ -591,7 +532,7 @@ ACTOR_INTERESTS = {
         "structural_interests": [
             "Nuclear programme as deterrent and regional leverage",
             "Proxy network (Hezbollah, Houthis, Shia militias) as strategic depth",
-            "Sanctions relief — economy at critical stress point",
+            "Sanctions relief -- economy at critical stress point",
             "Hormuz control as ultimate leverage card",
             "Regime survival against domestic opposition",
             "Preventing Israeli normalisation with Arab states",
@@ -616,12 +557,12 @@ ACTOR_INTERESTS = {
     # ── Israel ─────────────────────────────────────────────────────
     "Israel": {
         "structural_interests": [
-            "Preventing Iranian nuclear capability — existential framing",
-            "Abraham Accords expansion — Arab normalisation",
+            "Preventing Iranian nuclear capability -- existential framing",
+            "Abraham Accords expansion -- Arab normalisation",
             "US military and diplomatic support maintenance",
             "Preventing ICC jurisdiction over senior officials",
-            "Palestinian Authority weakness — no state solution",
-            "West Bank settlements — irreversible facts on ground",
+            "Palestinian Authority weakness -- no state solution",
+            "West Bank settlements -- irreversible facts on ground",
         ],
         "narrative_tools": [
             "October 7 as existential event framing (accurate but also deployed politically)",
@@ -634,7 +575,7 @@ ACTOR_INTERESTS = {
             "ICJ genocide provisional measures": "international isolation",
             "Deir Yassin/Tantura historical massacres": "founding narrative damage",
             "Settler violence documentation": "US political pressure",
-            "Al-Ahli hospital incident": "still contested — both sides claim",
+            "Al-Ahli hospital incident": "still contested -- both sides claim",
         },
         "known_disinfo_ops": ["Unit 8200 (cyber/signals)", "IDF Spokesperson narrative management", "Hasbara coordination network", "Targeting of journalists (CPJ documents 130+ killed in Gaza)"],
         "financial_beneficiaries": ["Elbit Systems", "Rafael Advanced Defense", "IAI", "US military aid ($3.8B annual)", "Settlements movement (Yesha Council)"],
@@ -643,7 +584,7 @@ ACTOR_INTERESTS = {
     # ── Donald Trump ───────────────────────────────────────────────
     "Donald Trump": {
         "structural_interests": [
-            "Personal legal protection — presidential immunity",
+            "Personal legal protection -- presidential immunity",
             "Truth Social and media empire revenue",
             "Real estate empire deregulation",
             "Tariff policy as political leverage and revenue",
@@ -660,7 +601,7 @@ ACTOR_INTERESTS = {
         "loses_if_true": {
             "January 6 coordination evidence": "criminal liability",
             "Trump Org financial fraud": "already convicted in NY",
-            "Russia 2016 coordination": "contested — Mueller partial findings",
+            "Russia 2016 coordination": "contested -- Mueller partial findings",
             "Iran deal break motivations": "Netanyahu relationship, Adelson money",
         },
         "financial_beneficiaries": ["Trump Organization", "Truth Social (DJT stock)", "Trump Media & Technology Group", "Mar-a-Lago", "Saudi golf partnership (LIV)"],
@@ -670,9 +611,9 @@ ACTOR_INTERESTS = {
     "Saudi Arabia": {
         "structural_interests": [
             "Oil price above $70/barrel (Vision 2030 requires it)",
-            "Iran containment — sectarian and geopolitical",
+            "Iran containment -- sectarian and geopolitical",
             "US security umbrella maintenance",
-            "MBS succession consolidation — no rival power centres",
+            "MBS succession consolidation -- no rival power centres",
             "Normalisation with Israel (for US security guarantees)",
             "OPEC+ production discipline",
         ],
@@ -680,11 +621,11 @@ ACTOR_INTERESTS = {
             "Reformist modernisation framing (Vision 2030)",
             "Iran as regional destabiliser",
             "Yemen war as defensive operation",
-            "Sportswashing — LIV Golf, Newcastle, F1",
+            "Sportswashing -- LIV Golf, Newcastle, F1",
         ],
         "loses_if_true": {
             "MBS ordered Khashoggi killing": "already admitted indirectly, ICC referral stalled",
-            "Saudi 9/11 connections": "28 pages — some declassified",
+            "Saudi 9/11 connections": "28 pages -- some declassified",
             "Yemen civilian targeting": "UNHRC documented",
         },
         "financial_beneficiaries": ["Saudi Aramco", "PIF (sovereign wealth fund)", "MBS personal network", "US arms manufacturers ($110B+ deals)"],
@@ -695,7 +636,7 @@ ACTOR_INTERESTS = {
         "structural_interests": [
             "Western military and financial support continuation",
             "NATO membership as ultimate security guarantee",
-            "Territorial integrity — internationally recognised borders",
+            "Territorial integrity -- internationally recognised borders",
             "War crimes accountability for Russia",
             "Preventing frozen conflict that legitimises occupation",
         ],
@@ -709,7 +650,7 @@ ACTOR_INTERESTS = {
         "loses_if_true": {
             "Ukrainian corruption levels": "Western aid scrutiny",
             "Azov battalion history": "narrative complexity for Western audiences",
-            "Civilian shield accusations": "Russian claims — limited primary doc evidence",
+            "Civilian shield accusations": "Russian claims -- limited primary doc evidence",
         },
         "financial_beneficiaries": ["Zelensky's inner circle (corruption allegations)", "Western defence industry (weapons contracts)", "Reconstruction contracts (postwar)"],
     },
@@ -719,7 +660,7 @@ def get_actor_context(actor_name):
     """
     Returns structural interests and narrative tools for a named actor.
     Used to pre-load Claude with 'why would X say this' context.
-    Fuzzy match — checks if actor_name contains any key.
+    Fuzzy match -- checks if actor_name contains any key.
     """
     actor_name_lower = actor_name.lower()
     for key, data in ACTOR_INTERESTS.items():
@@ -765,7 +706,7 @@ def build_actor_context_block(cluster_articles):
     return "\n".join(lines)
 
 
-# ── Tier 0: Primary documents — highest epistemic value ─────────
+# ── Tier 0: Primary documents -- highest epistemic value ─────────
 # These are facts, not journalism. Institutional mandate creates bias
 # but the data itself (a sanction designation, an IAEA inspection result,
 # a court filing) is verifiable primary evidence.
@@ -796,9 +737,9 @@ INTEL_SOURCES = {
     "Ethiopia Insight", "Afghanistan Analysts",
     # ── Think tanks (analytical, not advocacy) ────────────────────
     "ISW", "ICG", "IISS", "Carnegie", "Stimson Center",
-    "Chatham House",  # note: UK establishment-adjacent — declare
+    "Chatham House",  # note: UK establishment-adjacent -- declare
     # ── B-grade independent journalists ──────────────────────────
-    # Verified via primary docs / OSINT — NOT via mainstream press
+    # Verified via primary docs / OSINT -- NOT via mainstream press
     "Seymour Hersh", "Emptywheel", "Ken Klippenstein",
     "Lee Fang", "Craig Murray", "John Helmer", "Lindsey Snell",
     "Richard Medhurst", "Consortium News", "Electronic Intifada",
@@ -807,7 +748,7 @@ INTEL_SOURCES = {
     "Sanctions Radar",
 }
 
-# State media — present but must not count as corroboration
+# State media -- present but must not count as corroboration
 STATE_SOURCES = {
     "TASS", "Xinhua", "Global Times", "IRNA", "PressTV",
     "RT", "Sputnik", "CGTN", "Press TV",
@@ -825,20 +766,20 @@ def cluster_has_intel_corroboration(cluster):
     """
     True if any tier-2 independent intel source is present.
     This includes OSINT, investigative journalism, and B-grade
-    independent journalists — all checked against primary docs only.
+    independent journalists -- all checked against primary docs only.
     """
     return any(get_source_tier(a["source"]) <= 2 for a in cluster)
 
 def cluster_corroboration_detail(cluster):
     """
     Corroboration using a three-tier hierarchy:
-      Tier 0 — Primary documents (IAEA, ICC, OFAC, ACLED, ICIJ, MSF...)
+      Tier 0 -- Primary documents (IAEA, ICC, OFAC, ACLED, ICIJ, MSF...)
                These are facts, not narratives. Highest epistemic value.
-      Tier 1 — Intel-grade independent (Bellingcat, OCCRP, ISW, specialists,
+      Tier 1 -- Intel-grade independent (Bellingcat, OCCRP, ISW, specialists,
                B-grade independent journalists verified by primary docs)
                These use reproducible methodology and disclosed funding.
-      Wire    — Reuters/AP/AFP as news confirmation layer (NOT the truth arbiter)
-      State   — Government narrative — flags divergence, not corroboration
+      Wire    -- Reuters/AP/AFP as news confirmation layer (NOT the truth arbiter)
+      State   -- Government narrative -- flags divergence, not corroboration
 
     KEY DESIGN PRINCIPLE: mainstream press (BBC, Guardian, Bloomberg etc.)
     is NOT used as a corroboration source. It carries packed narratives from
@@ -871,7 +812,7 @@ def cluster_corroboration_detail(cluster):
         # Check Intel Sources
         elif any(intel.lower() in src.lower() for intel in INTEL_SOURCES):
             intel_srcs.append(src)
-        # Wire services (Reuters/AP/AFP — most independent wires)
+        # Wire services (Reuters/AP/AFP -- most independent wires)
         elif tier == 1:
             wire_srcs.append(src)
         # State media
@@ -880,7 +821,7 @@ def cluster_corroboration_detail(cluster):
         # Social
         elif tier == 5:
             social_srcs.append(src)
-        # Mainstream press — track but don't use for verification
+        # Mainstream press -- track but don't use for verification
         elif any(ms.lower() in src.lower() for ms in MAINSTREAM):
             mainstream_srcs.append(src)
 
@@ -901,7 +842,7 @@ def cluster_corroboration_detail(cluster):
     if len(primary_srcs) >= 2:
         confidence  = "high"
         conf_reason = (f"Primary document corroboration: "
-                      f"{', '.join(primary_srcs[:3])} — "
+                      f"{', '.join(primary_srcs[:3])} -- "
                       f"these are primary evidence, not journalism")
     elif len(primary_srcs) >= 1 and len(intel_srcs) >= 1:
         confidence  = "high"
@@ -913,35 +854,35 @@ def cluster_corroboration_detail(cluster):
                       f"wire confirmation ({wire_srcs[0]})")
     elif len(intel_srcs) >= 3:
         confidence  = "medium"
-        conf_reason = (f"Multi-intel corroboration: {', '.join(intel_srcs[:4])} — "
-                      f"independent methodologies converge — no primary doc yet")
+        conf_reason = (f"Multi-intel corroboration: {', '.join(intel_srcs[:4])} -- "
+                      f"independent methodologies converge -- no primary doc yet")
     elif len(intel_srcs) >= 2:
         confidence  = "medium"
-        conf_reason = (f"Two independent intel sources: {', '.join(intel_srcs[:3])} — "
+        conf_reason = (f"Two independent intel sources: {', '.join(intel_srcs[:3])} -- "
                       f"not yet primary-document confirmed")
     elif len(primary_srcs) == 1:
         confidence  = "medium"
-        conf_reason = (f"Single primary source ({primary_srcs[0]}) — "
+        conf_reason = (f"Single primary source ({primary_srcs[0]}) -- "
                       f"high-quality evidence but needs corroboration")
     elif len(intel_srcs) == 1 and wire_srcs:
         confidence  = "medium"
-        conf_reason = (f"Intel source ({intel_srcs[0]}) + wire confirmation ({wire_srcs[0]}) — "
+        conf_reason = (f"Intel source ({intel_srcs[0]}) + wire confirmation ({wire_srcs[0]}) -- "
                       f"no primary document yet")
     elif len(intel_srcs) == 1:
         confidence  = "low"
-        conf_reason = (f"Single intel source ({intel_srcs[0]}) — "
+        conf_reason = (f"Single intel source ({intel_srcs[0]}) -- "
                       f"no primary document or additional independent corroboration")
     elif wire_srcs and not intel_srcs and not primary_srcs:
         confidence  = "low"
-        conf_reason = (f"Wire only ({', '.join(wire_srcs[:2])}) — "
+        conf_reason = (f"Wire only ({', '.join(wire_srcs[:2])}) -- "
                       f"news confirmed but no independent intel or primary doc verification")
     elif state_srcs and not primary_srcs and not intel_srcs:
         confidence  = "low"
-        conf_reason = (f"State media only ({', '.join(state_srcs[:2])}) — "
+        conf_reason = (f"State media only ({', '.join(state_srcs[:2])}) -- "
                       f"official claim, not independently verified fact")
     elif social_srcs and not primary_srcs and not intel_srcs:
         confidence  = "low"
-        conf_reason = f"Social signals only — unverified"
+        conf_reason = f"Social signals only -- unverified"
     else:
         confidence  = "low"
         conf_reason = "No primary document or independent intel corroboration"
@@ -995,7 +936,7 @@ def cluster_source_diversity(cluster):
 def is_provisional(article, hours=2):
     """
     Returns True if an article was published within the last N hours.
-    Provisional articles are flagged as potentially unverified —
+    Provisional articles are flagged as potentially unverified --
     breaking reports are often corrected within the first 2 hours.
     """
     try:
@@ -1085,7 +1026,7 @@ def fetch_rss(feed):
             desc = (get("description") or get("summary") or "")
             desc_clean = re.sub("<[^>]+>", "", desc).strip()
 
-            # Full content — many quality feeds include this
+            # Full content -- many quality feeds include this
             full_content = (
                 item.findtext(f"{{{NS['content']}}}encoded") or
                 item.findtext(f"{{{NS['atom']}}}content") or ""
@@ -1278,7 +1219,7 @@ def extract_entities(text):
 
 
 # ─────────────────────────────────────────────
-# REDDIT — via PRAW (official API, free)
+# REDDIT -- via PRAW (official API, free)
 # ─────────────────────────────────────────────
 #
 # Setup (one-time):
@@ -1336,10 +1277,10 @@ REDDIT_MAX_POSTS   = 10
 try:
     import praw
     PRAW_AVAILABLE = True
-    print("PRAW available — Reddit module enabled")
+    print("PRAW available -- Reddit module enabled")
 except ImportError:
     PRAW_AVAILABLE = False
-    print("praw not installed — Reddit disabled")
+    print("praw not installed -- Reddit disabled")
     print("  Install: pip install praw")
 
 
@@ -1358,7 +1299,7 @@ def fetch_reddit():
     user_agent    = os.environ.get("REDDIT_USER_AGENT", "Parallax/1.0")
 
     if not client_id or not client_secret:
-        print("  Reddit: REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET not set — skipping")
+        print("  Reddit: REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET not set -- skipping")
         return []
 
     try:
@@ -1430,12 +1371,12 @@ def fetch_reddit():
 
 
 # ─────────────────────────────────────────────
-# TELEGRAM — via Telethon (official MTProto API)
+# TELEGRAM -- via Telethon (official MTProto API)
 # ─────────────────────────────────────────────
 #
 # Setup (one-time):
 #   1. Go to https://my.telegram.org/apps
-#   2. Create an app — get API_ID and API_HASH
+#   2. Create an app -- get API_ID and API_HASH
 #   3. Add TELEGRAM_API_ID, TELEGRAM_API_HASH,
 #      TELEGRAM_PHONE to Replit Secrets
 #   4. First run will ask for SMS verification code
@@ -1509,7 +1450,7 @@ BLUESKY_ACCOUNTS = [
     "laraseligman.bsky.social",     # Politico defense
     "jonathanlanday.bsky.social",   # Reuters national security
     "karenmdevine.bsky.social",     # AP foreign
-    "emptywheel.bsky.social",       # Marcy Wheeler — intel
+    "emptywheel.bsky.social",       # Marcy Wheeler -- intel
     "travisj.bsky.social",          # ABC News investigative
     "nancyayoussef.bsky.social",    # WSJ national security
     "courtneykube.bsky.social",     # NBC News Pentagon
@@ -1527,10 +1468,10 @@ try:
     from telethon import TelegramClient
     from telethon.tl.functions.messages import GetHistoryRequest
     TELETHON_AVAILABLE = True
-    print("Telethon available — Telegram module enabled")
+    print("Telethon available -- Telegram module enabled")
 except ImportError:
     TELETHON_AVAILABLE = False
-    print("telethon not installed — Telegram disabled")
+    print("telethon not installed -- Telegram disabled")
     print("  Install: pip install telethon")
 
 
@@ -1549,7 +1490,7 @@ def fetch_telegram():
     phone    = os.environ.get("TELEGRAM_PHONE")
 
     if not api_id or not api_hash:
-        print("  Telegram: TELEGRAM_API_ID / TELEGRAM_API_HASH not set — skipping")
+        print("  Telegram: TELEGRAM_API_ID / TELEGRAM_API_HASH not set -- skipping")
         return []
 
     articles = []
@@ -1625,10 +1566,10 @@ def fetch_telegram():
 
 
 # ─────────────────────────────────────────────
-# BLUESKY — via atproto (open firehose, no key)
+# BLUESKY -- via atproto (open firehose, no key)
 # ─────────────────────────────────────────────
 #
-# No API key needed — Bluesky is an open protocol.
+# No API key needed -- Bluesky is an open protocol.
 # We search for posts by keyword rather than using
 # the raw firehose (which is too high-volume).
 # Focus: breaking news, journalist accounts.
@@ -1648,10 +1589,10 @@ BLUESKY_MIN_LIKES    = 3   # Filter noise
 try:
     from atproto import Client as BskyClient, client_utils
     ATPROTO_AVAILABLE = True
-    print("atproto available — Bluesky module enabled")
+    print("atproto available -- Bluesky module enabled")
 except ImportError:
     ATPROTO_AVAILABLE = False
-    print("atproto not installed — Bluesky disabled")
+    print("atproto not installed -- Bluesky disabled")
     print("  Install: pip install atproto")
 
 
@@ -1795,7 +1736,7 @@ def archive_url_wayback(url):
                 return f"https://web.archive.org{location}"
         return None
     except Exception:
-        return None  # Non-fatal — archiving is best-effort
+        return None  # Non-fatal -- archiving is best-effort
 
 def fetch_gdelt():
     """
@@ -1894,9 +1835,9 @@ def sim(a, b):
     """
     Multi-signal similarity for clustering:
     1. Word Jaccard on title+body text (base)
-    2. Named entity overlap bonus — "Gaza" and "Hamas" in both = strong signal
-    3. Author identity bonus — same journalist covering same story
-    4. Category/tag overlap — feeds that tag stories similarly
+    2. Named entity overlap bonus -- "Gaza" and "Hamas" in both = strong signal
+    3. Author identity bonus -- same journalist covering same story
+    4. Category/tag overlap -- feeds that tag stories similarly
 
     This fixes the core problem: "Gaza ceasefire" and "Hamas truce negotiations"
     share zero word tokens but share entities (Gaza, Hamas, ceasefire concept).
@@ -1905,7 +1846,7 @@ def sim(a, b):
     sa, sb = words(a["text"]), words(b["text"])
     base = (len(sa & sb) / len(sa | sb)) if (sa and sb) else 0.0
 
-    # Entity overlap bonus — extract capitalised proper nouns from titles
+    # Entity overlap bonus -- extract capitalised proper nouns from titles
     def title_entities(art):
         t = art.get("title","")
         # Capitalised words 3+ chars that aren't stopwords
@@ -1921,7 +1862,7 @@ def sim(a, b):
         elif shared == 1:
             entity_bonus = 0.07   # 1 shared named entity = moderate signal
 
-    # Bigram overlap on title — catches "ceasefire talks" / "ceasefire negotiations"
+    # Bigram overlap on title -- catches "ceasefire talks" / "ceasefire negotiations"
     def title_bigrams(art):
         ws = [w for w in re.findall(r"[a-z]{3,}", art.get("title","").lower())
               if w not in STOPWORDS]
@@ -1932,7 +1873,7 @@ def sim(a, b):
     if ba and bb and (ba & bb):
         bigram_bonus = 0.08
 
-    # Source diversity — different sources on same story is MORE valuable
+    # Source diversity -- different sources on same story is MORE valuable
     # No same-source penalty here; handled by cluster quality filter
 
     total = base + entity_bonus + bigram_bonus
@@ -2064,7 +2005,7 @@ def score_signal_velocity(cluster, story_id_str):
     )
     if western_present and nonwestern_present: score += 10
 
-    # Persistence bonus — did this story exist last cycle?
+    # Persistence bonus -- did this story exist last cycle?
     velocity_history = load_json_file(VELOCITY_FILE, {})
     if story_id_str in velocity_history:
         score += 15
@@ -2089,22 +2030,22 @@ def detect_contradictions(cluster):
         state_names = [a["source"] for a in state_sources[:2]]
         flags.append(
             f"DIRECT CONFLICT: {', '.join(wire_names)} (independent) "
-            f"vs {', '.join(state_names)} (state-aligned) — "
+            f"vs {', '.join(state_names)} (state-aligned) -- "
             f"treat these as competing narratives, not corroboration"
         )
 
     if social_sources and not wire_sources:
         social_names = list({a["source"] for a in social_sources[:3]})
         flags.append(
-            f"SOCIAL-ONLY: {', '.join(social_names)} — "
-            f"no wire service corroboration yet — mark as unverified signal"
+            f"SOCIAL-ONLY: {', '.join(social_names)} -- "
+            f"no wire service corroboration yet -- mark as unverified signal"
         )
 
     prov_ratio = cluster_provisional_ratio(cluster)
     if prov_ratio > 0.6:
         flags.append(
-            f"PROVISIONAL: {int(prov_ratio*100)}% of sources published <2 hours ago — "
-            f"breaking reports frequently require correction — confidence ceiling: low"
+            f"PROVISIONAL: {int(prov_ratio*100)}% of sources published <2 hours ago -- "
+            f"breaking reports frequently require correction -- confidence ceiling: low"
         )
 
     return flags
@@ -2229,9 +2170,9 @@ def detect_narrative_drift(story_id_str):
     if lc > fc:
         notes.append(f"confidence rose {first['confidence']}→{latest['confidence']} over {len(snaps)} cycles")
         events.append({"type":"confidence_up","from":first["confidence"],"to":latest["confidence"],
-                       "time":latest["time"],"detail":"Corroboration improving — new independent sources added"})
+                       "time":latest["time"],"detail":"Corroboration improving -- new independent sources added"})
     elif lc < fc:
-        notes.append(f"confidence dropped {first['confidence']}→{latest['confidence']} — story contested or corrected")
+        notes.append(f"confidence dropped {first['confidence']}→{latest['confidence']} -- story contested or corrected")
         events.append({"type":"confidence_down","from":first["confidence"],"to":latest["confidence"],
                        "time":latest["time"],"detail":"Story being challenged or corrected by new evidence"})
 
@@ -2251,7 +2192,7 @@ def detect_narrative_drift(story_id_str):
     added   = latest_srcs - first_srcs
     dropped = first_srcs - latest_srcs
 
-    # Source tier shift — check if story moved from state/social sources to wire sources
+    # Source tier shift -- check if story moved from state/social sources to wire sources
     wire_sources    = {"reuters","ap","afp","bbc","guardian","nyt","wsj","bloomberg","ft"}
     state_sources   = {"tass","xinhua","irna","rt","sputnik","cgtn","presstviran"}
     first_has_wire  = any(s.lower() in wire_sources for s in first_srcs)
@@ -2260,20 +2201,20 @@ def detect_narrative_drift(story_id_str):
     latest_has_state = any(s.lower() in state_sources for s in latest_srcs)
 
     if not first_has_wire and latest_has_wire:
-        notes.append("wire sources entered — story escalating in credibility")
+        notes.append("wire sources entered -- story escalating in credibility")
         events.append({"type":"tier_upgrade","time":latest["time"],
-                       "detail":"Wire services (Reuters/AP/BBC etc) now covering — story gaining independent corroboration"})
+                       "detail":"Wire services (Reuters/AP/BBC etc) now covering -- story gaining independent corroboration"})
     elif first_has_wire and not latest_has_wire:
-        notes.append("wire sources dropped out — story may be contested or cooling")
+        notes.append("wire sources dropped out -- story may be contested or cooling")
         events.append({"type":"tier_downgrade","time":latest["time"],
-                       "detail":"Wire services stopped covering — check for corrections or story cooling"})
+                       "detail":"Wire services stopped covering -- check for corrections or story cooling"})
 
     if not first_has_state and latest_has_state:
         events.append({"type":"state_media_entered","time":latest["time"],
-                       "detail":"State media now covering — potential narrative management or counter-framing"})
+                       "detail":"State media now covering -- potential narrative management or counter-framing"})
     elif first_has_state and not latest_has_state:
         events.append({"type":"state_media_dropped","time":latest["time"],
-                       "detail":"State media stopped covering — may indicate story is no longer useful for that government"})
+                       "detail":"State media stopped covering -- may indicate story is no longer useful for that government"})
 
     if added:
         notes.append(f"new sources: {', '.join(list(added)[:3])}")
@@ -2288,7 +2229,7 @@ def detect_narrative_drift(story_id_str):
     if len(unique_hashes) >= 3 and len(unique_hls) <= 1:
         notes.append(f"covert reframing: content changed {len(unique_hashes)} times without headline change")
         events.append({"type":"covert_reframe","count":len(unique_hashes),"time":latest["time"],
-                       "detail":"Summary content changed significantly while headline stayed the same — potential quiet correction"})
+                       "detail":"Summary content changed significantly while headline stayed the same -- potential quiet correction"})
 
     # 5. What-is-known framing shifts
     first_known  = set(str(x).lower()[:50] for x in first.get("what_is_known",[]))
@@ -2296,20 +2237,20 @@ def detect_narrative_drift(story_id_str):
     facts_added   = len(latest_known - first_known)
     facts_removed = len(first_known - latest_known)
     if facts_removed >= 1:
-        notes.append(f"{facts_removed} previously stated fact(s) removed — possible correction")
+        notes.append(f"{facts_removed} previously stated fact(s) removed -- possible correction")
         events.append({"type":"facts_removed","count":facts_removed,"time":latest["time"],
-                       "detail":f"{facts_removed} claim(s) that appeared in earlier versions are no longer stated — check for corrections"})
+                       "detail":f"{facts_removed} claim(s) that appeared in earlier versions are no longer stated -- check for corrections"})
     if facts_added >= 2:
         events.append({"type":"facts_added","count":facts_added,"time":latest["time"],
-                       "detail":f"{facts_added} new confirmed facts added — story developing"})
+                       "detail":f"{facts_added} new confirmed facts added -- story developing"})
 
     # 6. Disputed section expansion (story becoming more contested)
     first_disputed  = len(first.get("what_is_disputed",""))
     latest_disputed = len(latest.get("what_is_disputed",""))
     if latest_disputed > first_disputed * 1.5 and latest_disputed > 100:
-        notes.append("contested claims section expanding — story becoming more disputed")
+        notes.append("contested claims section expanding -- story becoming more disputed")
         events.append({"type":"dispute_expansion","time":latest["time"],
-                       "detail":"What-is-disputed section has grown significantly — more claims being challenged"})
+                       "detail":"What-is-disputed section has grown significantly -- more claims being challenged"})
 
     # Velocity analysis: how fast are snapshots accumulating?
     if len(snaps) >= 6:
@@ -2319,10 +2260,10 @@ def detect_narrative_drift(story_id_str):
         early_changes  = sum(1 for i in range(1,len(early))  if early[i]["summary_hash"]  != early[i-1]["summary_hash"])
         if recent_changes > early_changes:
             events.append({"type":"velocity_increasing","time":latest["time"],
-                           "detail":"Story changing faster recently than at start — active development or controversy"})
+                           "detail":"Story changing faster recently than at start -- active development or controversy"})
         elif recent_changes < early_changes and early_changes >= 2:
             events.append({"type":"velocity_decreasing","time":latest["time"],
-                           "detail":"Story stabilising — fewer changes in recent cycles"})
+                           "detail":"Story stabilising -- fewer changes in recent cycles"})
 
     drift_note = "; ".join(notes) if notes else ""
     return drift_note, events
@@ -2443,7 +2384,7 @@ def enrich_articles(articles, max_per_cluster=6):
 
     def fetch_one(article):
         if article.get("body") and len(article["body"]) > 200:
-            # Already have good body — still extract structured data
+            # Already have good body -- still extract structured data
             body = article["body"]
             article["quotes"]   = extract_quotes(body)
             article["numbers"]  = extract_numbers(body)
@@ -2529,10 +2470,10 @@ def generate_story(cluster_articles):
     # ── Enrich articles with full body text before passing to Claude ──
     cluster_articles = enrich_articles(cluster_articles, max_per_cluster=6)
 
-    # Format articles — now includes full body, entities, and source lean
+    # Format articles -- now includes full body, entities, and source lean
     def fmt_article(a):
         """
-        Format article for Claude prompt — now includes:
+        Format article for Claude prompt -- now includes:
         - Article type (breaking/statement/analysis/opinion/correction/primary-doc)
         - Author byline
         - Direct quotes extracted from body text
@@ -2556,14 +2497,14 @@ def generate_story(cluster_articles):
             body_label = "Full article text" if len(body) > 300 else "Summary"
             out += f'  {body_label}: {body[:1000]}\n'
 
-        # Direct quotes — most valuable for attribution accuracy
+        # Direct quotes -- most valuable for attribution accuracy
         quotes = a.get("quotes", [])
         if quotes:
             out += f'  Direct quotes:\n'
             for q in quotes[:3]:
-                out += f'    — "{q["quote"]}" — {q["attribution"]}\n'
+                out += f'    -- "{q["quote"]}" -- {q["attribution"]}\n'
 
-        # Key numbers — statistics, casualties, financial figures
+        # Key numbers -- statistics, casualties, financial figures
         numbers = a.get("numbers", [])
         if numbers:
             num_str = " | ".join(n["value"] for n in numbers[:5])
@@ -2623,17 +2564,17 @@ def generate_story(cluster_articles):
 
     if primary_srcs:
         accuracy_context.append(
-            f"PRIMARY DOCUMENT CORROBORATION: {', '.join(primary_srcs[:4])} — "
+            f"PRIMARY DOCUMENT CORROBORATION: {', '.join(primary_srcs[:4])} -- "
             f"these are primary evidence (filings, designations, field data), not journalism. "
             f"Treat claims traceable to these as established facts. "
             f"{'Intel also confirms: ' + ', '.join(intel_srcs[:3]) + '.' if intel_srcs else ''}"
         )
     elif len(intel_srcs) >= 3:
         accuracy_context.append(
-            f"MULTI-INTEL CORROBORATION: {', '.join(intel_srcs[:4])} — "
+            f"MULTI-INTEL CORROBORATION: {', '.join(intel_srcs[:4])} -- "
             f"independent methodologies (OSINT/investigative/specialist) converge. "
             f"This is strong independent corroboration even without primary documents. "
-            f"{'Wire confirms: ' + wire_srcs[0] + '.' if wire_srcs else 'No wire coverage yet — note this.'}"
+            f"{'Wire confirms: ' + wire_srcs[0] + '.' if wire_srcs else 'No wire coverage yet -- note this.'}"
         )
     elif len(intel_srcs) >= 2:
         accuracy_context.append(
@@ -2643,27 +2584,27 @@ def generate_story(cluster_articles):
         )
     elif intel_srcs:
         accuracy_context.append(
-            f"SINGLE INTEL SOURCE: {intel_srcs[0]} — "
+            f"SINGLE INTEL SOURCE: {intel_srcs[0]} -- "
             f"meaningful but needs additional independent corroboration. "
             f"Confidence ceiling: low-medium."
         )
     elif wire_srcs and not intel_srcs and not primary_srcs:
         accuracy_context.append(
-            f"WIRE ONLY: {', '.join(wire_srcs[:2])} — "
+            f"WIRE ONLY: {', '.join(wire_srcs[:2])} -- "
             f"news confirmed but no independent OSINT, primary document, or investigative verification. "
             f"This means the story exists in mainstream media but its claims are unverified by independent intel. "
             f"Confidence ceiling: low-medium. Do not treat wire coverage as verification of claims."
         )
     elif not primary_srcs and not intel_srcs and not wire_srcs:
         accuracy_context.append(
-            "⚠ NO INDEPENDENT CORROBORATION — no primary document, no intel-grade source, no wire. "
+            "⚠ NO INDEPENDENT CORROBORATION -- no primary document, no intel-grade source, no wire. "
             "Social signals or state media only. Confidence ceiling: low."
         )
 
     # Mainstream is tracked and disclosed but does not drive confidence
     if mainstream_srcs:
         accuracy_context.append(
-            f"MAINSTREAM COVERAGE (not used for verification): {', '.join(mainstream_srcs[:4])} — "
+            f"MAINSTREAM COVERAGE (not used for verification): {', '.join(mainstream_srcs[:4])} -- "
             f"these outlets have concentrated ownership and carry packaged narratives. "
             f"Note their coverage but verify all claims against primary docs and intel sources above."
         )
@@ -2671,7 +2612,7 @@ def generate_story(cluster_articles):
     # State narrative flag
     if state_srcs and not primary_srcs and not intel_srcs:
         accuracy_context.append(
-            f"⚠ STATE MEDIA ONLY — {', '.join(state_srcs[:2])} — "
+            f"⚠ STATE MEDIA ONLY -- {', '.join(state_srcs[:2])} -- "
             f"official government claim, not independently verified. "
             f"State media confirms what governments WANT reported."
         )
@@ -2682,13 +2623,13 @@ def generate_story(cluster_articles):
             f"Where these diverge IS the story. Surface the gap explicitly."
         )
     if prov_ratio > 0.5:
-        accuracy_context.append(f"⚠ {int(prov_ratio*100)}% of sources are <2 hours old — breaking, unverified — use provisional language throughout")
+        accuracy_context.append(f"⚠ {int(prov_ratio*100)}% of sources are <2 hours old -- breaking, unverified -- use provisional language throughout")
     if drift_note:
         accuracy_context.append(f"NARRATIVE DRIFT DETECTED: {drift_note}")
     if diversity_score >= 60:
-        accuracy_context.append(f"Source diversity: high ({diversity_score}/100) — multiple perspectives represented")
+        accuracy_context.append(f"Source diversity: high ({diversity_score}/100) -- multiple perspectives represented")
     elif diversity_score < 30:
-        accuracy_context.append(f"⚠ Source diversity: low ({diversity_score}/100) — limited perspective range")
+        accuracy_context.append(f"⚠ Source diversity: low ({diversity_score}/100) -- limited perspective range")
 
     accuracy_block = "\n".join(accuracy_context) if accuracy_context else "No conflicts detected across sources."
 
@@ -2716,7 +2657,7 @@ def generate_story(cluster_articles):
         if cross_source_ents:
             accuracy_context.append(
                 f"CROSS-SOURCE ENTITY CONNECTIONS: These actors/locations appear across "
-                f"multiple independent sources — {', '.join(cross_source_ents[:8])}. "
+                f"multiple independent sources -- {', '.join(cross_source_ents[:8])}. "
                 f"Investigate relationships between these entities explicitly."
             )
 
@@ -2739,7 +2680,7 @@ def generate_story(cluster_articles):
         if len(set(persons)) >= 2 and len(set(orgs)) >= 2:
             accuracy_context.append(
                 f"KEY ACTORS: {', '.join(list(set(persons))[:5])} | "
-                f"KEY ORGS: {', '.join(list(set(orgs))[:5])} — "
+                f"KEY ORGS: {', '.join(list(set(orgs))[:5])} -- "
                 f"identify documented relationships or financial connections between these."
             )
         accuracy_block = "\n".join(accuracy_context) if accuracy_context else "No conflicts detected across sources."
@@ -2767,34 +2708,34 @@ def generate_story(cluster_articles):
             "If the headline, confidence, key facts, or source set has materially changed, "
             "note this explicitly in your summary using phrases like: "
             "'This updates previous reporting which stated...', "
-            "'Earlier sources claimed X — new wire reporting now indicates Y', "
+            "'Earlier sources claimed X -- new wire reporting now indicates Y', "
             "'Confidence has risen/fallen because...'. "
             "If sources previously covering this story are now absent, note that explicitly."
         )
 
-    prompt  = f"""You are Vantage — a geopolitical intelligence system that synthesises multiple sources into original analysis for decision-makers.
+    prompt  = f"""You are Vantage -- a geopolitical intelligence system that synthesises multiple sources into original analysis for decision-makers.
 
-YOUR JOB: Take raw articles from 87 feeds — wire services, state media, independent outlets, social media — and produce ONE coherent intelligence story. You are not quoting these sources. You are using them as raw inputs to build original analysis. The Sources tab handles attribution — the story body states facts.
+YOUR JOB: Take raw articles from 87 feeds -- wire services, state media, independent outlets, social media -- and produce ONE coherent intelligence story. You are not quoting these sources. You are using them as raw inputs to build original analysis. The Sources tab handles attribution -- the story body states facts.
 
 WRITING RULES:
 - Lead with WHAT HAPPENED in plain, direct language
 - ACRONYM RULE: The FIRST time any acronym appears in ANY field, write it as: ACRONYM (Full Name). Examples: IRGC (Islamic Revolutionary Guard Corps), TASS (Russian state news agency), OFAC (Office of Foreign Assets Control), LNG (liquefied natural gas). This applies to the headline, hook, summary, and overview_prose. After the first expansion, use the acronym alone
-- Never reference a figure, amount, or event without explaining what it is. No "the $3bn figure" — say what the $3bn is for
+- Never reference a figure, amount, or event without explaining what it is. No "the $3bn figure" -- say what the $3bn is for
 - Write one coherent narrative. Do NOT summarise articles one by one
 - Do NOT say "according to Reuters" or "IranWire reports" repeatedly. State facts. The Sources tab shows where they came from
 - No filler sentences. Every sentence adds new information
-- No meta-commentary or analyst language in the overview. Do not say "this is significant", "this represents a key gap", "this is the same framing used in". State the facts — the reader draws their own conclusions. If Iran used the same justification before, say "Iran cited navigational safety violations, the same basis it used when it seized three vessels in March" — that is a fact, not analysis
+- No meta-commentary or analyst language in the overview. Do not say "this is significant", "this represents a key gap", "this is the same framing used in". State the facts -- the reader draws their own conclusions. If Iran used the same justification before, say "Iran cited navigational safety violations, the same basis it used when it seized three vessels in March" -- that is a fact, not analysis
 
 NEUTRALITY:
 - ABSOLUTE. No opinions. No sides. Facts only
 - Do not characterise actions as "aggressive", "justified", "provocative". Use neutral language: "deployed", "stated", "claimed"
 - Do not frame any actor as good or bad. Present what each side says and does
 - When sources disagree, state both positions with equal weight. Do not signal which you believe
-- Use neutral descriptive language. Not "unprovoked aggression" — say "military action that [country] describes as [X] and [country] describes as [Y]"
+- Use neutral descriptive language. Not "unprovoked aggression" -- say "military action that [country] describes as [X] and [country] describes as [Y]"
 
 CROSS-SOURCE ANALYSIS:
 - When Western and non-Western sources report the same fact, that is high confidence
-- When sources contradict each other, note it clearly — present both versions as fact and let the reader see the gap
+- When sources contradict each other, note it clearly -- present both versions as fact and let the reader see the gap
 - When a government says one thing but does another, state both the words and the actions. The reader sees the gap
 - Track what has changed: if an actor's position shifted from yesterday, note what they said before and what they say now
 
@@ -2812,20 +2753,20 @@ SCANNABLE OUTPUT RULES FOR STORY CARDS:
 
 Respond with ONLY a JSON object (no markdown). Keep the response compact.
 {{
-  "headline": "Factual headline max 15 words — specific, not generic",
+  "headline": "Factual headline max 15 words -- specific, not generic",
   "location": "City, Country or Region",
   "region": "europe|middle-east|africa|asia-pacific|americas|russia-fsu|south-asia|latin-america|global",
   "category": "conflict-war|politics|economics|human-rights|environment|technology|disinformation",
   "confidence": "low|medium|high",
   "watch_level": "routine|elevated|active|urgent",
   "hook": "Two brief sentences, max 25 words total. First sentence states what happened. Second sentence states why it matters or what the tension is",
-  "so_what_short": "One sentence connecting SPECIFIC facts from THIS story to why they matter. Not generic analysis — tie directly to what happened",
-  "summary": "TWO paragraphs, max 150 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body — sources go in source_citations",
+  "so_what_short": "One sentence connecting SPECIFIC facts from THIS story to why they matter. Not generic analysis -- tie directly to what happened",
+  "summary": "TWO paragraphs, max 150 words. Lead with the news. Synthesise sources into one narrative. State facts without attribution in the body -- sources go in source_citations",
   "what_is_known": "Confirmed facts only. What multiple sources agree on",
   "what_is_disputed": "Where sources contradict each other. Side A says X, Side B says Y. State both flatly",
   "why_it_matters": "Second-order effects. What this changes. What to watch next. Be specific to this event, not generic",
   "overview_prose": "2-3 tight paragraphs, max 200 words total. Synthesise all sources into one coherent story. If actors contradict themselves or each other, state the contradiction as fact. Track narrative shifts if prior context is available",
-  "top_call": {{"text": "Specific next development that follows from THIS story within 48h — not generic", "rate_numerator": 3, "rate_denominator": 5}},
+  "top_call": {{"text": "Specific next development that follows from THIS story within 48h -- not generic", "rate_numerator": 3, "rate_denominator": 5}},
   "confidence_reason": "One sentence explaining confidence level based on source agreement and verification",
   "source_citations": [
     {{"source": "Source name", "platform": "rss|reddit|telegram|bluesky", "lean": "left|center|right|state-affiliated", "url": "article url", "claim": "What this source specifically reported"}}
@@ -2840,7 +2781,7 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
             print(f"  Story gen: Claude returned empty")
             return None
     result = result.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
-    # v32: Robust JSON repair — handle common Claude-response defects before parsing
+    # v32: Robust JSON repair -- handle common Claude-response defects before parsing
     # (1) Trim leading text before first { and trailing text after last }
     _first_brace = result.find('{')
     _last_brace = result.rfind('}')
@@ -2854,7 +2795,7 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
     result = _re_repair.sub(r'("|\.\d+|true|false|null)(\s*\n\s*")', r'\1,\2', result)
     result = _re_repair.sub(r'(}|])(\s*\n\s*")', r'\1,\2', result)
     # (3) Collapse any stray unescaped newlines inside string literals conservatively
-    #     (only a safety net — don't modify if already valid)
+    #     (only a safety net -- don't modify if already valid)
     try:
         # v66-be: Strip markdown fences if Claude wraps JSON
         if result and result.strip().startswith("```"):
@@ -2914,12 +2855,12 @@ Provide deep-analysis fields as a JSON object. Be specific: name names, cite dat
     {{"source_actor": "Who", "narrative": "Their framing", "verdict": "supported|disputed|unverifiable"}}
   ],
   "financial_connections": "Which companies, banks, or financial instruments connect to this event? Who traded or positioned before it happened?",
-  "key_figures_involved": "List key individuals: Name (Role) — how they connect. Include indirect connections through board seats, investments, or advisory roles.",
+  "key_figures_involved": "List key individuals: Name (Role) -- how they connect. Include indirect connections through board seats, investments, or advisory roles.",
   "absence_signals": "What SHOULD be reported but is not? Which actors or agencies are conspicuously silent?",
   "historical_pattern": "Has this pattern played out before? Name the previous instance with dates, actors, and outcome.",
   "narrative_gaps": "What key information is missing from all sources",
-  "narrative_convergence": "Where opposing sources unexpectedly agree — this often reveals ground truth",
-  "civilian_impact": "Direct human impact — who is affected and how",
+  "narrative_convergence": "Where opposing sources unexpectedly agree -- this often reveals ground truth",
+  "civilian_impact": "Direct human impact -- who is affected and how",
   "source_diversity": "Rate source balance 1-5. Are we hearing from all sides?",
   "connecting_events": [
     {{"related_event": "Specific ongoing event", "connection": "The causal chain linking them"}}
@@ -2930,7 +2871,7 @@ Provide deep-analysis fields as a JSON object. Be specific: name names, cite dat
   "blue_team_actor_b": "Defending against that actor requires:",
   "wild_card": "Which third party profits while these two are focused on each other?",
   "second_order_effects": "If the most likely outcome occurs, what cascade follows that nobody is discussing?",
-  "psyops_coordination": "none|low|medium|high — what specific patterns suggest coordinated messaging?",
+  "psyops_coordination": "none|low|medium|high -- what specific patterns suggest coordinated messaging?",
   "contradiction_flags": []
 }}
 
@@ -3003,11 +2944,11 @@ def generate_daily_brief():
     synthesises with current stories.json data, and saves to brief.json.
     """
     print("\n" + "="*50)
-    print(f"Daily Brief — {utc_now().strftime('%A %d %B %Y · 05:00 UTC')}")
+    print(f"Daily Brief -- {utc_now().strftime('%A %d %B %Y · 05:00 UTC')}")
     print("="*50)
 
     if not ANTHROPIC_API_KEY:
-        print("  Brief: ANTHROPIC_API_KEY not set — skipping")
+        print("  Brief: ANTHROPIC_API_KEY not set -- skipping")
         return
 
     # Load current stories for context
@@ -3024,9 +2965,9 @@ def generate_daily_brief():
 
     today = utc_now().strftime("%A %d %B %Y")
 
-    system_prompt = f"""You are Parallax — an intelligence analysis system producing a morning briefing for {today}.
+    system_prompt = f"""You are Parallax -- an intelligence analysis system producing a morning briefing for {today}.
 
-Using your web search tool, search for overnight developments across ALL major regions. Cover every region — do not let one conflict dominate. Search topics:
+Using your web search tool, search for overnight developments across ALL major regions. Cover every region -- do not let one conflict dominate. Search topics:
 - MIDDLE EAST: US-Iran war, ceasefire status, Strait of Hormuz, Israel-Palestine
 - EUROPE: Ukraine frontline, Russian strikes, NATO activity, EU policy
 - AFRICA: Sudan/Darfur RSF, Sahel security, East Africa, South Africa
@@ -3042,10 +2983,10 @@ Current tracked stories for context:
 
 Produce a concise, factual morning brief. Every claim must be attributed to a specific source.
 SCANNABLE OUTPUT RULES FOR DAILY BRIEF (covers the globe, not single events):
-- paragraph_1_situation: Break into sub-sections by region or theater. Use short labeled headers like HORMUZ: or UKRAINE: or AFRICA: before each sub-section. Separate sub-sections with line breaks. 2-3 sentences of prose under each header. Cover the globe — do not let one conflict dominate.
+- paragraph_1_situation: Break into sub-sections by region or theater. Use short labeled headers like HORMUZ: or UKRAINE: or AFRICA: before each sub-section. Separate sub-sections with line breaks. 2-3 sentences of prose under each header. Cover the globe -- do not let one conflict dominate.
 - paragraph_2_connections: Opening sentence naming the pattern. Then 2-3 specific connections, each on its own line starting with a dash. Each connection is 1-2 sentences tying stories together by name. End with one sentence on the broader implication.
 - paragraph_3_what_watch: Numbered list (1. 2. 3.) of specific verifiable indicators. Each names the actor, the action, and what it would mean. Specific primary evidence, not generic themes.
-- paragraph_4_buried: Prose format. 2-3 sentences on the underreported story plus 1-2 on why the silence matters. No bullets needed — this reads as narrative.
+- paragraph_4_buried: Prose format. 2-3 sentences on the underreported story plus 1-2 on why the silence matters. No bullets needed -- this reads as narrative.
 - Apply the same rules to each top_story paragraph.
 MANDATORY REGION COVERAGE: The top_stories array MUST include at minimum one story for EACH of these regions: middle-east, europe, africa, americas, asia-pacific, south-asia, russia-fsu, and one global/transnational story. That is 8 minimum top_stories. If no major development occurred in a region, still include the most significant activity from that region. Every region tab on the dashboard must have content.
 
@@ -3060,10 +3001,10 @@ Return ONLY a JSON object (no markdown):
   "headline_brief": "One sentence: the single most significant development overnight",
 
   "intelligence_overview": {{
-    "paragraph_1_situation": "CURRENT SITUATION — 150-200 words. What is the state of the world right now across all tracked theatres. Lead with the most urgent. Name actors, numbers, locations. Every sentence sourced. This is the helicopter view — what a senior analyst would say in the first 60 seconds of a briefing.",
-    "paragraph_2_connections": "THE CONNECTIONS — 150-200 words. What links these stories together that the reader would miss reading headlines separately. What pattern runs across the Iran war, Ukraine, Sudan, economic signals? Who are the common actors appearing in multiple theatres? What financial flows connect seemingly separate events? What second-order consequence from Story A is now visible in Story B?",
-    "paragraph_3_what_watch": "WHAT TO WATCH TODAY — 150-200 words. The 3-5 most specific, verifiable things that will indicate how today develops. Not general themes — specific actors, specific actions, specific indicators. What primary evidence (IAEA access, vessel movements, OFAC announcement) would confirm or deny each scenario.",
-    "paragraph_4_buried": "WHAT MAINSTREAM IS MISSING — 100-150 words. The story that is in the intel sources but not on front pages. What is ACLED tracking that Reuters isn't reporting? What regional specialist published something with zero pickup? What silence from a state actor is itself a signal? This is the paragraph that requires reading between the lines."
+    "paragraph_1_situation": "CURRENT SITUATION -- 150-200 words. What is the state of the world right now across all tracked theatres. Lead with the most urgent. Name actors, numbers, locations. Every sentence sourced. This is the helicopter view -- what a senior analyst would say in the first 60 seconds of a briefing.",
+    "paragraph_2_connections": "THE CONNECTIONS -- 150-200 words. What links these stories together that the reader would miss reading headlines separately. What pattern runs across the Iran war, Ukraine, Sudan, economic signals? Who are the common actors appearing in multiple theatres? What financial flows connect seemingly separate events? What second-order consequence from Story A is now visible in Story B?",
+    "paragraph_3_what_watch": "WHAT TO WATCH TODAY -- 150-200 words. The 3-5 most specific, verifiable things that will indicate how today develops. Not general themes -- specific actors, specific actions, specific indicators. What primary evidence (IAEA access, vessel movements, OFAC announcement) would confirm or deny each scenario.",
+    "paragraph_4_buried": "WHAT MAINSTREAM IS MISSING -- 100-150 words. The story that is in the intel sources but not on front pages. What is ACLED tracking that Reuters isn't reporting? What regional specialist published something with zero pickup? What silence from a state actor is itself a signal? This is the paragraph that requires reading between the lines."
   }},
 
   "top_stories": [
@@ -3071,13 +3012,13 @@ Return ONLY a JSON object (no markdown):
       "rank": 1,
       "region": "middle-east",
       "story_card_ids": ["story-6", "story-7"],
-      "headline": "Specific headline max 15 words — factual not vague",
+      "headline": "Specific headline max 15 words -- factual not vague",
       "paragraph_1_situation": "180-200 words. What is the current situation for THIS story specifically. Lead with what happened. Every sentence attributed to a named source. Specific actors, numbers, locations. This is the primary factual record.",
-      "paragraph_2_connections": "180-200 words. What links THIS story to the other stories in today's brief. Be specific — name the other stories and explain the exact mechanism connecting them. Financial flows, shared actors, causal chains, strategic interactions. This paragraph must reference at least 2 other stories from today.",
+      "paragraph_2_connections": "180-200 words. What links THIS story to the other stories in today's brief. Be specific -- name the other stories and explain the exact mechanism connecting them. Financial flows, shared actors, causal chains, strategic interactions. This paragraph must reference at least 2 other stories from today.",
       "paragraph_3_watch": "150-180 words. 3-5 specific verifiable things to watch in the next 24 hours for THIS story. Name the actor, the action, and what it would mean. Primary evidence (IAEA statement, vessel count, ISPR release) that would confirm or deny each scenario.",
       "paragraph_4_buried": "120-150 words. What is in the intelligence sources but not in mainstream coverage for THIS story. What is ACLED tracking that Reuters isn't reporting? What silence from a state actor is itself a signal? What technical detail changes the meaning of the headline?",
       "significance": "One sentence: the single most important thing to understand about this story",
-      "contested_claim": "If any source disputes another, state both precisely — or null",
+      "contested_claim": "If any source disputes another, state both precisely -- or null",
       "has_prediction": true,
       "has_psyop": false,
       "has_econ": false,
@@ -3087,7 +3028,7 @@ Return ONLY a JSON object (no markdown):
 
   "overnight_signals": [
     {{
-      "signal": "One sentence — actor, action, number",
+      "signal": "One sentence -- actor, action, number",
       "source": "Named source",
       "significance": "brief|moderate|high",
       "story_card_id": "story-1"
@@ -3105,13 +3046,13 @@ Return ONLY a JSON object (no markdown):
     }}
   ],
 
-  "analyst_note": "2-3 sentences: the most important pattern or under-reported story — what requires reading between the lines today",
+  "analyst_note": "2-3 sentences: the most important pattern or under-reported story -- what requires reading between the lines today",
   "sources_consulted": ["source1", "source2", "source3"]
 }}
 
 Include 5-6 top_stories, 5-8 overnight_signals, and 1-3 contested_numbers_today entries.
 Map story_card_ids: story-1=Ukraine, story-2=Sudan, story-3=China, story-4=Turkey, story-5=Manipur, story-6=Iran/Hormuz, story-7=Oil/IMF, story-8=Pakistan/Islamabad.
-The four intelligence_overview paragraphs are the core analytical product — make them dense, specific, and reveal connections.
+The four intelligence_overview paragraphs are the core analytical product -- make them dense, specific, and reveal connections.
 """
 
     payload = json.dumps({
@@ -3243,7 +3184,7 @@ The four intelligence_overview paragraphs are the core analytical product — ma
 def run_scraper():
     global last_run
     print(f"\n{'='*50}")
-    print(f"Parallax scraper — {utc_now().strftime('%Y-%m-%d %H:%M UTC')}")
+    print(f"Parallax scraper -- {utc_now().strftime('%Y-%m-%d %H:%M UTC')}")
     print(f"{'='*50}\n")
     last_run["status"] = "running"
 
@@ -3269,7 +3210,7 @@ def run_scraper():
         print(f"  ACLED API: {len(acled_events)} conflict events")
 
     # ── Social media sources ──────────────────────────────────────
-    # Reddit disabled — no PRAW credentials configured
+    # Reddit disabled -- no PRAW credentials configured
     # reddit_posts = fetch_reddit()
     # all_articles.extend(reddit_posts)
 
@@ -3331,7 +3272,7 @@ def run_scraper():
                     claude_conf = story.get("confidence", "low")
                     corr_conf   = corr.get("confidence", "low")
                     conf_order  = {"low": 0, "medium": 1, "high": 2}
-                    # Only override downward — don't upgrade past what Claude assessed
+                    # Only override downward -- don't upgrade past what Claude assessed
                     if conf_order.get(corr_conf, 0) < conf_order.get(claude_conf, 0):
                         story["confidence"]      = corr_conf
                         story["confidence_reason"] = (
@@ -3346,7 +3287,7 @@ def run_scraper():
                         "social_sources":corr.get("social_srcs", []),
                         "count":         corr.get("corroboration_count", 0),
                     }
-                # Narrative drift — enhanced multi-signal
+                # Narrative drift -- enhanced multi-signal
                 _drift_note, _drift_events = detect_narrative_drift(story.get("id",""))
                 story["drift_note"]         = _drift_note
                 story["drift_events"]       = _drift_events
@@ -3388,7 +3329,7 @@ def run_scraper():
                                  "narrative_b":{"actor":"Unknown","benefit":"Under analysis","level":"low"},
                                  "civilian_impact":"Under analysis."},
                 "money_flow": {"financial_interests":"Under analysis.","known_flows":[],"data_gaps":"Unknown."},
-                "confidence_reason": "Early report — insufficient independent sources.",
+                "confidence_reason": "Early report -- insufficient independent sources.",
                 "signal_score": min(25 + len(cl) * 5, 65),
                 "published": cl[0]["published"],
                 "updated": utc_now().isoformat(),
@@ -3410,11 +3351,11 @@ def run_scraper():
     save_velocity_record(stories)
     save_narrative_snapshot(stories)
 
-    # 4c. Absence detection — ACLED events with no wire coverage
+    # 4c. Absence detection -- ACLED events with no wire coverage
     absence_alerts = check_absence_detection(all_articles)
     if absence_alerts:
         print(f"  Absence alerts: {len(absence_alerts)} underreported events detected")
-# 4d. Archive old stories before overwriting — preserve previous stories
+# 4d. Archive old stories before overwriting -- preserve previous stories
     try:
         if os.path.exists(DATA_FILE):
             with open(DATA_FILE, "r") as old_f:
@@ -3442,7 +3383,7 @@ def run_scraper():
                     json.dump(archive, af, indent=2, ensure_ascii=False)
                 print(f"  Archived {len(old_stories)} old stories ({len(archive)} total in archive)")
     except Exception as e:
-        print(f"  Warning: Story archive failed: {e} — continuing with save")
+        print(f"  Warning: Story archive failed: {e} -- continuing with save")
     # 5. Write output
     output = {
         "generated_at": utc_now().isoformat(),
@@ -3467,7 +3408,7 @@ def run_scraper():
         "articles": len(all_articles),
         "status": "ok"
     }
-    print(f"\n✓ Done — {len(stories)} stories written to {DATA_FILE}")
+    print(f"\n✓ Done -- {len(stories)} stories written to {DATA_FILE}")
 
 # ─────────────────────────────────────────────
 # BACKGROUND SCHEDULER
@@ -3480,8 +3421,8 @@ def scheduler():
     """
     last_brief_date = None
 
-    # v88: no first run on deploy — wait for scheduled time (7 AM AZ / 14:00 UTC)
-    print("Scheduler started — next scrape at 5 AM Arizona (12:00 UTC)")
+    # v88: no first run on deploy -- wait for scheduled time (7 AM AZ / 14:00 UTC)
+    print("Scheduler started -- next scrape at 5 AM Arizona (12:00 UTC)")
     while True:
         time.sleep(60)  # Check every minute for brief trigger
 
@@ -3493,7 +3434,7 @@ def scheduler():
                 and last_brief_date != now.date()):
             last_brief_date = now.date()
             try:
-                print("=== 5 AM AZ — Starting scheduled scrape + brief ===")
+                print("=== 5 AM AZ -- Starting scheduled scrape + brief ===")
                 run_scraper()
                 generate_daily_brief()
             except Exception as e:
@@ -3617,7 +3558,7 @@ if FLASK:
 
     @app.route("/trigger")
     def trigger():
-        """Manual scrape trigger — visit /trigger to force a fresh run"""
+        """Manual scrape trigger -- visit /trigger to force a fresh run"""
         t = threading.Thread(target=run_scraper, daemon=True)
         t.start()
         return jsonify({"status": "triggered", "message": "Scraper started in background"})
@@ -3635,7 +3576,7 @@ if FLASK:
         try:
             return send_file(BRIEF_FILE, mimetype="application/json")
         except FileNotFoundError:
-            return jsonify({"error": "No brief available yet — generates at 05:00 UTC daily"}), 404
+            return jsonify({"error": "No brief available yet -- generates at 05:00 UTC daily"}), 404
 
     @app.route("/story-history.json")
     def story_history_json():
@@ -3735,7 +3676,7 @@ if FLASK:
     @app.route("/research", methods=["POST"])
     def research():
         """
-        Research endpoint — accepts a query, calls Claude with web search,
+        Research endpoint -- accepts a query, calls Claude with web search,
         returns a Parallax story card JSON.
         Called by the browser research bar to avoid CORS issues.
         """
@@ -3750,7 +3691,7 @@ if FLASK:
             if not ANTHROPIC_API_KEY:
                 return jsonify({"error": "ANTHROPIC_API_KEY not set in Replit Secrets"}), 503
 
-            system_prompt = f"""You are Parallax — an intelligence analysis system. A user has searched for: "{query}"
+            system_prompt = f"""You are Parallax -- an intelligence analysis system. A user has searched for: "{query}"
 
 Using your web search tool, find the most recent relevant information from multiple sources. Generate a structured intelligence story card.
 
@@ -3808,7 +3749,7 @@ Return ONLY a JSON object (no markdown, no preamble):
             ).strip()
 
             if not text:
-                return jsonify({"error": "No content returned — try a more specific query"}), 500
+                return jsonify({"error": "No content returned -- try a more specific query"}), 500
 
             # Parse JSON from response
             clean = text.replace("```json","").replace("```","").strip()
@@ -3868,7 +3809,7 @@ def fetch_acled_events(country=None, days_back=7):
         articles = []
         for e in events:
             fat = int(e.get("fatalities",0) or 0)
-            title = f"ACLED: {e.get('event_type','')} in {e.get('location','')}, {e.get('country','')} — {fat} fatalities"
+            title = f"ACLED: {e.get('event_type','')} in {e.get('location','')}, {e.get('country','')} -- {fat} fatalities"
             notes = e.get("notes","")[:300]
             articles.append({
                 "title":     title,
@@ -3987,7 +3928,7 @@ The JSON must have this EXACT structure (all values are strings or numbers, NO n
 REGIONAL METRICS must include ALL 11: Avg GDP Growth, Intra-Regional Trade Volume, Regional Integration Score, Key Export Revenue status, Commodity Price Exposure, Regional Contagion Risk, Migration Flows, Shared Infrastructure Vulnerability, Regional Currency Dynamics, Cross-Border Conflict Economic Cost, Regional Development Bank Activity.
 
 Include 3-5 cascading_effects showing cross-country chains."""
-    result = call_gemini(prompt, max_tokens=6000)  # Using Gemini free tier
+    result = call_claude_atlas(prompt, max_tokens=6000)
     if not result:
         return {'name': region_name, 'health_score': 50, 'summary': 'No data', 'countries': [], 'metrics': [], 'cascading_effects': []}
     try:
@@ -4032,7 +3973,7 @@ SECTION 4 Vulnerability Geopolitical (category vulnerability) 12 metrics: Food I
 For EVERY metric provide: name, current (specific number), baseline, baseline_label, direction (use arrows), direction_class (ub/db/ug/dg/st/cr), status (critical/declining/caution/stable/improving), category, why (2-3 sentences), cascade (1-2 sentences), source.
 
 Include 4-6 cascading_effects. Be specific with numbers."""
-    result = call_gemini(prompt, max_tokens=8000)  # Using Gemini free tier
+    result = call_claude_atlas(prompt, max_tokens=8000)
     if not result:
         return {'name': country_name, 'health_score': 50, 'assessment': 'Generation failed', 'sections': [], 'cascading_effects': []}
     try:
@@ -4282,7 +4223,7 @@ Do NOT use a pre-set list of scenarios. Let the CURRENT DATA drive what scenario
 
 IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Text inside parentheses does NOT count toward any length or word limits.
 
-QUALITY CHECK — your scenarios MUST collectively cover ALL of these domains. If the current situation does not naturally produce a scenario in a domain, create one from emerging signals:
+QUALITY CHECK -- your scenarios MUST collectively cover ALL of these domains. If the current situation does not naturally produce a scenario in a domain, create one from emerging signals:
 - Military escalation (war expansion, new fronts, weapons deployment, proxy activation)
 - Economic shock (market crash, currency collapse, supply chain break, sanctions cascade)
 - Political rupture (alliance fracture, regime change, election disruption, governance crisis)
@@ -4313,7 +4254,7 @@ Respond ONLY with valid JSON. No markdown, no backticks.
     ],
     "red_team": "How the adversary sees this playing out. Their optimal move, their reasoning, what victory looks like from their side.",
     "blue_team": "How US/allies see this. Optimal response, available tools, acceptable outcomes, escalation limits.",
-    "gray_actors": "Who else is involved — China, corporations, cartels, neutral states, criminal orgs. Who benefits from chaos, who exploits the distraction, who plays both sides.",
+    "gray_actors": "Who else is involved -- China, corporations, cartels, neutral states, criminal orgs. Who benefits from chaos, who exploits the distraction, who plays both sides.",
     "branches": [
       {{
         "name": "Escalation Path",
@@ -4321,7 +4262,7 @@ Respond ONLY with valid JSON. No markdown, no backticks.
         "description": "Step by step what happens in this branch",
         "timeline": "how fast this plays out",
         "domains": [
-          {{"domain": "Military", "impact": "specific military consequences — force movements, casualties, weapons used"}},
+          {{"domain": "Military", "impact": "specific military consequences -- force movements, casualties, weapons used"}},
           {{"domain": "Economic", "impact": "GDP impact, commodity prices, currency movements, trade disruption"}},
           {{"domain": "Political", "impact": "domestic and international political fallout, governance changes"}},
           {{"domain": "Humanitarian", "impact": "displacement numbers, casualties, food/water/medical impact"}},
@@ -4360,26 +4301,26 @@ Respond ONLY with valid JSON. No markdown, no backticks.
 ]}}
 
 REQUIREMENTS FOR EACH SCENARIO:
-1. title — clear scenario name
-2. threat_level — critical/elevated/monitoring/dormant based on how close the trigger is to firing
-3. trigger_condition — specific, observable event that starts this
-4. trigger_probability — 0-100 how likely the trigger fires
-5. timeline — how fast the scenario plays out once triggered
-6. players — every actor with objective, capability, constraint
-7. red_team — adversary perspective and optimal move
-8. blue_team — US/allied perspective and optimal response
-9. gray_actors — neutral/opportunistic actors — who benefits, who exploits
-10. branches — 2-3 possible paths, each with probability and ALL 11 domain impacts
-11. historical_analog — specific precedent with dates
-12. early_warning — observable indicators with status (watching/triggered/clear)
-13. connected — how this scenario links to other scenarios and predictions
+1. title -- clear scenario name
+2. threat_level -- critical/elevated/monitoring/dormant based on how close the trigger is to firing
+3. trigger_condition -- specific, observable event that starts this
+4. trigger_probability -- 0-100 how likely the trigger fires
+5. timeline -- how fast the scenario plays out once triggered
+6. players -- every actor with objective, capability, constraint
+7. red_team -- adversary perspective and optimal move
+8. blue_team -- US/allied perspective and optimal response
+9. gray_actors -- neutral/opportunistic actors -- who benefits, who exploits
+10. branches -- 2-3 possible paths, each with probability and ALL 11 domain impacts
+11. historical_analog -- specific precedent with dates
+12. early_warning -- observable indicators with status (watching/triggered/clear)
+13. connected -- how this scenario links to other scenarios and predictions
 
 THE 11 DOMAINS (every branch must cover ALL of these):
 Military, Economic, Political, Humanitarian, Cyber, Corporate, Criminal, Information, Alliance, Energy, Financial
 
-Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be grounded in what is actually happening right now. No generic templates — every word should reflect current intelligence."""
+Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be grounded in what is actually happening right now. No generic templates -- every word should reflect current intelligence."""
 
-    result = call_gemini(prompt, max_tokens=8000)  # Using Gemini free tier
+    result = call_claude_atlas(prompt, max_tokens=8000)
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
 
@@ -4456,7 +4397,7 @@ Respond ONLY with valid JSON. No markdown, no backticks.
 {{"generated_at": "{datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC')}",
 "scorecard": {{"active": 20, "confirmed": 0, "evolving": 0, "invalidated": 0, "accuracy_rate": "NEW"}},
 "timeframes": [
-  {{"label": "Next 7 Days — X Active Predictions",
+  {{"label": "Next 7 Days -- X Active Predictions",
     "predictions": [
       {{
         "headline": "specific falsifiable prediction with acronyms expanded on first use",
@@ -4506,9 +4447,9 @@ Respond ONLY with valid JSON. No markdown, no backticks.
       }}
     ]
   }},
-  {{"label": "Next 30 Days — X Active Predictions", "predictions": []}},
-  {{"label": "Next 90 Days — X Active Predictions", "predictions": []}},
-  {{"label": "6+ Months — X Active Predictions", "predictions": []}}
+  {{"label": "Next 30 Days -- X Active Predictions", "predictions": []}},
+  {{"label": "Next 90 Days -- X Active Predictions", "predictions": []}},
+  {{"label": "6+ Months -- X Active Predictions", "predictions": []}}
 ]}}
 
 REQUIRED PREDICTION CATEGORIES - you MUST include predictions from ALL of these domains:
@@ -4577,9 +4518,9 @@ Every prediction must include a market_impact object with:
 - tickers: specific ETFs or stocks most affected (use US market tickers like XLE, XLF, GLD, USO, ITA, XAR, SPY, QQQ, EEM, FXI, EWJ, SMH, KWEB, etc.)
 - market_direction: risk-on, risk-off, sector-rotation, or neutral
 - asset_impacts: array of specific assets with direction (up/down/flat), magnitude (percentage range), and mechanism (why this asset moves)
-Connect every geopolitical prediction to its financial consequence. Be specific with ticker symbols and percentage ranges — someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
+Connect every geopolitical prediction to its financial consequence. Be specific with ticker symbols and percentage ranges -- someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
 
-    result = call_gemini(prompt, max_tokens=16000)  # Using Gemini free tier
+    result = call_claude_atlas(prompt, max_tokens=16000)
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
@@ -4607,7 +4548,7 @@ Connect every geopolitical prediction to its financial consequence. Be specific 
 
 # ── PSYOPS DETECTION ENGINE (v1) ──────────────────────────────────────
 # Two-call architecture: Scanner (~$1-2) then Deep Dive (~$2-3)
-# NEVER auto-trigger — Tyler must approve
+# NEVER auto-trigger -- Tyler must approve
 
 PSYOPS_SCAN_FILE = os.path.join(DATA_DIR, 'psyops_scan.json')
 PSYOPS_DETAILS_FILE = os.path.join(DATA_DIR, 'psyops_details.json')
@@ -4646,10 +4587,10 @@ def call_claude_psyops(prompt, max_tokens=8000):
             print(f"[PSYOPS] API error body: {error_detail[:500]}")
         return None
 
-PSYOPS_SCANNER_PROMPT = """You are Vantage's Information Operations Scanner — a detection system that identifies active psychological operations, coordinated inauthentic behavior, and narrative manipulation campaigns worldwide.
+PSYOPS_SCANNER_PROMPT = """You are Vantage's Information Operations Scanner -- a detection system that identifies active psychological operations, coordinated inauthentic behavior, and narrative manipulation campaigns worldwide.
 
 ## YOUR MISSION
-Scan the current global information environment and identify 3-5 active or recently active information operations, propaganda campaigns, or coordinated narrative manipulation efforts. Cover ALL actors — Western, Russian, Chinese, Iranian, domestic, corporate. No sacred cows. Both sides are red and blue.
+Scan the current global information environment and identify 3-5 active or recently active information operations, propaganda campaigns, or coordinated narrative manipulation efforts. Cover ALL actors -- Western, Russian, Chinese, Iranian, domestic, corporate. No sacred cows. Both sides are red and blue.
 
 ## CRITICAL DEFINITIONS
 - Psyop: Coordinated + deceptive effort to influence. Key: COORDINATED + DECEPTIVE.
@@ -4660,27 +4601,27 @@ Scan the current global information environment and identify 3-5 active or recen
 ## ANTI-PARANOIA GUARDRAILS
 1. THREE-INDICATOR MINIMUM from at least TWO categories before flagging coordination
 2. ORGANIC EXPLANATION CHECK first
-3. PROPORTIONALITY — extraordinary claims need extraordinary evidence
+3. PROPORTIONALITY -- extraordinary claims need extraordinary evidence
 4. CUI BONO IS NOT PROOF
-5. HANLON'S RAZOR — lazy journalism is not a psyop
+5. HANLON'S RAZOR -- lazy journalism is not a psyop
 
 ## DETECTION LAYERS
 1. Source Origin 2. Ownership Mapping 3. Narrative Timeline 4. Technique ID 5. False Confirmation 6. Convergence Typing 7. Acceleration Anomaly 8. Vocabulary Tracking 9. Absence Detection 10. Cross-Channel Patterns 11. Algorithm-as-Operator
 
 ## SACI SCORING (0.0-1.0 each, higher = more concerning)
-S — Source Integrity: transparency and independence of sources
-A — Actor Alignment: evidence of deliberate actor involvement
-C — Coordination Indicators: temporal, linguistic, network patterns
-I — Information Integrity: accuracy and contextualization of claims
+S -- Source Integrity: transparency and independence of sources
+A -- Actor Alignment: evidence of deliberate actor involvement
+C -- Coordination Indicators: temporal, linguistic, network patterns
+I -- Information Integrity: accuracy and contextualization of claims
 
 ## LEGITIMACY SCORING (5 factors, 0.0-1.0 each, 1.0 = most manipulative)
 1. Origin Transparency 2. Intent Transparency 3. Information Manipulation 4. Trust Exploitation 5. Deception Dependency
 
 ## CONFIDENCE LEVELS
-CONFIRMED — technical evidence or official acknowledgment
-PROBABLE — strong circumstantial evidence, known TTPs
-SUSPECTED — pattern matches playbooks, some indicators, gaps in evidence
-INDICATORS ONLY — anomalies detected, insufficient to characterize
+CONFIRMED -- technical evidence or official acknowledgment
+PROBABLE -- strong circumstantial evidence, known TTPs
+SUSPECTED -- pattern matches playbooks, some indicators, gaps in evidence
+INDICATORS ONLY -- anomalies detected, insufficient to characterize
 
 ## TECHNIQUES TO CHECK FOR
 firehose, strategic_ambiguity, wedge_amplification, astroturfing, narrative_laundering, hack_and_leak, emotional_hijacking, manufactured_consensus, anchoring, controlled_opposition, source_seeding
@@ -4721,23 +4662,23 @@ firehose, strategic_ambiguity, wedge_amplification, astroturfing, narrative_laun
 REMEMBER: Evidence chain for every claim. Both sides red and blue. Overclaiming destroys credibility."""
 
 
-PSYOPS_DEEP_DIVE_PROMPT_TEMPLATE = """You are Vantage's Deep Analysis Engine — a 7-pass intelligence analysis system.
+PSYOPS_DEEP_DIVE_PROMPT_TEMPLATE = """You are Vantage's Deep Analysis Engine -- a 7-pass intelligence analysis system.
 
 ## SCANNER RESULTS TO ANALYZE
 {scanner_results}
 
 ## 7-PASS ANALYSIS
 Run ALL passes on each campaign:
-1. NARRATIVE ANALYST — Map full narrative ecosystem, origins, evolution, gaps, convergence
-2. FINANCIAL INVESTIGATOR — Funding, ownership, lobbying, FARA, financial beneficiaries
-3. NETWORK MAPPER — Platform spread, account behavior, cross-platform coordination, topology
-4. TECHNIQUE PROFILER — Which manipulation playbooks are being used, with evidence
-5. RED TEAM — For EVERY actor: what are they doing to manipulate, what narratives, what techniques, what outcome sought
-6. BLUE TEAM — For EVERY actor: vulnerabilities, hidden facts, audience gaps, counter-narrative opportunities
-7. SYNTHESIS — Overall assessment, cross-campaign connections, predictions, watch indicators
+1. NARRATIVE ANALYST -- Map full narrative ecosystem, origins, evolution, gaps, convergence
+2. FINANCIAL INVESTIGATOR -- Funding, ownership, lobbying, FARA, financial beneficiaries
+3. NETWORK MAPPER -- Platform spread, account behavior, cross-platform coordination, topology
+4. TECHNIQUE PROFILER -- Which manipulation playbooks are being used, with evidence
+5. RED TEAM -- For EVERY actor: what are they doing to manipulate, what narratives, what techniques, what outcome sought
+6. BLUE TEAM -- For EVERY actor: vulnerabilities, hidden facts, audience gaps, counter-narrative opportunities
+7. SYNTHESIS -- Overall assessment, cross-campaign connections, predictions, watch indicators
 
 ## MANDATORY RULES
-- BOTH SIDES ARE RED AND BLUE — analyze Western ops with same rigor as adversary ops
+- BOTH SIDES ARE RED AND BLUE -- analyze Western ops with same rigor as adversary ops
 - Evidence chain for every claim
 - Anti-paranoia: organic first, coordination only when organic insufficient
 - Never claim more certainty than evidence supports
@@ -4781,7 +4722,7 @@ def trigger_psyops():
     mode = request.args.get('mode', 'full')  # full, scan_only, deep_dive_only
     focus = request.args.get('focus', '')  # optional region/topic focus
 
-    print(f"[PSYOPS] Trigger received — mode={mode}, focus={focus}")
+    print(f"[PSYOPS] Trigger received -- mode={mode}, focus={focus}")
 
     if mode in ('full', 'scan_only'):
         # Call 1: Scanner
@@ -4810,7 +4751,7 @@ def trigger_psyops():
         # Save scanner results
         with open(PSYOPS_SCAN_FILE, 'w') as f:
             json.dump(scan_data, f, indent=2, ensure_ascii=False)
-        print(f"[PSYOPS] Scanner complete — {len(scan_data.get('campaigns', []))} campaigns found")
+        print(f"[PSYOPS] Scanner complete -- {len(scan_data.get('campaigns', []))} campaigns found")
 
         if mode == 'scan_only':
             # Merge scan into combined psyops.json
@@ -4865,7 +4806,7 @@ def trigger_psyops():
         # Save deep dive results
         with open(PSYOPS_DETAILS_FILE, 'w') as f:
             json.dump(deep_data, f, indent=2, ensure_ascii=False)
-        print(f"[PSYOPS] Deep Dive complete — {len(deep_data.get('campaigns', []))} campaigns analyzed")
+        print(f"[PSYOPS] Deep Dive complete -- {len(deep_data.get('campaigns', []))} campaigns analyzed")
 
         # Merge into combined psyops.json
         combined = {
@@ -4903,18 +4844,18 @@ def stories_archive():
         return jsonify([])
 if __name__ == "__main__":
     print("Parallax starting...")
-    print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET — stories will be basic'}")
+    print(f"API key: {'present' if ANTHROPIC_API_KEY else 'NOT SET -- stories will be basic'}")
     print(f"Scrape interval: every {SCRAPE_INTERVAL_MINUTES} minutes")
 
-    # Flask is required — must be in requirements.txt
+    # Flask is required -- must be in requirements.txt
     if not FLASK:
         raise SystemExit("ERROR: Flask not installed. Add 'flask' to requirements.txt")
 
     # Start scraper in background thread
-    # v92: AUTO-SCRAPER ENABLED — runs at 5 AM Arizona (12:00 UTC)
+    # v92: AUTO-SCRAPER ENABLED -- runs at 5 AM Arizona (12:00 UTC)
     scraper_thread = threading.Thread(target=scheduler, daemon=True)
     scraper_thread.start()
-    print("Background scheduler ENABLED — auto-scrape + brief at 7 AM AZ")
+    print("Background scheduler ENABLED -- auto-scrape + brief at 7 AM AZ")
     # Start Flask server
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
