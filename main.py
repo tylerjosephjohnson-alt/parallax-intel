@@ -3985,8 +3985,8 @@ Include 4-6 cascading_effects. Be specific with numbers."""
             print(f"[ATLAS] JSON parse failed for {country_name}: {e}")
             return {'name': country_name, 'health_score': 50, 'assessment': 'Parse error', 'sections': [], 'cascading_effects': []}
     return country_data
- # ── v115: Predictions Intelligence Forecasting Engine ──
- # ── v116: Scenarios Global War Gaming Engine ──
+# ── v115: Predictions Intelligence Forecasting Engine ──
+# ── v116: Scenarios Global War Gaming Engine ──
 # Append this block to main.py BEFORE 
 # ── v120: Vantage Markets Integration Endpoints ──────────────────────
 # Event alerts, risk scores, and market signals for Vantage Markets
