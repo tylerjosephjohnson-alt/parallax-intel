@@ -3863,7 +3863,7 @@ def call_claude_atlas(prompt, max_tokens=8000):
         print(f"    Claude atlas error: {type(e).__name__}: {e}")
         return None
 
-ATLAS_FILE = os.path.join(VOLUME_PATH, 'atlas.json') if 'VOLUME_PATH' in dir() else 'atlas.json'
+ATLAS_FILE = os.path.join(DATA_DIR, 'atlas.json')
 
 @app.route('/atlas.json')
 def serve_atlas():
@@ -3987,9 +3987,191 @@ Include 4-6 cascading_effects. Be specific with numbers."""
     return country_data
  # ── v115: Predictions Intelligence Forecasting Engine ──
  # ── v116: Scenarios Global War Gaming Engine ──
-# Append this block to main.py BEFORE if __name__ == "__main__":
+# Append this block to main.py BEFORE 
+# ── v120: Vantage Markets Integration Endpoints ──────────────────────
+# Event alerts, risk scores, and market signals for Vantage Markets
 
-SCENARIOS_FILE = os.path.join(VOLUME_PATH, 'scenarios.json') if 'VOLUME_PATH' in dir() else 'scenarios.json'
+@app.route('/event-alerts.json')
+def serve_event_alerts():
+    """Market-relevant event alerts from current stories."""
+    try:
+        if not os.path.exists(DATA_FILE):
+            return jsonify({"alerts": [], "generated_at": utc_now().isoformat()})
+        with open(DATA_FILE, 'r') as f:
+            data = json.load(f)
+        stories = data.get("stories", [])
+        alerts = []
+        CAT_MAP = {
+            "conflict-war": {"sectors": ["Defense", "Energy", "Materials"], "tickers": ["ITA", "XLE", "GLD", "USO"], "direction": "risk-off"},
+            "economics": {"sectors": ["Finance", "Consumer", "Industrial"], "tickers": ["XLF", "SPY", "DIA"], "direction": "sector-rotation"},
+            "politics": {"sectors": ["Finance", "Healthcare", "Energy"], "tickers": ["XLF", "XLV", "SPY"], "direction": "neutral"},
+            "human-rights": {"sectors": ["Consumer", "Industrial"], "tickers": ["EEM", "SPY"], "direction": "risk-off"},
+            "environment": {"sectors": ["Energy", "Utilities", "Materials"], "tickers": ["XLE", "XLU", "XLB"], "direction": "sector-rotation"},
+            "technology": {"sectors": ["Tech", "Communication"], "tickers": ["QQQ", "XLK", "SMH"], "direction": "risk-on"},
+            "disinformation": {"sectors": [], "tickers": [], "direction": "neutral"},
+        }
+        REG_MAP = {
+            "middle-east": ["USO", "GLD", "XLE"],
+            "europe": ["EZU", "FEZ", "HEDJ"],
+            "africa": ["AFK", "EZA"],
+            "asia-pacific": ["EWJ", "FXI", "AAXJ"],
+            "americas": ["SPY", "EWW", "EWZ"],
+            "russia-fsu": ["GLD", "USO"],
+            "south-asia": ["INDA", "PIN"],
+            "latin-america": ["ILF", "EWZ", "EWW"],
+            "global": ["SPY", "ACWI", "VT"],
+            "china": ["FXI", "KWEB", "MCHI"],
+        }
+        urgency_map = {"urgent": 5, "active": 4, "elevated": 3, "routine": 2}
+        for story in stories:
+            category = story.get("category", "politics")
+            region = story.get("region", "global")
+            confidence = story.get("confidence", "low")
+            signal_score = story.get("signal_score", 50)
+            watch = story.get("watch_level", "routine")
+            severity = urgency_map.get(watch, 2)
+            if confidence == "high":
+                severity = min(severity + 1, 5)
+            if signal_score < 40:
+                continue
+            sector_info = CAT_MAP.get(category, {"sectors": [], "tickers": [], "direction": "neutral"})
+            region_tickers = REG_MAP.get(region, [])
+            all_tickers = list(dict.fromkeys(sector_info["tickers"] + region_tickers))
+            alerts.append({
+                "event": story.get("headline", ""),
+                "severity": severity,
+                "severity_label": watch,
+                "confidence": confidence,
+                "signal_score": signal_score,
+                "category": category,
+                "region": region,
+                "sectors_affected": sector_info["sectors"],
+                "tickers": all_tickers[:8],
+                "market_direction": sector_info["direction"],
+                "timestamp": story.get("published", ""),
+                "story_id": story.get("id", ""),
+                "so_what": story.get("so_what_short", ""),
+            })
+        alerts.sort(key=lambda a: (-a["severity"], -a["signal_score"]))
+        return jsonify({
+            "alerts": alerts[:20],
+            "generated_at": utc_now().isoformat(),
+            "total_stories": len(stories),
+            "alerts_count": len(alerts),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "alerts": []}), 500
+
+
+@app.route('/risk-score.json')
+def serve_risk_score():
+    """Global + per-region risk scores from all Vantage data."""
+    try:
+        stories = []
+        predictions = []
+        psyops_campaigns = []
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, 'r') as f:
+                stories = json.load(f).get("stories", [])
+        pred_file = os.path.join(DATA_DIR, 'predictions.json')
+        if os.path.exists(pred_file):
+            with open(pred_file, 'r') as f:
+                pred_raw = json.load(f)
+                for tf in pred_raw.get("timeframes", []):
+                    predictions.extend(tf.get("predictions", []))
+        psyops_file_path = os.path.join(DATA_DIR, 'psyops.json')
+        if os.path.exists(psyops_file_path):
+            with open(psyops_file_path, 'r') as f:
+                ps = json.load(f)
+                if ps.get("scan"):
+                    psyops_campaigns = ps["scan"].get("campaigns", [])
+        urgency_map = {"urgent": 10, "active": 7, "elevated": 4, "routine": 1}
+        story_urgency = sum(urgency_map.get(s.get("watch_level", "routine"), 1) for s in stories[:20])
+        story_component = min(40, story_urgency * 2)
+        high_prob_conflict = [p for p in predictions
+                             if p.get("category") in ("military", "conflict-war", "economic")
+                             and p.get("probability", 0) > 60]
+        pred_component = min(30, len(high_prob_conflict) * 8)
+        active_campaigns = [c for c in psyops_campaigns if c.get("status") == "active"]
+        psyops_component = min(30, len(active_campaigns) * 6)
+        global_score = min(100, story_component + pred_component + psyops_component)
+        REGIONS = ["middle-east", "europe", "africa", "asia-pacific", "americas",
+                   "russia-fsu", "south-asia", "latin-america", "china", "global"]
+        region_scores = {}
+        for region in REGIONS:
+            region_stories = [s for s in stories if s.get("region") == region]
+            r_urgency = sum(urgency_map.get(s.get("watch_level", "routine"), 1) for s in region_stories)
+            region_preds = [p for p in predictions if region in (p.get("regions", []) + [p.get("region", "")])]
+            r_conflict = len([p for p in region_preds if p.get("probability", 0) > 60])
+            r_score = min(100, r_urgency * 3 + r_conflict * 10)
+            region_scores[region] = {
+                "score": r_score,
+                "story_count": len(region_stories),
+                "high_prob_predictions": r_conflict,
+                "level": "critical" if r_score >= 75 else "elevated" if r_score >= 50 else "moderate" if r_score >= 25 else "low",
+            }
+        return jsonify({
+            "global_risk_score": global_score,
+            "global_level": "critical" if global_score >= 75 else "elevated" if global_score >= 50 else "moderate" if global_score >= 25 else "low",
+            "components": {
+                "story_urgency": story_component,
+                "prediction_risk": pred_component,
+                "psyops_intensity": psyops_component,
+            },
+            "regions": region_scores,
+            "active_psyops_campaigns": len(active_campaigns),
+            "total_stories": len(stories),
+            "total_predictions": len(predictions),
+            "generated_at": utc_now().isoformat(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "global_risk_score": 50}), 500
+
+
+@app.route('/market-signals.json')
+def serve_market_signals():
+    """Predictions filtered to market-relevant events with asset impact tags."""
+    try:
+        pred_file = os.path.join(DATA_DIR, 'predictions.json')
+        if not os.path.exists(pred_file):
+            return jsonify({"signals": [], "generated_at": utc_now().isoformat()})
+        with open(pred_file, 'r') as f:
+            pred_data = json.load(f)
+        signals = []
+        market_cats = {"economic", "military", "political", "technology"}
+        for tf in pred_data.get("timeframes", []):
+            timeframe_label = tf.get("label", "")
+            for pred in tf.get("predictions", []):
+                has_market_impact = bool(pred.get("market_impact"))
+                is_market_relevant = pred.get("category", "") in market_cats
+                if has_market_impact or is_market_relevant:
+                    signals.append({
+                        "headline": pred.get("headline", ""),
+                        "probability": pred.get("probability", 50),
+                        "confidence_band": pred.get("confidence_band", ""),
+                        "category": pred.get("category", ""),
+                        "region": pred.get("region", ""),
+                        "regions": pred.get("regions", []),
+                        "timeframe": timeframe_label,
+                        "status": pred.get("status", "active"),
+                        "market_impact": pred.get("market_impact", {}),
+                        "accelerators": pred.get("accelerators", []),
+                        "decelerators": pred.get("decelerators", []),
+                        "logic_chain": pred.get("logic_chain", []),
+                        "connected_predictions": pred.get("connected_predictions", ""),
+                    })
+        signals.sort(key=lambda s: -s.get("probability", 0))
+        return jsonify({
+            "signals": signals,
+            "count": len(signals),
+            "generated_at": utc_now().isoformat(),
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "signals": []}), 500
+
+if __name__ == "__main__":
+
+SCENARIOS_FILE = os.path.join(DATA_DIR, 'scenarios.json')
 
 @app.route('/scenarios.json')
 def serve_scenarios():
@@ -4015,7 +4197,7 @@ def generate_scenarios():
     stories_context = ""
     brief_context = ""
     try:
-        stories_file = os.path.join(VOLUME_PATH, 'stories.json') if 'VOLUME_PATH' in dir() else 'stories.json'
+        stories_file = os.path.join(DATA_DIR, 'stories.json')
         if os.path.exists(stories_file):
             with open(stories_file, 'r') as f:
                 stories = json.load(f)
@@ -4023,7 +4205,7 @@ def generate_scenarios():
                 stories_context = "Current stories: " + "; ".join(headlines)
     except: pass
     try:
-        brief_file = os.path.join(VOLUME_PATH, 'brief.json') if 'VOLUME_PATH' in dir() else 'brief.json'
+        brief_file = os.path.join(DATA_DIR, 'brief.json')
         if os.path.exists(brief_file):
             with open(brief_file, 'r') as f:
                 brief = json.load(f)
@@ -4159,7 +4341,7 @@ Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be gr
     return scn_data
 # Append this block to main.py BEFORE if __name__ == "__main__":
 
-PREDICTIONS_FILE = os.path.join(VOLUME_PATH, 'predictions.json') if 'VOLUME_PATH' in dir() else 'predictions.json'
+PREDICTIONS_FILE = os.path.join(DATA_DIR, 'predictions.json')
 
 @app.route('/predictions.json')
 def serve_predictions():
@@ -4187,7 +4369,7 @@ def generate_predictions():
     stories_context = ""
     brief_context = ""
     try:
-        stories_file = os.path.join(VOLUME_PATH, 'stories.json') if 'VOLUME_PATH' in dir() else 'stories.json'
+        stories_file = os.path.join(DATA_DIR, 'stories.json')
         if os.path.exists(stories_file):
             with open(stories_file, 'r') as f:
                 stories = json.load(f)
@@ -4195,7 +4377,7 @@ def generate_predictions():
                 stories_context = "Current top stories: " + "; ".join(headlines)
     except: pass
     try:
-        brief_file = os.path.join(VOLUME_PATH, 'brief.json') if 'VOLUME_PATH' in dir() else 'brief.json'
+        brief_file = os.path.join(DATA_DIR, 'brief.json')
         if os.path.exists(brief_file):
             with open(brief_file, 'r') as f:
                 brief = json.load(f)
@@ -4255,7 +4437,16 @@ Respond ONLY with valid JSON. No markdown, no backticks.
           {{"text": "specific observable indicator", "status": "watching"}},
           {{"text": "another indicator", "status": "triggered"}}
         ],
-        "sources": "List of sources"
+        "sources": "List of sources",
+        "market_impact": {
+          "sectors_affected": ["Energy", "Defense"],
+          "tickers": ["XLE", "LMT", "BA"],
+          "market_direction": "risk-off",
+          "asset_impacts": [
+            {"asset": "Brent Crude", "direction": "up", "magnitude": "+5-8%", "mechanism": "supply disruption"},
+            {"asset": "Gold", "direction": "up", "magnitude": "+2-3%", "mechanism": "safe haven flow"}
+          ]
+        }
       }}
     ]
   }},
@@ -4322,7 +4513,15 @@ headline, probability (0-100), confidence_band, status, category, region, region
 
 Indicator status values: "watching", "triggered", "clear"
 
-Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every prediction must be falsifiable — someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
+Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every prediction must be falsifiable.
+
+MARKET IMPACT (REQUIRED for every prediction):
+Every prediction must include a market_impact object with:
+- sectors_affected: which stock market sectors move (Energy, Defense, Tech, Finance, Healthcare, Consumer, Industrial, Materials, Utilities, Real Estate)
+- tickers: specific ETFs or stocks most affected (use US market tickers like XLE, XLF, GLD, USO, ITA, XAR, SPY, QQQ, EEM, FXI, EWJ, SMH, KWEB, etc.)
+- market_direction: risk-on, risk-off, sector-rotation, or neutral
+- asset_impacts: array of specific assets with direction (up/down/flat), magnitude (percentage range), and mechanism (why this asset moves)
+Connect every geopolitical prediction to its financial consequence. Be specific with ticker symbols and percentage ranges — someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
 
     result = call_claude_atlas(prompt, max_tokens=16000)
     if not result:
@@ -4354,9 +4553,9 @@ Be SPECIFIC with numbers, dates, thresholds. Use real current data. Every predic
 # Two-call architecture: Scanner (~$1-2) then Deep Dive (~$2-3)
 # NEVER auto-trigger — Tyler must approve
 
-PSYOPS_SCAN_FILE = os.path.join(VOLUME_PATH, 'psyops_scan.json') if 'VOLUME_PATH' in dir() else 'psyops_scan.json'
-PSYOPS_DETAILS_FILE = os.path.join(VOLUME_PATH, 'psyops_details.json') if 'VOLUME_PATH' in dir() else 'psyops_details.json'
-PSYOPS_FILE = os.path.join(VOLUME_PATH, 'psyops.json') if 'VOLUME_PATH' in dir() else 'psyops.json'
+PSYOPS_SCAN_FILE = os.path.join(DATA_DIR, 'psyops_scan.json')
+PSYOPS_DETAILS_FILE = os.path.join(DATA_DIR, 'psyops_details.json')
+PSYOPS_FILE = os.path.join(DATA_DIR, 'psyops.json')
 
 def call_claude_psyops(prompt, max_tokens=8000):
     """Psyops-specific Claude caller with 300s timeout for large JSON responses"""
