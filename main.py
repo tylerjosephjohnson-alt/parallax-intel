@@ -4,6 +4,16 @@ Paste this as main.py in a new Replit Python project.
 Add ANTHROPIC_API_KEY in Replit Secrets (padlock icon).
 The Flask server serves the app + stories.json.
 The background thread runs the scraper every 30 minutes.
+
+@app.route('/test-gemini')
+def test_gemini_endpoint():
+    """Test Gemini API with a simple call — costs nothing."""
+    try:
+        result = call_gemini("Say hello in exactly 3 words.", max_tokens=50)
+        return jsonify({"status": "ok", "result": result[:200] if result else "empty", "gemini_key_set": bool(GEMINI_API_KEY)})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e), "gemini_key_set": bool(GEMINI_API_KEY)})
+
 @app.route('/test-claude')
 def test_claude():
     try:
@@ -79,6 +89,55 @@ MAX_STORIES = 20
 HOURS_LOOKBACK = 48
 CLUSTER_MIN_SOURCES = 3  # v43: raised from 2 — fewer clusters qualify, less Claude calls
 MODEL = "claude-sonnet-4-6"
+
+# ── Gemini Free Tier — zero-cost alternative to Claude for development/testing ──
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = "gemini-2.5-flash"
+
+def call_gemini(prompt, max_tokens=8000):
+    """Call Google Gemini API — FREE tier. Drop-in replacement for call_claude_atlas."""
+    if not GEMINI_API_KEY:
+        print("[GEMINI] No GEMINI_API_KEY set — falling back to Claude")
+        return call_claude_atlas(prompt, max_tokens)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+    payload = json.dumps({
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.3}
+    }).encode()
+    req = Request(url, data=payload,
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urlopen(req, timeout=300) as r:
+            resp = json.loads(r.read())
+            candidates = resp.get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if parts:
+                    text = parts[0].get("text", "")
+                    if text:
+                        # Strip markdown fences
+                        text = text.strip()
+                        if text.startswith("```"):
+                            text = text.split("\n", 1)[-1]
+                            if text.endswith("```"):
+                                text = text[:-3]
+                            text = text.strip()
+                        return text
+            print(f"[GEMINI] Empty response: {json.dumps(resp)[:300]}")
+            return None
+    except Exception as e:
+        err_body = ""
+        try:
+            if hasattr(e, 'read'):
+                err_body = e.read().decode('utf-8', errors='replace')[:500]
+        except:
+            pass
+        print(f"[GEMINI] Error: {type(e).__name__}: {e}")
+        if err_body:
+            print(f"[GEMINI] Body: {err_body}")
+        return None
+
+
 DATA_FILE            = os.path.join(DATA_DIR, "stories.json")
 
 # FRED economic data series — real indicators for overlay context
@@ -3928,7 +3987,7 @@ The JSON must have this EXACT structure (all values are strings or numbers, NO n
 REGIONAL METRICS must include ALL 11: Avg GDP Growth, Intra-Regional Trade Volume, Regional Integration Score, Key Export Revenue status, Commodity Price Exposure, Regional Contagion Risk, Migration Flows, Shared Infrastructure Vulnerability, Regional Currency Dynamics, Cross-Border Conflict Economic Cost, Regional Development Bank Activity.
 
 Include 3-5 cascading_effects showing cross-country chains."""
-    result = call_claude_atlas(prompt, max_tokens=6000)
+    result = call_gemini(prompt, max_tokens=6000)  # Using Gemini free tier
     if not result:
         return {'name': region_name, 'health_score': 50, 'summary': 'No data', 'countries': [], 'metrics': [], 'cascading_effects': []}
     try:
@@ -3973,7 +4032,7 @@ SECTION 4 Vulnerability Geopolitical (category vulnerability) 12 metrics: Food I
 For EVERY metric provide: name, current (specific number), baseline, baseline_label, direction (use arrows), direction_class (ub/db/ug/dg/st/cr), status (critical/declining/caution/stable/improving), category, why (2-3 sentences), cascade (1-2 sentences), source.
 
 Include 4-6 cascading_effects. Be specific with numbers."""
-    result = call_claude_atlas(prompt, max_tokens=8000)
+    result = call_gemini(prompt, max_tokens=8000)  # Using Gemini free tier
     if not result:
         return {'name': country_name, 'health_score': 50, 'assessment': 'Generation failed', 'sections': [], 'cascading_effects': []}
     try:
@@ -4320,7 +4379,7 @@ Military, Economic, Political, Humanitarian, Cyber, Corporate, Criminal, Informa
 
 Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be grounded in what is actually happening right now. No generic templates — every word should reflect current intelligence."""
 
-    result = call_claude_atlas(prompt, max_tokens=8000)
+    result = call_gemini(prompt, max_tokens=8000)  # Using Gemini free tier
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
 
@@ -4520,7 +4579,7 @@ Every prediction must include a market_impact object with:
 - asset_impacts: array of specific assets with direction (up/down/flat), magnitude (percentage range), and mechanism (why this asset moves)
 Connect every geopolitical prediction to its financial consequence. Be specific with ticker symbols and percentage ranges — someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
 
-    result = call_claude_atlas(prompt, max_tokens=16000)
+    result = call_gemini(prompt, max_tokens=16000)  # Using Gemini free tier
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
