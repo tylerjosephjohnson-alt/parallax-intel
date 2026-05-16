@@ -4568,6 +4568,11 @@ Every prediction must include a market_impact object with:
 Connect every geopolitical prediction to its financial consequence. Be specific with ticker symbols and percentage ranges -- someone should be able to look at it in 7/30/90 days and say definitively whether it was right or wrong."""
 
     result = call_gemini(prompt, max_tokens=16000)
+    print(f"[PREDICTIONS] Gemini returned: {len(result) if result else 0} chars")
+    if result:
+        print(f"[PREDICTIONS] First 500: {result[:500]}")
+    else:
+        print("[PREDICTIONS] Gemini returned None")
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
