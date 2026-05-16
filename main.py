@@ -4340,7 +4340,7 @@ Generate 5 high-quality scenarios. Each must have all fields shown in the templa
 
 Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be grounded in what is actually happening right now. No generic templates -- every word should reflect current intelligence."""
 
-    result = call_gemini(prompt, max_tokens=8000)
+    result = call_claude_atlas(prompt, max_tokens=8000)
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
 
