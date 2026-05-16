@@ -4020,7 +4020,7 @@ SECTION 4 Vulnerability Geopolitical (category vulnerability) 12 metrics: Food I
 For EVERY metric provide: name, current (specific number), baseline, baseline_label, direction (use arrows), direction_class (ub/db/ug/dg/st/cr), status (critical/declining/caution/stable/improving), category, why (2-3 sentences), cascade (1-2 sentences), source.
 
 Include 4-6 cascading_effects. Be specific with numbers."""
-    result = call_gemini(prompt, max_tokens=8000)
+    result = call_gemini(prompt, max_tokens=32000)
     if not result:
         return {'name': country_name, 'health_score': 50, 'assessment': 'Generation failed', 'sections': [], 'cascading_effects': []}
     try:
@@ -4264,7 +4264,7 @@ def generate_scenarios():
 
 {brief_context}
 
-TASK: Read the current intelligence above. Identify the 10-15 most consequential trigger events happening RIGHT NOW that could branch into multiple futures. For each one, war-game it across ALL domains simultaneously.
+TASK: Read the current intelligence above. Identify the 5-7 most consequential trigger events happening RIGHT NOW that could branch into multiple futures. For each one, war-game it across ALL domains simultaneously.
 
 Do NOT use a pre-set list of scenarios. Let the CURRENT DATA drive what scenarios you create. The scenarios must reflect what is actually happening in the world today.
 
@@ -4371,14 +4371,33 @@ Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be gr
     if not result:
         return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
 
+    print(f"[SCENARIOS] Gemini returned: {len(result) if result else 0} chars")
+    if result:
+        print(f"[SCENARIOS] First 300: {result[:300]}")
     try:
         scn_data = json.loads(result)
-    except:
+        print(f"[SCENARIOS] json.loads OK")
+    except Exception as e1:
+        print(f"[SCENARIOS] json.loads failed: {e1}")
+        repaired = result
+        last_complete = repaired.rfind('},')
+        if last_complete > 0:
+            repaired = repaired[:last_complete+1]
+            ob = repaired.count('{') - repaired.count('}')
+            obrk = repaired.count('[') - repaired.count(']')
+            print(f"[SCENARIOS] Truncation repair: closing {obrk} [ and {ob} {{ }}")
+            repaired += ']' * obrk
+            repaired += '}' * ob
         try:
-            scn_data = json5.loads(result)
-        except Exception as e:
-            print(f"[SCENARIOS] JSON parse failed: {e}")
-            return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
+            scn_data = json.loads(repaired)
+            print(f"[SCENARIOS] Repaired parse OK")
+        except Exception as e2:
+            try:
+                scn_data = json5.loads(repaired)
+                print(f"[SCENARIOS] json5 OK")
+            except Exception as e3:
+                print(f"[SCENARIOS] All parse failed: {e3}")
+                return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'scenarios': [], 'stats': {}}
 
     with open(SCENARIOS_FILE, 'w') as f:
         json.dump(scn_data, f, indent=2)
