@@ -4270,17 +4270,6 @@ Do NOT use a pre-set list of scenarios. Let the CURRENT DATA drive what scenario
 
 IMPORTANT ACRONYM RULE (standard across entire site): On first use of any acronym in a section, write the acronym first then the full name in parentheses. Example: "IEA (International Energy Agency)" then just "IEA" after that. Text inside parentheses does NOT count toward any length or word limits.
 
-QUALITY CHECK -- your scenarios MUST collectively cover ALL of these domains. If the current situation does not naturally produce a scenario in a domain, create one from emerging signals:
-- Military escalation (war expansion, new fronts, weapons deployment, proxy activation)
-- Economic shock (market crash, currency collapse, supply chain break, sanctions cascade)
-- Political rupture (alliance fracture, regime change, election disruption, governance crisis)
-- Technology disruption (compute chokepoint, AI breakthrough, export controls, autonomous weapons)
-- Criminal/cartel (narco-state formation, trafficking route shift, cartel vs state, black market exploitation)
-- Climate/resource (water conflict, grid collapse, famine cascade, energy crisis)
-- Information warfare (deepfake deployment, coordinated disinfo, media capture, narrative control)
-- Pandemic/health (pathogen emergence, health system collapse, bioweapon signal)
-- Black swan (unexpected event nobody is watching that could reshape everything)
-
 Respond ONLY with valid JSON. No markdown, no backticks.
 
 {{"generated_at": "{datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC')}",
@@ -4347,23 +4336,7 @@ Respond ONLY with valid JSON. No markdown, no backticks.
   }}
 ]}}
 
-REQUIREMENTS FOR EACH SCENARIO:
-1. title -- clear scenario name
-2. threat_level -- critical/elevated/monitoring/dormant based on how close the trigger is to firing
-3. trigger_condition -- specific, observable event that starts this
-4. trigger_probability -- 0-100 how likely the trigger fires
-5. timeline -- how fast the scenario plays out once triggered
-6. players -- every actor with objective, capability, constraint
-7. red_team -- adversary perspective and optimal move
-8. blue_team -- US/allied perspective and optimal response
-9. gray_actors -- neutral/opportunistic actors -- who benefits, who exploits
-10. branches -- 2-3 possible paths, each with probability and ALL 11 domain impacts
-11. historical_analog -- specific precedent with dates
-12. early_warning -- observable indicators with status (watching/triggered/clear)
-13. connected -- how this scenario links to other scenarios and predictions
-
-THE 11 DOMAINS (every branch must cover ALL of these):
-Military, Economic, Political, Humanitarian, Cyber, Corporate, Criminal, Information, Alliance, Energy, Financial
+Generate 5 high-quality scenarios. Each must have all fields shown in the template above.
 
 Be SPECIFIC. Use real numbers, real actors, real data. Every scenario must be grounded in what is actually happening right now. No generic templates -- every word should reflect current intelligence."""
 
