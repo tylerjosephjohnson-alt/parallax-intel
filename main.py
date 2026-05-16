@@ -4482,15 +4482,15 @@ Respond ONLY with valid JSON. No markdown, no backticks.
           {{"text": "another indicator", "status": "triggered"}}
         ],
         "sources": "List of sources",
-        "market_impact": {
+        "market_impact": {{
           "sectors_affected": ["Energy", "Defense"],
           "tickers": ["XLE", "LMT", "BA"],
           "market_direction": "risk-off",
           "asset_impacts": [
-            {"asset": "Brent Crude", "direction": "up", "magnitude": "+5-8%", "mechanism": "supply disruption"},
-            {"asset": "Gold", "direction": "up", "magnitude": "+2-3%", "mechanism": "safe haven flow"}
+            {{"asset": "Brent Crude", "direction": "up", "magnitude": "+5-8%", "mechanism": "supply disruption"}},
+            {{"asset": "Gold", "direction": "up", "magnitude": "+2-3%", "mechanism": "safe haven flow"}}
           ]
-        }
+        }}
       }}
     ]
   }},
