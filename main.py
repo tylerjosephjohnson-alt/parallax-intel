@@ -4583,14 +4583,33 @@ Connect every geopolitical prediction to its financial consequence. Be specific 
     if first_brace >= 0 and last_brace > first_brace:
         result = result[first_brace:last_brace+1]
 
+    # Robust JSON parse with truncation repair
     try:
         pred_data = json.loads(result)
-    except:
+        print(f"[PREDICTIONS] json.loads OK: {list(pred_data.keys())}")
+    except Exception as e1:
+        print(f"[PREDICTIONS] json.loads failed: {e1}")
+        # Try to repair truncated JSON by closing open brackets
+        repaired = result
+        open_braces = repaired.count('{') - repaired.count('}')
+        open_brackets = repaired.count('[') - repaired.count(']')
+        if open_braces > 0 or open_brackets > 0:
+            print(f"[PREDICTIONS] Repairing: {open_brackets} unclosed [ and {open_braces} unclosed {{ }}")
+            repaired = repaired.rstrip().rstrip(',')
+            repaired += ']' * open_brackets
+            repaired += '}' * open_braces
         try:
-            pred_data = json5.loads(result)
-        except Exception as e:
-            print(f"[PREDICTIONS] JSON parse failed: {e}")
-            return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
+            pred_data = json.loads(repaired)
+            print(f"[PREDICTIONS] Repaired json.loads OK: {list(pred_data.keys())}")
+        except Exception as e2:
+            print(f"[PREDICTIONS] Repaired json.loads failed: {e2}")
+            try:
+                pred_data = json5.loads(repaired)
+                print(f"[PREDICTIONS] json5 OK: {list(pred_data.keys())}")
+            except Exception as e3:
+                print(f"[PREDICTIONS] All parse attempts failed: {e3}")
+                globals()['_LAST_CLAUDE_ERROR'] = f"PRED_PARSE_FAIL: {str(e3)[:200]}"
+                return {'generated_at': datetime.now(timezone.utc).strftime('%d %b %Y %H:%M UTC'), 'timeframes': [], 'scorecard': {}}
 
     # Save to file
     with open(PREDICTIONS_FILE, 'w') as f:
