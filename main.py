@@ -2822,7 +2822,7 @@ Respond with ONLY a JSON object (no markdown). Keep the response compact.
   "velocity_score": 50,
   "provisional": false
 }}"""
-    result = call_claude(prompt, max_tokens=4000)
+    result = call_gemini(prompt, max_tokens=4000)
     if not result:
             _DEBUG_STORY_GEN.append({"stage": "claude_empty", "cluster_size": len(cluster_articles), "cluster_first_title": cluster_articles[0].get("title", "")[:80] if cluster_articles else "", "last_error": _LAST_CLAUDE_ERROR})
             print(f"  Story gen: Claude returned empty")
@@ -3326,10 +3326,14 @@ def run_scraper():
 
                 stories.append(story)
                 # Step 2: enrich with deep analysis (non-fatal if fails)
-                try:
-                    enrich_story(story)
-                except Exception as e:
-                    print(f"  Enrich error (non-fatal): {e}")
+                # Only enrich high-signal stories with Claude (saves API cost)
+                if story.get("signal_score", 0) >= 60 or story.get("confidence") == "high":
+                    try:
+                        enrich_story(story)
+                    except Exception as e:
+                        print(f"  Enrich error (non-fatal): {e}")
+                else:
+                    print(f"  Skipped enrichment (score {story.get('signal_score',0)})")
 
             time.sleep(1.2)
         else:
