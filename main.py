@@ -2984,249 +2984,219 @@ def fetch_fred(series_id):
 # DAILY BRIEF GENERATOR
 # ─────────────────────────────────────────────
 
+def generate_region_brief(region_name, region_stories, all_stories_context=""):
+    """Generate a focused brief for one region using Gemini (free)."""
+    if not region_stories:
+        return None
+    
+    story_text = ""
+    for s in region_stories[:8]:
+        story_text += f"- {s.get('headline','')} [{s.get('confidence','?')}] score:{s.get('signal_score',50)}\n"
+        story_text += f"  {s.get('summary','')[:200]}\n"
+    
+    prompt = f"""Intelligence analyst producing a regional brief for {region_name}. Today: {utc_now().strftime('%A %d %B %Y')}.
+
+STORIES FOR THIS REGION:
+{story_text}
+
+GLOBAL CONTEXT (other regions):
+{all_stories_context[:500]}
+
+Produce a focused regional brief. Valid JSON only, no markdown.
+
+{{"region": "{region_name}",
+"threat_level": "critical|elevated|moderate|low",
+"threat_reason": "one sentence why this threat level",
+"headline": "single most important development in this region today",
+"situation": "2-3 paragraphs. What is happening in {region_name} right now. Specific actors, numbers, locations. Every claim attributed.",
+"connections": "1-2 paragraphs. How events in {region_name} connect to other regions. Name specific links.",
+"watch": "3-5 specific verifiable indicators to watch in next 24 hours. Numbered list.",
+"buried": "1-2 paragraphs. What is in intelligence sources but not mainstream coverage for this region.",
+"key_actors": ["actor1", "actor2", "actor3"],
+"risk_score": 65
+}}"""
+    
+    result = call_gemini(prompt, max_tokens=4000)
+    if not result:
+        return None
+    
+    # JSON extraction
+    first_brace = result.find('{')
+    last_brace = result.rfind('}')
+    if first_brace >= 0 and last_brace > first_brace:
+        result = result[first_brace:last_brace+1]
+    
+    try:
+        return json.loads(result)
+    except:
+        try:
+            return json5.loads(result)
+        except Exception as e:
+            print(f"[BRIEF] Region {region_name} parse failed: {e}")
+            return None
+
+
+def generate_global_summary(region_briefs):
+    """Generate a global executive summary from all regional briefs using Gemini (free)."""
+    regions_text = ""
+    for rb in region_briefs:
+        if rb:
+            regions_text += f"\n{rb.get('region','')}: {rb.get('headline','')} [threat: {rb.get('threat_level','?')}]\n"
+            regions_text += f"  {rb.get('situation','')[:200]}\n"
+    
+    prompt = f"""Senior intelligence analyst. Synthesize these regional briefs into one global executive summary. Today: {utc_now().strftime('%A %d %B %Y')}.
+
+REGIONAL BRIEFS:
+{regions_text}
+
+Produce a global summary. Valid JSON only, no markdown.
+
+{{"date": "{utc_now().strftime('%A %d %B %Y')}",
+"threat_level": "critical|elevated|moderate|low",
+"threat_reason": "one sentence",
+"headline_brief": "single most important global development today",
+"executive_summary": "3-4 paragraphs, 200-300 words. Helicopter view of the world today. What matters most, what connects, what to watch. Dense, no filler.",
+"cross_region_connections": "2-3 specific connections between regions that readers would miss",
+"top_risks": ["risk1", "risk2", "risk3"],
+"what_to_watch": "3-5 numbered specific indicators across all regions"
+}}"""
+    
+    result = call_gemini(prompt, max_tokens=4000)
+    if not result:
+        return None
+    
+    first_brace = result.find('{')
+    last_brace = result.rfind('}')
+    if first_brace >= 0 and last_brace > first_brace:
+        result = result[first_brace:last_brace+1]
+    
+    try:
+        return json.loads(result)
+    except:
+        try:
+            return json5.loads(result)
+        except Exception as e:
+            print(f"[BRIEF] Global summary parse failed: {e}")
+            return None
+
+
 def generate_daily_brief():
     """
-    Generates a structured intelligence brief at 05:00 UTC.
-    Uses Claude with web search to pull overnight developments,
-    synthesises with current stories.json data, and saves to brief.json.
+    Per-region daily brief system.
+    Generates a brief for each region from its stories,
+    then synthesizes a global executive summary.
+    Uses Gemini free tier for all calls.
     """
     print("\n" + "="*50)
-    print(f"Daily Brief -- {utc_now().strftime('%A %d %B %Y · 05:00 UTC')}")
+    print(f"Daily Brief -- {utc_now().strftime('%A %d %B %Y -- %H:%M UTC')}")
     print("="*50)
 
-    if not ANTHROPIC_API_KEY:
-        print("  Brief: ANTHROPIC_API_KEY not set -- skipping")
+    # Load current stories
+    stories = []
+    try:
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE) as f:
+                stories = json.load(f).get("stories", [])
+    except Exception as e:
+        print(f"  Brief: Could not load stories: {e}")
+    
+    if not stories:
+        print("  Brief: No stories available -- skipping")
         return
 
-    # Load current stories for context
-    try:
-        with open(DATA_FILE) as f:
-            current = json.load(f)
-        stories = current.get("stories", [])
-        story_context = "\n".join(
-            f"- {s.get('headline','?')} [{s.get('confidence','?')} confidence, score {s.get('signal_score',0)}]"
-            for s in stories[:8]
-        )
-    except Exception:
-        story_context = "No current stories available."
-
-    today = utc_now().strftime("%A %d %B %Y")
-
-    system_prompt = f"""You are Parallax -- an intelligence analysis system producing a morning briefing for {today}.
-
-Using your web search tool, search for overnight developments across ALL major regions. Cover every region -- do not let one conflict dominate. Search topics:
-- MIDDLE EAST: US-Iran war, ceasefire status, Strait of Hormuz, Israel-Palestine
-- EUROPE: Ukraine frontline, Russian strikes, NATO activity, EU policy
-- AFRICA: Sudan/Darfur RSF, Sahel security, East Africa, South Africa
-- AMERICAS: US domestic policy, drug trafficking enforcement, Latin American politics
-- ASIA PACIFIC: China military, Taiwan Strait, North Korea, ASEAN
-- SOUTH ASIA: India-Pakistan, Afghanistan, Sri Lanka, Myanmar
-- RUSSIA/EURASIA: Russian economy, Central Asia, Caucasus
-- GLOBAL: Energy markets, financial system, trade policy, organized crime, human trafficking
-- Any other major breaking developments overnight
-
-Current tracked stories for context:
-{story_context}
-
-Produce a concise, factual morning brief. Every claim must be attributed to a specific source.
-SCANNABLE OUTPUT RULES FOR DAILY BRIEF (covers the globe, not single events):
-- paragraph_1_situation: Break into sub-sections by region or theater. Use short labeled headers like HORMUZ: or UKRAINE: or AFRICA: before each sub-section. Separate sub-sections with line breaks. 2-3 sentences of prose under each header. Cover the globe -- do not let one conflict dominate.
-- paragraph_2_connections: Opening sentence naming the pattern. Then 2-3 specific connections, each on its own line starting with a dash. Each connection is 1-2 sentences tying stories together by name. End with one sentence on the broader implication.
-- paragraph_3_what_watch: Numbered list (1. 2. 3.) of specific verifiable indicators. Each names the actor, the action, and what it would mean. Specific primary evidence, not generic themes.
-- paragraph_4_buried: Prose format. 2-3 sentences on the underreported story plus 1-2 on why the silence matters. No bullets needed -- this reads as narrative.
-- Apply the same rules to each top_story paragraph.
-MANDATORY REGION COVERAGE: The top_stories array MUST include at minimum one story for EACH of these regions: middle-east, europe, africa, americas, asia-pacific, south-asia, russia-fsu, and one global/transnational story. That is 8 minimum top_stories. If no major development occurred in a region, still include the most significant activity from that region. Every region tab on the dashboard must have content.
-
-
-
-Return ONLY a JSON object (no markdown):
-{{
-  "date": "{today}",
-  "generated_at": "05:00 UTC",
-  "threat_level": "elevated|high|critical|moderate",
-  "threat_level_reason": "One sentence explaining the overall threat assessment for today",
-  "headline_brief": "One sentence: the single most significant development overnight",
-
-  "intelligence_overview": {{
-    "paragraph_1_situation": "CURRENT SITUATION -- 150-200 words. What is the state of the world right now across all tracked theatres. Lead with the most urgent. Name actors, numbers, locations. Every sentence sourced. This is the helicopter view -- what a senior analyst would say in the first 60 seconds of a briefing.",
-    "paragraph_2_connections": "THE CONNECTIONS -- 150-200 words. What links these stories together that the reader would miss reading headlines separately. What pattern runs across the Iran war, Ukraine, Sudan, economic signals? Who are the common actors appearing in multiple theatres? What financial flows connect seemingly separate events? What second-order consequence from Story A is now visible in Story B?",
-    "paragraph_3_what_watch": "WHAT TO WATCH TODAY -- 150-200 words. The 3-5 most specific, verifiable things that will indicate how today develops. Not general themes -- specific actors, specific actions, specific indicators. What primary evidence (IAEA access, vessel movements, OFAC announcement) would confirm or deny each scenario.",
-    "paragraph_4_buried": "WHAT MAINSTREAM IS MISSING -- 100-150 words. The story that is in the intel sources but not on front pages. What is ACLED tracking that Reuters isn't reporting? What regional specialist published something with zero pickup? What silence from a state actor is itself a signal? This is the paragraph that requires reading between the lines."
-  }},
-
-  "top_stories": [
-    {{
-      "rank": 1,
-      "region": "middle-east",
-      "story_card_ids": ["story-6", "story-7"],
-      "headline": "Specific headline max 15 words -- factual not vague",
-      "paragraph_1_situation": "180-200 words. What is the current situation for THIS story specifically. Lead with what happened. Every sentence attributed to a named source. Specific actors, numbers, locations. This is the primary factual record.",
-      "paragraph_2_connections": "180-200 words. What links THIS story to the other stories in today's brief. Be specific -- name the other stories and explain the exact mechanism connecting them. Financial flows, shared actors, causal chains, strategic interactions. This paragraph must reference at least 2 other stories from today.",
-      "paragraph_3_watch": "150-180 words. 3-5 specific verifiable things to watch in the next 24 hours for THIS story. Name the actor, the action, and what it would mean. Primary evidence (IAEA statement, vessel count, ISPR release) that would confirm or deny each scenario.",
-      "paragraph_4_buried": "120-150 words. What is in the intelligence sources but not in mainstream coverage for THIS story. What is ACLED tracking that Reuters isn't reporting? What silence from a state actor is itself a signal? What technical detail changes the meaning of the headline?",
-      "significance": "One sentence: the single most important thing to understand about this story",
-      "contested_claim": "If any source disputes another, state both precisely -- or null",
-      "has_prediction": true,
-      "has_psyop": false,
-      "has_econ": false,
-      "source": "Primary source names"
-    }}
-  ],
-
-  "overnight_signals": [
-    {{
-      "signal": "One sentence -- actor, action, number",
-      "source": "Named source",
-      "significance": "brief|moderate|high",
-      "story_card_id": "story-1"
-    }}
-  ],
-
-  "contested_numbers_today": [
-    {{
-      "metric": "What is being contested",
-      "actor_a": "First actor",
-      "value_a": "Their figure",
-      "actor_b": "Second actor",
-      "value_b": "Their figure",
-      "why_gap": "One sentence: structural reason for the discrepancy"
-    }}
-  ],
-
-  "analyst_note": "2-3 sentences: the most important pattern or under-reported story -- what requires reading between the lines today",
-  "sources_consulted": ["source1", "source2", "source3"]
-}}
-
-Include 5-6 top_stories, 5-8 overnight_signals, and 1-3 contested_numbers_today entries.
-Map story_card_ids: story-1=Ukraine, story-2=Sudan, story-3=China, story-4=Turkey, story-5=Manipur, story-6=Iran/Hormuz, story-7=Oil/IMF, story-8=Pakistan/Islamabad.
-The four intelligence_overview paragraphs are the core analytical product -- make them dense, specific, and reveal connections.
-"""
-
-    payload = json.dumps({
-        "model":      "claude-sonnet-4-6",
-        "max_tokens": 16000,
-        "system":     system_prompt,
-        "messages":   [{"role": "user", "content": f"Generate the Parallax morning brief for {today}. Search for overnight developments now."}],
-        "tools":      [{"type": "web_search_20250305", "name": "web_search"}]
-    }).encode()
-
-    req = Request(
-        "https://api.anthropic.com/v1/messages",
-        data=payload,
-        headers={
-            "Content-Type":      "application/json",
-            "x-api-key":         ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01"
-        },
-        method="POST"
+    # Define regions
+    REGIONS = {
+        "middle-east": "Middle East",
+        "europe": "Europe",
+        "africa": "Africa",
+        "asia-pacific": "Asia Pacific",
+        "americas": "Americas",
+        "russia-fsu": "Russia / Eurasia",
+        "south-asia": "South Asia",
+    }
+    
+    # Build context string for cross-region awareness
+    all_context = "\n".join(
+        f"- {s.get('headline','')}" for s in stories[:15]
     )
-
+    
+    # Generate per-region briefs
+    region_briefs = []
+    for region_key, region_name in REGIONS.items():
+        region_stories = [s for s in stories if s.get("region") == region_key]
+        if not region_stories:
+            print(f"  {region_name}: no stories -- skipping")
+            continue
+        
+        print(f"  Generating brief for {region_name} ({len(region_stories)} stories)...")
+        rb = generate_region_brief(region_name, region_stories, all_context)
+        if rb:
+            rb["region_key"] = region_key
+            region_briefs.append(rb)
+            print(f"  {region_name}: {rb.get('threat_level','?')} -- {rb.get('headline','')[:60]}")
+        else:
+            print(f"  {region_name}: generation failed")
+        
+        time.sleep(1)  # Rate limit
+    
+    # Generate global summary
+    print("  Generating global summary...")
+    global_summary = generate_global_summary(region_briefs)
+    
+    if not global_summary:
+        global_summary = {
+            "date": utc_now().strftime('%A %d %B %Y'),
+            "threat_level": "elevated",
+            "headline_brief": "Brief generation partial -- see regional briefs",
+            "executive_summary": "Global summary generation failed. See individual regional briefs below.",
+        }
+    
+    # Archive old brief
     try:
-        with urlopen(req, timeout=600) as r:
-            data = json.loads(r.read())
-
-        text = " ".join(
-            b["text"] for b in data.get("content", [])
-            if b.get("type") == "text"
-        ).strip()
-
-        if not text:
-            print("  Brief: No text returned from Claude")
-            return
-
-        clean = text.replace("```json","").replace("```","").strip()
-        j_start = clean.find("{")
-        j_end   = clean.rfind("}") + 1
-        json_text = clean[j_start:j_end]
-
-        # v8 robust JSON parse: strict -> repair pass -> debug fallback
-        try:
-            brief = json.loads(json_text, strict=False)
-        except json.JSONDecodeError as parse_err:
-            print(f"  Brief: strict parse failed at {parse_err}, attempting repair")
-            import re as _re
-            repaired = json_text
-            # Normalise smart quotes and fancy dashes Claude emits
-            _smart = {
-                "\u201c": '"', "\u201d": '"',
-                "\u2018": "'", "\u2019": "'",
-                "\u2013": "-", "\u2014": "-",
-                "\u2026": "...", "\u00a0": " ",
-            }
-            for _bad, _good in _smart.items():
-                repaired = repaired.replace(_bad, _good)
-            # Strip stray backtick fences left mid-document
-            repaired = repaired.replace("```", "")
-            # Remove trailing commas before } or ]
-            repaired = _re.sub(r",(\s*[}\]])", r"\1", repaired)
-            # Remove stray // line comments
-            repaired = _re.sub(r"^\s*//[^\n]*$", "", repaired, flags=_re.MULTILINE)
-            try:
-                brief = brief = json.loads(repaired, strict=False)
-                print(f"  Brief: repair successful")
-            except json.JSONDecodeError as repair_err:
-                print(f"  Brief: repair failed too ({repair_err})")
-                try:
-                    ts = utc_now().strftime("%Y%m%d-%H%M%S")
-                    with open(f"brief-raw-{ts}.txt", "w", encoding="utf-8") as f:
-                        f.write(text)
-                    with open(f"brief-repaired-{ts}.txt", "w", encoding="utf-8") as f:
-                        f.write(repaired)
-                    print(f"  Brief: wrote debug files brief-raw-{ts}.txt")
-                except Exception:
-                    pass
-                raise
-
-        # Add metadata
-        brief["generated_at_iso"] = utc_now().isoformat()
-        brief["generated_by"]     = "Parallax daily brief engine v1"
-
-        # v93: Archive old brief before overwriting
-        try:
-            if os.path.exists(BRIEF_FILE):
-                with open(BRIEF_FILE, "r") as old_f:
-                    old_brief = json.load(old_f)
-                old_brief["type"] = "daily_brief"
-                old_brief["archived_at"] = utc_now().isoformat()
-                archive = []
-                if os.path.exists(BRIEF_ARCHIVE_FILE):
-                    with open(BRIEF_ARCHIVE_FILE, "r") as af:
-                        archive = json.load(af)
-                archive.insert(0, old_brief)
-                archive = archive[:30]  # Keep last 30 briefs
-                with open(BRIEF_ARCHIVE_FILE, "w") as af:
-                    json.dump(archive, af, indent=2, ensure_ascii=False)
-                print(f"  Archived previous brief ({old_brief.get('date', 'unknown')})")
-        except Exception as ae:
-            print(f"  Brief archive error: {ae}")
-
-        # v113: Map nested brief fields to top level for frontend tab rendering
-        _ov = brief.get("intelligence_overview", {})
-        if isinstance(_ov, dict):
-            brief["analysis"] = _ov.get("paragraph_2_connections", "")
-            brief["expected_today"] = _ov.get("paragraph_3_what_watch", "")
-            brief["overview_prose"] = _ov.get("paragraph_1_situation", "")
-            brief["buried_lede"] = _ov.get("paragraph_4_buried", "")
-
-        with open(BRIEF_FILE, "w") as f:
-            json.dump(brief, f, indent=2, ensure_ascii=False)
-
-        print(f"  Brief generated: {brief.get('headline_brief','?')[:70]}")
-        print(f"  Threat level: {brief.get('threat_level','?')}")
-        print(f"  Top stories: {len(brief.get('top_stories',[]))}")
-
-    except Exception as e:
-        # Capture full error body from HTTPError for debugging
-        err_body = ""
-        try:
-            if hasattr(e, 'read'):
-                err_body = e.read().decode('utf-8', errors='replace')[:800]
-        except Exception:
-            pass
-        print(f"  Brief error: {e}")
-        if err_body:
-            print(f"  Brief error body: {err_body}")
-
+        if os.path.exists(BRIEF_FILE):
+            with open(BRIEF_FILE, "r") as old_f:
+                old_brief = json.load(old_f)
+            old_brief["archived_at"] = utc_now().isoformat()
+            archive = []
+            if os.path.exists(BRIEF_ARCHIVE_FILE):
+                with open(BRIEF_ARCHIVE_FILE, "r") as af:
+                    archive = json.load(af)
+            archive.insert(0, old_brief)
+            archive = archive[:30]
+            with open(BRIEF_ARCHIVE_FILE, "w") as af:
+                json.dump(archive, af, indent=2, ensure_ascii=False)
+    except Exception as ae:
+        print(f"  Brief archive error: {ae}")
+    
+    # Build final brief structure
+    brief = {
+        "date": utc_now().strftime('%A %d %B %Y'),
+        "generated_at_iso": utc_now().isoformat(),
+        "generated_by": "Vantage per-region brief engine v2",
+        "global": global_summary,
+        "regions": {rb["region_key"]: rb for rb in region_briefs},
+        "region_count": len(region_briefs),
+        "story_count": len(stories),
+        "threat_level": global_summary.get("threat_level", "elevated"),
+        "headline_brief": global_summary.get("headline_brief", ""),
+        # Legacy fields for backward compatibility
+        "intelligence_overview": {
+            "paragraph_1_situation": global_summary.get("executive_summary", ""),
+            "paragraph_2_connections": global_summary.get("cross_region_connections", ""),
+            "paragraph_3_what_watch": global_summary.get("what_to_watch", ""),
+            "paragraph_4_buried": "",
+        },
+        "overview_prose": global_summary.get("executive_summary", ""),
+        "analysis": global_summary.get("cross_region_connections", ""),
+        "expected_today": global_summary.get("what_to_watch", ""),
+        "top_stories": [],
+    }
+    
+    with open(BRIEF_FILE, "w") as f:
+        json.dump(brief, f, indent=2, ensure_ascii=False)
+    
+    print(f"  Brief complete: {len(region_briefs)} regions, threat level: {brief['threat_level']}")
+    print(f"  Headline: {brief['headline_brief'][:70]}")
 
 def run_scraper():
     global last_run
