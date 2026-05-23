@@ -3130,6 +3130,7 @@ def generate_daily_brief():
     Uses Gemini free tier.
     """
     print("\n" + "="*50)
+    import traceback
     print(f"Daily Brief v3 -- {utc_now().strftime('%A %d %B %Y -- %H:%M UTC')}")
     print("="*50)
 
@@ -3185,7 +3186,13 @@ def generate_daily_brief():
             continue
         
         print(f"  Generating brief for {region_name}...")
-        rb = generate_region_brief(region_name, articles)
+        try:
+            rb = generate_region_brief(region_name, articles)
+        except Exception as e:
+            print(f"  [BRIEF] ERROR generating {region_name}: {e}")
+            import traceback
+            traceback.print_exc()
+            rb = None
         if rb:
             rb["region_key"] = region_key
             region_briefs.append(rb)
@@ -3197,7 +3204,13 @@ def generate_daily_brief():
     
     # Step 4: Generate global summary
     print("  Generating global summary...")
-    global_summary = generate_global_summary(region_briefs)
+    try:
+        global_summary = generate_global_summary(region_briefs)
+    except Exception as e:
+        print(f"  [BRIEF] ERROR generating global summary: {e}")
+        import traceback
+        traceback.print_exc()
+        global_summary = None
     
     if not global_summary:
         global_summary = {
@@ -3667,9 +3680,14 @@ if FLASK:
     @app.route("/trigger-brief")
     def trigger_brief():
         """Manual brief trigger for testing"""
-        t = threading.Thread(target=generate_daily_brief, daemon=True)
-        t.start()
-        return jsonify({"status": "triggered", "message": "Brief generation started"})
+        # Run synchronously so errors are visible in logs
+        try:
+            generate_daily_brief()
+            return jsonify({"status": "ok", "message": "Brief generation complete"})
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({"status": "error", "error": str(e)}), 500
 
     @app.route("/trigger-enrich")
     def trigger_enrich():
