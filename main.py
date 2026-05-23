@@ -121,6 +121,30 @@ def call_gemini(prompt, max_tokens=8000):
                 err_body = e.read().decode("utf-8", errors="replace")[:500]
         except:
             pass
+        # Retry on rate limit (429)
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in err_body:
+            wait_time = 15
+            print(f"[GEMINI] Rate limited -- waiting {wait_time}s then retrying...")
+            time.sleep(wait_time)
+            try:
+                with urlopen(req, timeout=300) as r2:
+                    resp2 = json.loads(r2.read())
+                    candidates2 = resp2.get("candidates", [])
+                    if candidates2:
+                        parts2 = candidates2[0].get("content", {}).get("parts", [])
+                        if parts2:
+                            text2 = parts2[0].get("text", "")
+                            if text2:
+                                text2 = text2.strip()
+                                if text2.startswith("```"):
+                                    text2 = text2.split("\n", 1)[-1]
+                                    if text2.endswith("```"):
+                                        text2 = text2[:-3]
+                                    text2 = text2.strip()
+                                return text2
+            except Exception as e2:
+                print(f"[GEMINI] Retry also failed: {e2}")
+                return None
         print(f"[GEMINI] Error: {type(e).__name__}: {e}")
         if err_body:
             print(f"[GEMINI] Body: {err_body}")
@@ -3205,7 +3229,7 @@ def generate_daily_brief():
         else:
             print(f"    Failed")
         
-        time.sleep(1)
+        time.sleep(15)  # Gemini free tier: 20 req/min limit
     
     # Step 4: Generate global summary
     print("  Generating global summary...")
