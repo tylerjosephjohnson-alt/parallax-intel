@@ -18,7 +18,7 @@ Requirements (install in Replit shell):
   pip install spacy && python -m spacy download en_core_web_sm  # optional but recommended
 """
 
-import json, os, hashlib, time, re, threading
+import json, os, hashlib, time, re, threading, sys
 from datetime import datetime, timezone, timedelta
 from urllib.request import urlopen, Request
 from urllib.error import URLError
@@ -3151,7 +3151,7 @@ def generate_daily_brief():
     except:
         pass
     
-    print(f"  Fetched {len(all_articles)} articles from {len(RSS_FEEDS)} feeds")
+    print(f"  Fetched {len(all_articles)} articles from {len(RSS_FEEDS)} feeds"); sys.stdout.flush()
     
     if len(all_articles) < 5:
         print("  Too few articles -- skipping brief")
@@ -3169,13 +3169,18 @@ def generate_daily_brief():
     }
     
     region_articles = {k: [] for k in REGIONS}
+    unclassified = []
     for article in all_articles:
         region = classify_article_region(article)
         if region in region_articles:
             region_articles[region].append(article)
+        else:
+            unclassified.append(article)
+    print(f"  Unclassified articles: {len(unclassified)}"); sys.stdout.flush()
     
     for k, v in region_articles.items():
         print(f"  {REGIONS[k]}: {len(v)} articles")
+    sys.stdout.flush()
 
     # Step 3: Generate per-region briefs
     region_briefs = []
@@ -3264,7 +3269,7 @@ def generate_daily_brief():
     with open(BRIEF_FILE, "w") as f:
         json.dump(brief, f, indent=2, ensure_ascii=False)
     
-    print(f"\n  Brief complete: {len(region_briefs)} regions, {len(all_articles)} articles")
+    print(f"\n  Brief complete: {len(region_briefs)} regions, {len(all_articles)} articles"); sys.stdout.flush()
     print(f"  Threat level: {brief['threat_level']}")
     print(f"  Headline: {brief['headline_brief'][:70]}")
 
