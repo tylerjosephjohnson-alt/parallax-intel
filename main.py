@@ -2984,43 +2984,85 @@ def fetch_fred(series_id):
 # DAILY BRIEF GENERATOR
 # ─────────────────────────────────────────────
 
-def generate_region_brief(region_name, region_stories, all_stories_context=""):
-    """Generate a focused brief for one region using Gemini (free)."""
-    if not region_stories:
+def classify_article_region(article):
+    """Classify an article into a region based on source, content, and metadata."""
+    # Check source-based classification first
+    source = article.get("source", "").lower()
+    title = article.get("title", "").lower()
+    summary = (article.get("summary", "") or "").lower()
+    text = title + " " + summary
+    
+    REGION_KEYWORDS = {
+        "middle-east": ["iran", "iraq", "syria", "israel", "gaza", "hamas", "hezbollah", "hormuz", "saudi", "yemen", "houthi", "qatar", "uae", "emirates", "lebanon", "jordan", "oman", "bahrain", "palestine", "irgc", "tehran", "baghdad", "damascus", "riyadh", "jerusalem", "tel aviv", "netanyahu", "khamenei"],
+        "europe": ["ukraine", "russia", "nato", "eu ", "european", "germany", "france", "uk ", "britain", "poland", "zelensky", "kyiv", "moscow", "brussels", "london", "paris", "berlin", "macron", "scholz", "starmer"],
+        "africa": ["sudan", "rsf", "darfur", "sahel", "nigeria", "ethiopia", "kenya", "south africa", "congo", "drc", "mali", "niger", "burkina", "somalia", "mozambique", "bamako", "khartoum", "addis"],
+        "asia-pacific": ["china", "taiwan", "japan", "korea", "asean", "philippines", "south china sea", "beijing", "tokyo", "pyongyang", "xi jinping", "kim jong"],
+        "americas": ["us ", "united states", "trump", "congress", "pentagon", "washington", "mexico", "canada", "brazil", "colombia", "venezuela", "fentanyl", "border"],
+        "russia-fsu": ["russia", "kremlin", "putin", "belarus", "kazakhstan", "uzbekistan", "georgia", "caucasus", "central asia", "moscow"],
+        "south-asia": ["india", "pakistan", "bangladesh", "sri lanka", "myanmar", "afghanistan", "kashmir", "modi", "islamabad", "new delhi", "taliban"],
+    }
+    
+    scores = {}
+    for region, keywords in REGION_KEYWORDS.items():
+        score = sum(1 for kw in keywords if kw in text)
+        if score > 0:
+            scores[region] = score
+    
+    if scores:
+        return max(scores, key=scores.get)
+    return "global"
+
+
+def generate_region_brief(region_name, region_articles):
+    """Generate a brief for one region from raw RSS articles using Gemini."""
+    if not region_articles:
         return None
     
-    story_text = ""
-    for s in region_stories[:8]:
-        story_text += f"- {s.get('headline','')} [{s.get('confidence','?')}] score:{s.get('signal_score',50)}\n"
-        story_text += f"  {s.get('summary','')[:200]}\n"
+    # Build article digest
+    article_text = ""
+    for a in region_articles[:15]:
+        source = a.get("source", "unknown")
+        lean = a.get("lean", "")
+        title = a.get("title", "")
+        summary = (a.get("summary", "") or a.get("body", "") or "")[:300]
+        pub = a.get("published", "")[:16]
+        article_text += f"[{source}] [{lean}] {title}\n  {summary}\n  Published: {pub}\n\n"
     
     prompt = f"""Intelligence analyst producing a regional brief for {region_name}. Today: {utc_now().strftime('%A %d %B %Y')}.
 
-STORIES FOR THIS REGION:
-{story_text}
+RAW INTELLIGENCE ARTICLES FOR {region_name.upper()}:
+{article_text}
 
-GLOBAL CONTEXT (other regions):
-{all_stories_context[:500]}
+RULES:
+- Synthesize these articles into ONE coherent regional intelligence brief
+- Lead with what happened, not what sources said
+- No filler. Every sentence adds information
+- Neutral. No sides. Facts only
+- When sources disagree, state both positions
+- Expand acronyms on first use
 
-Produce a focused regional brief. Valid JSON only, no markdown.
+Produce a regional brief. Valid JSON only, no markdown.
 
 {{"region": "{region_name}",
 "threat_level": "critical|elevated|moderate|low",
 "threat_reason": "one sentence why this threat level",
-"headline": "single most important development in this region today",
-"situation": "2-3 paragraphs. What is happening in {region_name} right now. Specific actors, numbers, locations. Every claim attributed.",
-"connections": "1-2 paragraphs. How events in {region_name} connect to other regions. Name specific links.",
-"watch": "3-5 specific verifiable indicators to watch in next 24 hours. Numbered list.",
-"buried": "1-2 paragraphs. What is in intelligence sources but not mainstream coverage for this region.",
-"key_actors": ["actor1", "actor2", "actor3"],
-"risk_score": 65
+"headline": "single most important development in {region_name} today max 15 words",
+"situation": "2-3 paragraphs. What is happening right now. Specific actors, numbers, locations. Lead with the most urgent development.",
+"connections": "1-2 paragraphs. How events in {region_name} connect to other regions and global dynamics.",
+"watch_today": "3-5 specific verifiable indicators to watch. Numbered. Name the actor, the action, what it means.",
+"buried": "1 paragraph. What is in the intelligence sources but not getting mainstream attention.",
+"key_developments": [
+  {{"headline": "development 1", "status": "escalating|stable|de-escalating", "confidence": "high|medium|low"}},
+  {{"headline": "development 2", "status": "escalating|stable|de-escalating", "confidence": "high|medium|low"}}
+],
+"risk_score": 65,
+"sources_used": ["source1", "source2"]
 }}"""
     
     result = call_gemini(prompt, max_tokens=4000)
     if not result:
         return None
     
-    # JSON extraction
     first_brace = result.find('{')
     last_brace = result.rfind('}')
     if first_brace >= 0 and last_brace > first_brace:
@@ -3037,28 +3079,28 @@ Produce a focused regional brief. Valid JSON only, no markdown.
 
 
 def generate_global_summary(region_briefs):
-    """Generate a global executive summary from all regional briefs using Gemini (free)."""
+    """Generate a global executive summary from all regional briefs."""
     regions_text = ""
     for rb in region_briefs:
         if rb:
-            regions_text += f"\n{rb.get('region','')}: {rb.get('headline','')} [threat: {rb.get('threat_level','?')}]\n"
-            regions_text += f"  {rb.get('situation','')[:200]}\n"
+            regions_text += f"\n{rb.get('region','')}: [{rb.get('threat_level','?')}] {rb.get('headline','')}\n"
+            regions_text += f"  {(rb.get('situation','') or '')[:250]}\n"
     
-    prompt = f"""Senior intelligence analyst. Synthesize these regional briefs into one global executive summary. Today: {utc_now().strftime('%A %d %B %Y')}.
+    prompt = f"""Senior intelligence analyst. Synthesize regional briefs into one global executive summary. Today: {utc_now().strftime('%A %d %B %Y')}.
 
 REGIONAL BRIEFS:
 {regions_text}
 
-Produce a global summary. Valid JSON only, no markdown.
+Valid JSON only, no markdown.
 
 {{"date": "{utc_now().strftime('%A %d %B %Y')}",
 "threat_level": "critical|elevated|moderate|low",
 "threat_reason": "one sentence",
 "headline_brief": "single most important global development today",
-"executive_summary": "3-4 paragraphs, 200-300 words. Helicopter view of the world today. What matters most, what connects, what to watch. Dense, no filler.",
-"cross_region_connections": "2-3 specific connections between regions that readers would miss",
+"executive_summary": "3-4 paragraphs, 200-300 words. State of the world today. What matters most, what connects across regions, what to watch. Dense, no filler.",
+"cross_region_connections": "2-3 specific connections between regions that readers would miss reading headlines separately",
 "top_risks": ["risk1", "risk2", "risk3"],
-"what_to_watch": "3-5 numbered specific indicators across all regions"
+"what_to_watch": "3-5 numbered indicators across all regions"
 }}"""
     
     result = call_gemini(prompt, max_tokens=4000)
@@ -3082,29 +3124,39 @@ Produce a global summary. Valid JSON only, no markdown.
 
 def generate_daily_brief():
     """
-    Per-region daily brief system.
-    Generates a brief for each region from its stories,
-    then synthesizes a global executive summary.
-    Uses Gemini free tier for all calls.
+    Per-region daily brief engine v3.
+    Scrapes RSS feeds directly, classifies articles by region,
+    generates a brief for each region, then synthesizes global summary.
+    Uses Gemini free tier.
     """
     print("\n" + "="*50)
-    print(f"Daily Brief -- {utc_now().strftime('%A %d %B %Y -- %H:%M UTC')}")
+    print(f"Daily Brief v3 -- {utc_now().strftime('%A %d %B %Y -- %H:%M UTC')}")
     print("="*50)
 
-    # Load current stories
-    stories = []
-    try:
-        if os.path.exists(DATA_FILE):
-            with open(DATA_FILE) as f:
-                stories = json.load(f).get("stories", [])
-    except Exception as e:
-        print(f"  Brief: Could not load stories: {e}")
+    # Step 1: Fetch fresh articles from RSS feeds
+    print("  Fetching RSS feeds...")
+    all_articles = []
+    for feed in RSS_FEEDS:
+        try:
+            arts = fetch_rss(feed)
+            all_articles.extend(arts)
+        except Exception as e:
+            pass
     
-    if not stories:
-        print("  Brief: No stories available -- skipping")
+    # Also fetch GDELT for conflict signals
+    try:
+        gdelt = fetch_gdelt()
+        all_articles.extend(gdelt)
+    except:
+        pass
+    
+    print(f"  Fetched {len(all_articles)} articles from {len(RSS_FEEDS)} feeds")
+    
+    if len(all_articles) < 5:
+        print("  Too few articles -- skipping brief")
         return
 
-    # Define regions
+    # Step 2: Classify articles by region
     REGIONS = {
         "middle-east": "Middle East",
         "europe": "Europe",
@@ -3115,31 +3167,35 @@ def generate_daily_brief():
         "south-asia": "South Asia",
     }
     
-    # Build context string for cross-region awareness
-    all_context = "\n".join(
-        f"- {s.get('headline','')}" for s in stories[:15]
-    )
+    region_articles = {k: [] for k in REGIONS}
+    for article in all_articles:
+        region = classify_article_region(article)
+        if region in region_articles:
+            region_articles[region].append(article)
     
-    # Generate per-region briefs
+    for k, v in region_articles.items():
+        print(f"  {REGIONS[k]}: {len(v)} articles")
+
+    # Step 3: Generate per-region briefs
     region_briefs = []
     for region_key, region_name in REGIONS.items():
-        region_stories = [s for s in stories if s.get("region") == region_key]
-        if not region_stories:
-            print(f"  {region_name}: no stories -- skipping")
+        articles = region_articles[region_key]
+        if len(articles) < 2:
+            print(f"  {region_name}: too few articles -- skipping")
             continue
         
-        print(f"  Generating brief for {region_name} ({len(region_stories)} stories)...")
-        rb = generate_region_brief(region_name, region_stories, all_context)
+        print(f"  Generating brief for {region_name}...")
+        rb = generate_region_brief(region_name, articles)
         if rb:
             rb["region_key"] = region_key
             region_briefs.append(rb)
-            print(f"  {region_name}: {rb.get('threat_level','?')} -- {rb.get('headline','')[:60]}")
+            print(f"    {rb.get('threat_level','?')} -- {rb.get('headline','')[:60]}")
         else:
-            print(f"  {region_name}: generation failed")
+            print(f"    Failed")
         
-        time.sleep(1)  # Rate limit
+        time.sleep(1)
     
-    # Generate global summary
+    # Step 4: Generate global summary
     print("  Generating global summary...")
     global_summary = generate_global_summary(region_briefs)
     
@@ -3148,10 +3204,10 @@ def generate_daily_brief():
             "date": utc_now().strftime('%A %d %B %Y'),
             "threat_level": "elevated",
             "headline_brief": "Brief generation partial -- see regional briefs",
-            "executive_summary": "Global summary generation failed. See individual regional briefs below.",
+            "executive_summary": "Global summary generation failed.",
         }
     
-    # Archive old brief
+    # Step 5: Archive old brief
     try:
         if os.path.exists(BRIEF_FILE):
             with open(BRIEF_FILE, "r") as old_f:
@@ -3166,20 +3222,20 @@ def generate_daily_brief():
             with open(BRIEF_ARCHIVE_FILE, "w") as af:
                 json.dump(archive, af, indent=2, ensure_ascii=False)
     except Exception as ae:
-        print(f"  Brief archive error: {ae}")
+        print(f"  Archive error: {ae}")
     
-    # Build final brief structure
+    # Step 6: Build final brief
     brief = {
         "date": utc_now().strftime('%A %d %B %Y'),
         "generated_at_iso": utc_now().isoformat(),
-        "generated_by": "Vantage per-region brief engine v2",
+        "generated_by": "Vantage per-region brief engine v3",
         "global": global_summary,
         "regions": {rb["region_key"]: rb for rb in region_briefs},
         "region_count": len(region_briefs),
-        "story_count": len(stories),
+        "article_count": len(all_articles),
         "threat_level": global_summary.get("threat_level", "elevated"),
         "headline_brief": global_summary.get("headline_brief", ""),
-        # Legacy fields for backward compatibility
+        # Legacy compatibility
         "intelligence_overview": {
             "paragraph_1_situation": global_summary.get("executive_summary", ""),
             "paragraph_2_connections": global_summary.get("cross_region_connections", ""),
@@ -3195,7 +3251,8 @@ def generate_daily_brief():
     with open(BRIEF_FILE, "w") as f:
         json.dump(brief, f, indent=2, ensure_ascii=False)
     
-    print(f"  Brief complete: {len(region_briefs)} regions, threat level: {brief['threat_level']}")
+    print(f"\n  Brief complete: {len(region_briefs)} regions, {len(all_articles)} articles")
+    print(f"  Threat level: {brief['threat_level']}")
     print(f"  Headline: {brief['headline_brief'][:70]}")
 
 def run_scraper():
