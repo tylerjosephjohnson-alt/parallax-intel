@@ -222,6 +222,46 @@
     border-left: 3px solid var(--steel); border-radius: 0 8px 8px 0;
     font-size: 13px; line-height: 1.6; margin: 16px 0;
   }
+  .fact-method { font-size: 13px; line-height: 1.65; color: var(--text-dim); margin: 0; max-width: 68ch; }
+  .fact-count { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--steel); margin: 0 0 16px; }
+  .fact-section { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--steel); margin: 26px 0 10px; }
+  .fact-meta-drawer {
+    margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border);
+  }
+  .fact-meta-drawer details {
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card);
+    margin-bottom: 10px; padding: 0 14px;
+  }
+  .fact-meta-drawer summary {
+    cursor: pointer; list-style: none; font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-dim); padding: 12px 0;
+  }
+  .fact-meta-drawer summary::-webkit-details-marker { display: none; }
+  .fact-meta-drawer details[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .fact-topic-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px; margin: 0 0 12px;
+  }
+  .fact-topic-cell {
+    border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+  }
+  .fact-topic-cell .n {
+    font-family: Georgia, 'Times New Roman', serif; font-size: 22px; color: var(--text);
+    display: block; line-height: 1.1;
+  }
+  .fact-topic-cell .k {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .fact-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .fact-kicker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .fact-label { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; }
+  .fact-card p { font-size: 14px; line-height: 1.6; color: var(--text); margin: 0 0 8px; }
+  .fact-card p:last-child { margin-bottom: 0; }
+  .fact-headline { font-family: Georgia, 'Times New Roman', serif; font-size: 18px; line-height: 1.35; }
+  .fact-outlets, .fact-sources, .fact-checks { font-size: 12px; line-height: 1.6; color: var(--text-dim); }
+  .fact-outlets a, .fact-sources a { color: var(--steel); }
   .overview-section { margin-bottom: 20px; }
   .overview-section:last-child { margin-bottom: 0; }
   .overview-label {
@@ -1512,6 +1552,226 @@
   function atlasBackToRegions() { setView('atlas'); location.reload(); }
   window.atlasShowRegion = atlasShowRegion;
   window.atlasBackToRegions = atlasBackToRegions;
+  function factLabel(label) {
+    const names = {
+      'sensor-confirmed': 'Sensor record',
+      'satellite-mapped': 'Satellite map published',
+      'dataset-record': 'Dataset record',
+      'multi-source': 'Multiple outlets',
+      'figures-differ': 'Figures differ',
+      'single-outlet': 'One outlet',
+      'statement': 'Statement'
+    };
+    return names[label] || label;
+  }
+  function factStoryFromEvent(item) {
+    if (item && item.story_card) return item.story_card;
+    if (item && item.edition === 'fact' && item.headline) return item;
+    const paragraphs = item.paragraphs || [];
+    const outlets = item.outlets || [];
+    const sources = [];
+    outlets.forEach(function(outlet) {
+      if (outlet.name && sources.indexOf(outlet.name) < 0) sources.push(outlet.name);
+    });
+    const labels = item.labels || [];
+    let badge = 'RECORDED', badgeClass = 'b-single';
+    if (labels.indexOf('sensor-confirmed') >= 0) { badge = 'SENSOR RECORD'; badgeClass = 'b-verified'; }
+    else if (labels.indexOf('satellite-mapped') >= 0) { badge = 'SATELLITE MAP'; badgeClass = 'b-corroborated'; }
+    else if (labels.indexOf('multi-source') >= 0) { badge = 'MULTI-SOURCE'; badgeClass = 'b-corroborated'; }
+    else if (labels.indexOf('single-outlet') >= 0) { badge = 'ONE OUTLET'; badgeClass = 'b-single'; }
+    else if (labels.indexOf('statement') >= 0) { badge = 'STATEMENT'; badgeClass = 'b-unverified'; }
+    return {
+      id: item.id,
+      headline: item.headline || '',
+      summary: paragraphs[0] || item.headline || '',
+      what_is_known: paragraphs.slice(1),
+      paragraphs: paragraphs,
+      labels: labels,
+      sources: sources,
+      source_count: sources.length,
+      outlets: outlets,
+      instruments: item.instruments || [],
+      imagery: item.imagery || null,
+      published: item.published || '',
+      location: '',
+      region: 'global',
+      category: 'politics',
+      confidence_badge: badge,
+      confidence_badge_class: badgeClass,
+      figures: item.figures || [],
+      lat: item.lat,
+      lon: item.lon
+    };
+  }
+  function renderFactStoryCard(item) {
+    const card = factStoryFromEvent(item);
+    const title = card.headline || '(untitled)';
+    const summary = card.summary || '';
+    const sources = card.sources || [];
+    const srcCount = card.source_count || sources.length;
+    const region = card.region || 'global';
+    const category = (card.category || '').toLowerCase();
+    const topicRaw = category || region;
+    const topicLabel = topicRaw === 'conflict-war' ? 'War' :
+      topicRaw === 'persecution' ? 'Persecution' :
+      topicRaw === 'stability' ? 'Stability' :
+      topicRaw === 'economics' ? 'Economy' :
+      topicRaw === 'environment' ? 'Environment' :
+      topicRaw === 'middle-east' ? 'Middle East' :
+      topicRaw === 'east-asia' ? 'East Asia' :
+      topicRaw === 'asia-pacific' ? 'Asia Pacific' :
+      topicRaw === 'russia-fsu' ? 'Russia / FSU' :
+      topicRaw.split('-').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+    let tpClass = '';
+    if (category === 'conflict-war') tpClass = 'tp-conflict';
+    else if (category === 'persecution') tpClass = 'tp-humanrights';
+    else if (category === 'stability') tpClass = 'tp-politics';
+    else if (category === 'politics') tpClass = 'tp-politics';
+    else if (category === 'economics') tpClass = 'tp-economics';
+    else if (category === 'environment') tpClass = 'tp-environment';
+    else {
+      tpClass = region === 'middle-east' ? 'tp-mideast' :
+        region === 'asia-pacific' ? 'tp-asia' :
+        region === 'europe' ? 'tp-europe' :
+        region === 'africa' ? 'tp-africa' :
+        region === 'americas' ? 'tp-americas' :
+        'tp-global';
+    }
+    const badge = card.confidence_badge || 'RECORDED';
+    const confBadge = card.confidence_badge_class || 'b-single';
+    const dateStr = (function() {
+      const d = card.updated || card.published;
+      if (!d) return '';
+      try {
+        const dt = new Date(d);
+        if (isNaN(dt)) return '';
+        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase();
+      } catch (e) { return ''; }
+    })();
+    const location = card.location || '';
+    let expandHtml = '';
+    const known = card.what_is_known || [];
+    if (known.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Record</div>' +
+        known.map(function(line){ return '<p>' + escapeHtml(line) + '</p>'; }).join('') + '</div>';
+    }
+    if (card.figures && card.figures.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Published figures</div><p>' +
+        escapeHtml(card.figures.map(function(row){ return row.source + ': ' + row.value + ' ' + row.label; }).join('; ')) +
+        '</p></div>';
+    }
+    if (card.instruments && card.instruments.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Instruments</div>' +
+        card.instruments.map(function(inst){
+          const obs = escapeHtml(inst.observation || inst.source || '');
+          if (inst.url) return '<p><a href="' + escapeHtml(inst.url) + '" target="_blank" rel="noopener">' + escapeHtml(inst.source || 'Instrument') + '</a> — ' + obs + '</p>';
+          return '<p>' + obs + '</p>';
+        }).join('') + '</div>';
+    }
+    if (card.imagery && card.imagery.scene_id) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Satellite scene on file</div><p>' +
+        escapeHtml('Sentinel-2 scene ' + (card.imagery.scene_id || '') +
+          (card.imagery.acquired ? ', acquired ' + card.imagery.acquired : '') +
+          (card.imagery.cloud_cover_pct != null ? ', cloud cover ' + card.imagery.cloud_cover_pct + '%' : '') +
+          '. The image was not interpreted.') +
+        '</p></div>';
+    }
+    const outletLinks = (card.outlets || []).filter(function(outlet, index, arr) {
+      return outlet.name && arr.findIndex(function(other){ return other.name === outlet.name; }) === index;
+    }).map(function(outlet) {
+      const name = escapeHtml(outlet.name || '');
+      if (outlet.url) return '<a href="' + escapeHtml(outlet.url) + '" target="_blank" rel="noopener">' + name + '</a>';
+      return name;
+    }).join(' · ');
+    if (outletLinks || sources.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Sources</div><div class="sc-sources-list">' +
+        (outletLinks || escapeHtml(sources.join(' · '))) + '</div></div>';
+    }
+    if ((card.labels || []).length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Labels</div><div class="fact-kicker" style="margin:0">' +
+        card.labels.map(function(label){ return '<span class="fact-label">' + escapeHtml(factLabel(label)) + '</span>'; }).join('') +
+        '</div></div>';
+    }
+    let html = '<div class="story-card-v2 compact fact-story-card" onclick="this.classList.toggle(\'expanded\')">';
+    html += '<div class="sc-left">';
+    html += '<div class="sc-meta-row">';
+    html += '<span class="sc-topic ' + tpClass + '">' + escapeHtml(topicLabel) + '</span>';
+    if (location) html += '<span class="sc-location">' + escapeHtml(location) + '</span>';
+    if (dateStr) html += '<span class="sc-pill">' + dateStr + '</span>';
+    html += '<span class="sc-pill sc-sources">' + srcCount + ' SRC</span>';
+    html += '</div>';
+    html += '<div class="sc-headline">' + escapeHtml(title) + '</div>';
+    if (summary) html += '<div class="sc-summary">' + escapeHtml(summary) + '</div>';
+    html += '</div>';
+    html += '<div class="sc-right">';
+    html += '<span class="sc-badge ' + confBadge + '">' + escapeHtml(badge) + '</span>';
+    if ((card.labels || []).indexOf('figures-differ') >= 0) {
+      html += '<div class="sc-flags"><span class="sc-flag">FIGURES DIFFER</span></div>';
+    }
+    html += '</div>';
+    if (expandHtml) html += '<div class="sc-expand" onclick="event.stopPropagation()">' + expandHtml + '</div>';
+    html += '</div>';
+    return html;
+  }
+  function renderFactItems(items) {
+    return (items || []).map(renderFactStoryCard).join('');
+  }
+  function renderFactBrief(brief) {
+    const counts = brief.counts || {};
+    const checks = brief.checks || {};
+    let html = '';
+    if (brief.headline_brief) {
+      html += '<p class="fact-count">' + escapeHtml(brief.headline_brief) + '</p>';
+    }
+    html += '<h2 class="fact-section">Corroborated or recorded</h2>';
+    const eventCards = (brief.story_cards && brief.story_cards.events) || brief.events || [];
+    html += eventCards.length ? renderFactItems(eventCards) : '<div class="empty-placeholder">No item met the corroboration rule in this run.</div>';
+    const singleCards = (brief.story_cards && brief.story_cards.single_outlet) || brief.single_outlet || [];
+    if (singleCards.length) {
+      html += '<h2 class="fact-section">One outlet only</h2>';
+      html += renderFactItems(singleCards);
+    }
+    const statementCards = (brief.story_cards && brief.story_cards.statements) || brief.statements || [];
+    if (statementCards.length) {
+      html += '<h2 class="fact-section">Statements</h2>';
+      html += renderFactItems(statementCards);
+    }
+    html += '<div class="fact-meta-drawer">';
+    html += '<details><summary>By priority topic</summary>';
+    html += '<div class="fact-topic-grid">';
+    [
+      ['War', counts.war],
+      ['Economy', counts.economy],
+      ['Persecution', counts.persecution],
+      ['Stability', counts.stability],
+      ['Environment', counts.environment],
+    ].forEach(function(row) {
+      html += '<div class="fact-topic-cell"><span class="n">' + escapeHtml(String(row[1] || 0)) +
+        '</span><span class="k">' + escapeHtml(row[0]) + '</span></div>';
+    });
+    html += '</div>';
+    html += '<p class="fact-checks">War, economy, persecution, and stability lead. Environment sensor records are capped and sorted last.</p>';
+    html += '</details>';
+    html += '<details><summary>How this brief is built</summary>';
+    html += '<p class="fact-method">' + escapeHtml(brief.method || '') + '</p>';
+    const checkBits = [];
+    if (checks.sentinel2) checkBits.push('Sentinel-2 search: ' + checks.sentinel2);
+    if (checks.firms) checkBits.push('NASA FIRMS: ' + checks.firms);
+    if (checks.acled) checkBits.push('ACLED: ' + checks.acled);
+    if (checkBits.length) html += '<p class="fact-checks">' + escapeHtml(checkBits.join(' · ')) + '</p>';
+    html += '</details>';
+    const sources = brief.sources || [];
+    if (sources.length) {
+      html += '<details><summary>Sources this run</summary><p class="fact-sources">';
+      html += sources.map(function(source) {
+        const err = source.error ? ' — ' + source.error : '';
+        return escapeHtml((source.name || 'source') + ': ' + (source.items || 0) + ' items' + err);
+      }).join('<br>');
+      html += '</p></details>';
+    }
+    html += '</div>';
+    return html;
+  }
     async function loadBrief() {
     const container = document.getElementById('brief-content');
     if (!container) return;
@@ -1523,6 +1783,13 @@
         return;
       }
       const brief = await r.json();
+      if (brief && brief.edition === 'fact') {
+        const dateEl = document.getElementById('brief-date');
+        if (dateEl) dateEl.textContent = brief.date || '';
+        container.innerHTML = renderFactBrief(brief);
+        briefLoaded = true;
+        return;
+      }
       if (!brief || brief.error || !brief.headline_brief) {
         container.innerHTML = '<div class="empty-placeholder">Brief is being generated. Check back in a few minutes.</div>';
         return;
@@ -2557,6 +2824,12 @@ function v6_switchBriefRegion(chip) {
   if (!briefContent) { setTimeout(v6_briefBoot, 300); return; }
   fetch('/brief.json').then(function(r){return r.json()}).then(function(briefData){
     window._lastBriefData = briefData;
+    if (briefData && briefData.edition === 'fact') {
+      briefContent.innerHTML = renderFactBrief(briefData);
+      var dateEl = document.getElementById('brief-date');
+      if (dateEl) dateEl.textContent = briefData.date || '';
+      return;
+    }
     var existing = briefEl.innerHTML;
     briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy" style="display:none">' + existing + '</div>';
   }).catch(function(e){ console.log('Brief fetch error:', e); });
