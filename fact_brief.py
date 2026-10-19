@@ -30,8 +30,15 @@ EMS_LOOKBACK_HOURS = 240
 MAX_PER_FEED = 12
 MAX_EVENTS = 40
 MAX_ENVIRONMENT_EVENTS = 5
-MAX_SINGLE = 20
+MAX_SINGLE = 24
 MAX_STATEMENTS = 12
+# Keep room for priority singles so war volume cannot wipe economy/persecution.
+SINGLE_TOPIC_FLOOR = {
+    "conflict-war": 5,
+    "economics": 5,
+    "persecution": 3,
+    "stability": 3,
+}
 USER_AGENT = "VantageFactBrief/1.0"
 
 # Higher score = higher in the brief. Environment sensors stay in the brief,
@@ -50,7 +57,7 @@ WAR_TERMS = (
     "war", "warfare", "armed conflict", "conflict", "battlefield", "offensive",
     "airstrike", "air strike", "missile", "drone strike", "artillery", "ceasefire",
     "invasion", "occupied", "front line", "frontline", "militia", "insurgent",
-    "combat", "shelling", "troops", "military", "armed forces", "hostage",
+    "combat", "shelling", "troops", "armed forces", "military base", "hostage",
     "attack", "killed", "drone attack", "missile attack", "rocket attack",
     "mortar", "bombardment", "ground offensive", "air raid", "warplane", "fighter jet",
 )
@@ -63,18 +70,41 @@ PERSECUTION_TERMS = (
 )
 STABILITY_TERMS = (
     "coup", "martial law", "state of emergency", "government collapse",
-    "no-confidence", "impeachment", "regime", "sanctions", "diplomatic",
+    "no-confidence", "impeachment", "regime", "diplomatic",
     "ambassador", "nuclear", "proliferation", "alliance", "nato", "unrest",
     "riots", "uprising", "insurrection", "secession", "sovereignty",
     "border clash", "mobilization", "mobilisation", "conscription",
     "power grid", "blackout", "martial", "resolution", "security council",
 )
+# Checked before war so oil, markets, inflation, and defence budgets are not
+# swallowed by words like "attack", "missile", or "nato".
 ECONOMY_TERMS = (
-    "inflation", "interest rate", "central bank", "recession", "gdp",
-    "sanctions", "tariff", "trade war", "oil price", "crude", "market crash",
-    "stock market", "currency", "debt default", "bailout", "imf", "world bank",
-    "unemployment", "supply chain", "commodity", "budget deficit", "fiscal",
-    "energy crisis", "gas price", "wheat", "grain corridor", "shipping lane",
+    # oil & energy markets
+    "oil", "brent", "wti", "opec", "crude", "barrel", "oilfield", "oil field",
+    "drilling", "petrodollar", "natural gas", "lng", "fuel price", "gas price",
+    "energy price", "energy crisis", "petrol", "gasoline", "diesel",
+    # inflation / rates / banks
+    "inflation", "cpi", "consumer price", "cost of living", "interest rate",
+    "rate hike", "rate cut", "raises rates", "raise rates", "cut rates",
+    "central bank", "federal reserve", "the fed", "fed",
+    "ecb", "bank of england", "bank of japan", "boe", "boj",
+    # markets & equities
+    "stock market", "stocks", "equities", "equity market", "bond market",
+    "bonds", "financial market", "global market", "market rally", "market crash",
+    "sell-off", "selloff", "dow jones", "s&p", "nasdaq", "ftse", "nikkei",
+    "msci", "futures", "investor", "investors",
+    # growth / trade / currency
+    "gdp", "recession", "tariff", "trade war", "trade deal", "exports", "imports",
+    "currency", "forex", "exchange rate", "dollar index", "yuan", "sanctions",
+    # fiscal / war budgets
+    "budget", "fiscal", "deficit", "bailout", "imf", "world bank", "debt default",
+    "military spending", "defence spending", "defense spending", "military budget",
+    "defence budget", "defense budget", "arms spending", "war budget",
+    "nato spending", "defence stock", "defense stock", "defence stocks",
+    "defense stocks", "arms maker", "arms makers",
+    # commodities / logistics
+    "commodity", "commodities", "wheat", "grain", "shipping", "supply chain",
+    "unemployment", "shipping lane", "grain corridor",
 )
 
 # Approximate gazetteer points are used only to decide whether an instrument
@@ -212,7 +242,15 @@ FACT_FEEDS = [
     {"url": "https://www.middleeasteye.net/rss", "source": "Middle East Eye", "org": "mee", "standing": "report"},
     {"url": "https://iranwire.com/en/feed/", "source": "IranWire", "org": "iranwire", "standing": "report"},
     {"url": "https://www.ft.com/world?format=rss", "source": "Financial Times", "org": "ft", "standing": "report"},
+    {"url": "https://www.ft.com/markets?format=rss", "source": "FT Markets", "org": "ft-markets", "standing": "report"},
     {"url": "https://feeds.bloomberg.com/politics/news.rss", "source": "Bloomberg", "org": "bloomberg", "standing": "report"},
+    {"url": "https://feeds.bloomberg.com/markets/news.rss", "source": "Bloomberg Markets", "org": "bloomberg-markets", "standing": "report"},
+    {"url": "http://feeds.bbci.co.uk/news/business/rss.xml", "source": "BBC Business", "org": "bbc-business", "standing": "report"},
+    {"url": "https://www.theguardian.com/business/rss", "source": "Guardian Business", "org": "guardian-business", "standing": "report"},
+    {"url": "https://rss.dw.com/rdf/rss-en-bus", "source": "DW Business", "org": "dw-business", "standing": "report"},
+    {"url": "https://feeds.npr.org/1006/rss.xml", "source": "NPR Business", "org": "npr-business", "standing": "report"},
+    {"url": "https://feeds.marketwatch.com/marketwatch/topstories/", "source": "MarketWatch", "org": "marketwatch", "standing": "report"},
+    {"url": "https://oilprice.com/rss/main", "source": "OilPrice", "org": "oilprice", "standing": "report"},
     {"url": "https://www.bellingcat.com/feed/", "source": "Bellingcat", "org": "bellingcat", "standing": "report", "lookback_hours": 168},
     {"url": "https://www.occrp.org/en/feed", "source": "OCCRP", "org": "occrp", "standing": "report", "lookback_hours": 168},
     {"url": "https://www.icij.org/feed/", "source": "ICIJ", "org": "icij", "standing": "report", "lookback_hours": 168},
@@ -1108,7 +1146,8 @@ def _text_has_term(text, terms):
 
 
 def event_topic(event):
-    """Assign one priority topic. War / persecution / stability / economy first."""
+    """Assign one priority topic. Economy market language is checked before war
+    so oil, inflation, and defence-budget stories are not misfiled as conflict."""
     text = (event.get("headline") or "") + " " + " ".join(event.get("paragraphs") or [])
     classes = [
         (instrument.get("event_class") or "")
@@ -1123,14 +1162,14 @@ def event_topic(event):
         ("earthquake", "magnitude", "tropical storm", "hurricane", "typhoon", "flood alert", "wildfire", "volcano"),
     )
 
+    if _text_has_term(text, ECONOMY_TERMS):
+        return "economics"
     if _text_has_term(text, WAR_TERMS):
         return "conflict-war"
     if _text_has_term(text, PERSECUTION_TERMS):
         return "persecution"
     if _text_has_term(text, STABILITY_TERMS):
         return "stability"
-    if _text_has_term(text, ECONOMY_TERMS):
-        return "economics"
     if _text_has_term(text, ("election", "parliament", "president", "minister", "court", "arrest", "protest", "vote", "cabinet")):
         return "politics"
     if is_hazard:
@@ -1175,6 +1214,29 @@ def prioritize_events(events):
     combined = priority + environment
     truncated_environment = len([event for event in events if _is_environment_event(event)]) > MAX_ENVIRONMENT_EVENTS
     return combined[:MAX_EVENTS], truncated_environment
+
+
+def prioritize_singles(singles):
+    """Sort singles by priority, but reserve floor slots for economy and peers."""
+    for event in singles:
+        event["topic"] = event_topic(event)
+    singles = sorted(singles, key=_sort_key, reverse=True)
+    kept = []
+    used = set()
+
+    def _add(event):
+        marker = id(event)
+        if marker in used or len(kept) >= MAX_SINGLE:
+            return
+        kept.append(event)
+        used.add(marker)
+
+    for topic, floor in SINGLE_TOPIC_FLOOR.items():
+        for event in [row for row in singles if row.get("topic") == topic][:floor]:
+            _add(event)
+    for event in singles:
+        _add(event)
+    return kept[:MAX_SINGLE]
 
 
 def _story_place_text(event):
@@ -1411,7 +1473,7 @@ def assemble_brief(articles, now=None):
             event["topic"] = event_topic(event)
             events.append(event)
     events, truncated_environment = prioritize_events(events)
-    single.sort(key=_sort_key, reverse=True)
+    single = prioritize_singles(single)
     statements.sort(key=lambda item: item.get("published") or "", reverse=True)
     trimmed = truncated_environment or len(events) >= MAX_EVENTS
     return {
@@ -1424,7 +1486,7 @@ def assemble_brief(articles, now=None):
         "method": METHOD,
         "priority_topics": ["conflict-war", "persecution", "stability", "economics"],
         "events": events,
-        "single_outlet": single[:MAX_SINGLE],
+        "single_outlet": single,
         "statements": statements[:MAX_STATEMENTS],
         "truncated": trimmed,
         "imagery_note": IMAGERY_NOTE,

@@ -222,9 +222,38 @@
     border-left: 3px solid var(--steel); border-radius: 0 8px 8px 0;
     font-size: 13px; line-height: 1.6; margin: 16px 0;
   }
-  .fact-method { font-size: 14px; line-height: 1.65; color: var(--text-dim); margin: 0 0 14px; max-width: 68ch; }
-  .fact-count { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--steel); margin: 0 0 8px; }
+  .fact-method { font-size: 13px; line-height: 1.65; color: var(--text-dim); margin: 0; max-width: 68ch; }
+  .fact-count { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--steel); margin: 0 0 16px; }
   .fact-section { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--steel); margin: 26px 0 10px; }
+  .fact-meta-drawer {
+    margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--border);
+  }
+  .fact-meta-drawer details {
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card);
+    margin-bottom: 10px; padding: 0 14px;
+  }
+  .fact-meta-drawer summary {
+    cursor: pointer; list-style: none; font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-dim); padding: 12px 0;
+  }
+  .fact-meta-drawer summary::-webkit-details-marker { display: none; }
+  .fact-meta-drawer details[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .fact-topic-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px; margin: 0 0 12px;
+  }
+  .fact-topic-cell {
+    border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+  }
+  .fact-topic-cell .n {
+    font-family: Georgia, 'Times New Roman', serif; font-size: 22px; color: var(--text);
+    display: block; line-height: 1.1;
+  }
+  .fact-topic-cell .k {
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
   .fact-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
   .fact-kicker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .fact-label { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; }
@@ -1688,24 +1717,12 @@
     return (items || []).map(renderFactStoryCard).join('');
   }
   function renderFactBrief(brief) {
-    let html = '<p class="fact-method">' + escapeHtml(brief.method || '') + '</p>';
-    html += '<p class="fact-count">' + escapeHtml(brief.headline_brief || '') + '</p>';
     const counts = brief.counts || {};
-    if (counts.war != null || counts.economy != null) {
-      html += '<p class="fact-checks">' + escapeHtml(
-        'Priority: War ' + (counts.war || 0) +
-        ' · Economy ' + (counts.economy || 0) +
-        ' · Persecution ' + (counts.persecution || 0) +
-        ' · Stability ' + (counts.stability || 0) +
-        ' · Environment ' + (counts.environment || 0)
-      ) + '</p>';
-    }
     const checks = brief.checks || {};
-    const checkBits = [];
-    if (checks.sentinel2) checkBits.push('Sentinel-2 search: ' + checks.sentinel2);
-    if (checks.firms) checkBits.push('NASA FIRMS: ' + checks.firms);
-    if (checks.acled) checkBits.push('ACLED: ' + checks.acled);
-    if (checkBits.length) html += '<p class="fact-checks">' + escapeHtml(checkBits.join(' · ')) + '</p>';
+    let html = '';
+    if (brief.headline_brief) {
+      html += '<p class="fact-count">' + escapeHtml(brief.headline_brief) + '</p>';
+    }
     html += '<h2 class="fact-section">Corroborated or recorded</h2>';
     const eventCards = (brief.story_cards && brief.story_cards.events) || brief.events || [];
     html += eventCards.length ? renderFactItems(eventCards) : '<div class="empty-placeholder">No item met the corroboration rule in this run.</div>';
@@ -1719,15 +1736,40 @@
       html += '<h2 class="fact-section">Statements</h2>';
       html += renderFactItems(statementCards);
     }
+    html += '<div class="fact-meta-drawer">';
+    html += '<details><summary>By priority topic</summary>';
+    html += '<div class="fact-topic-grid">';
+    [
+      ['War', counts.war],
+      ['Economy', counts.economy],
+      ['Persecution', counts.persecution],
+      ['Stability', counts.stability],
+      ['Environment', counts.environment],
+    ].forEach(function(row) {
+      html += '<div class="fact-topic-cell"><span class="n">' + escapeHtml(String(row[1] || 0)) +
+        '</span><span class="k">' + escapeHtml(row[0]) + '</span></div>';
+    });
+    html += '</div>';
+    html += '<p class="fact-checks">War, economy, persecution, and stability lead. Environment sensor records are capped and sorted last.</p>';
+    html += '</details>';
+    html += '<details><summary>How this brief is built</summary>';
+    html += '<p class="fact-method">' + escapeHtml(brief.method || '') + '</p>';
+    const checkBits = [];
+    if (checks.sentinel2) checkBits.push('Sentinel-2 search: ' + checks.sentinel2);
+    if (checks.firms) checkBits.push('NASA FIRMS: ' + checks.firms);
+    if (checks.acled) checkBits.push('ACLED: ' + checks.acled);
+    if (checkBits.length) html += '<p class="fact-checks">' + escapeHtml(checkBits.join(' · ')) + '</p>';
+    html += '</details>';
     const sources = brief.sources || [];
     if (sources.length) {
-      html += '<h2 class="fact-section">Sources this run</h2><p class="fact-sources">';
+      html += '<details><summary>Sources this run</summary><p class="fact-sources">';
       html += sources.map(function(source) {
         const err = source.error ? ' — ' + source.error : '';
         return escapeHtml((source.name || 'source') + ': ' + (source.items || 0) + ' items' + err);
       }).join('<br>');
-      html += '</p>';
+      html += '</p></details>';
     }
+    html += '</div>';
     return html;
   }
     async function loadBrief() {

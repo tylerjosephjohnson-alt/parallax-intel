@@ -173,6 +173,37 @@ class FactBriefTests(unittest.TestCase):
         self.assertTrue(all(topic != "environment" for topic in top_topics))
         self.assertIn("Priority topics are war, economy, persecution, and stability", METHOD)
 
+    def test_oil_markets_and_war_budgets_are_economics(self):
+        cases = [
+            "Brent crude oil jumps as OPEC signals production cuts",
+            "US defence stocks tumble as investors reprice election risk",
+            "Germany raises military spending toward NATO budget target",
+            "Euro area inflation cools after central bank data",
+            "Fed could raise rates in October, economists say",
+        ]
+        for headline in cases:
+            self.assertEqual(
+                event_topic({"headline": headline, "paragraphs": []}),
+                "economics",
+                headline,
+            )
+        # Conflict wording still wins when there is no market/budget language.
+        self.assertEqual(
+            event_topic({"headline": "Houthi attack kills 53 at Yemen training camp", "paragraphs": []}),
+            "conflict-war",
+        )
+
+    def test_economy_singles_are_not_crowded_out_by_war(self):
+        rows = []
+        for index in range(18):
+            rows.append(article(f"Missile attack hits site number {index}", "BBC", f"bbc-{index}"))
+        rows.append(article("Brent crude oil climbs on supply fears", "OilPrice", "oilprice"))
+        rows.append(article("Euro area inflation cools in September", "FT Markets", "ft-markets"))
+        rows.append(article("US defence stocks fall after budget vote", "MarketWatch", "marketwatch"))
+        brief = assemble_brief(rows)
+        topics = [event.get("topic") for event in brief["single_outlet"]]
+        self.assertGreaterEqual(topics.count("economics"), 3)
+
     def test_story_cards_are_attached_without_analysis(self):
         brief = assemble_brief([
             article("Ceasefire talks resume in Gaza", "BBC", "bbc"),
