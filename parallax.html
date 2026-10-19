@@ -222,6 +222,17 @@
     border-left: 3px solid var(--steel); border-radius: 0 8px 8px 0;
     font-size: 13px; line-height: 1.6; margin: 16px 0;
   }
+  .fact-method { font-size: 14px; line-height: 1.65; color: var(--text-dim); margin: 0 0 14px; max-width: 68ch; }
+  .fact-count { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--steel); margin: 0 0 8px; }
+  .fact-section { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--steel); margin: 26px 0 10px; }
+  .fact-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .fact-kicker { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .fact-label { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 2px 6px; }
+  .fact-card p { font-size: 14px; line-height: 1.6; color: var(--text); margin: 0 0 8px; }
+  .fact-card p:last-child { margin-bottom: 0; }
+  .fact-headline { font-family: Georgia, 'Times New Roman', serif; font-size: 18px; line-height: 1.35; }
+  .fact-outlets, .fact-sources, .fact-checks { font-size: 12px; line-height: 1.6; color: var(--text-dim); }
+  .fact-outlets a, .fact-sources a { color: var(--steel); }
   .overview-section { margin-bottom: 20px; }
   .overview-section:last-child { margin-bottom: 0; }
   .overview-label {
@@ -1512,6 +1523,75 @@
   function atlasBackToRegions() { setView('atlas'); location.reload(); }
   window.atlasShowRegion = atlasShowRegion;
   window.atlasBackToRegions = atlasBackToRegions;
+  function factLabel(label) {
+    const names = {
+      'sensor-confirmed': 'Sensor record',
+      'satellite-mapped': 'Satellite map published',
+      'dataset-record': 'Dataset record',
+      'multi-source': 'Multiple outlets',
+      'figures-differ': 'Figures differ',
+      'single-outlet': 'One outlet',
+      'statement': 'Statement'
+    };
+    return names[label] || label;
+  }
+  function renderFactItems(items) {
+    return items.map(function(item) {
+      const labels = (item.labels || []).map(function(label) {
+        return '<span class="fact-label">' + escapeHtml(factLabel(label)) + '</span>';
+      }).join('');
+      const paragraphs = (item.paragraphs || []).map(function(paragraph, index) {
+        const cls = index === 0 ? ' class="fact-headline"' : '';
+        return '<p' + cls + '>' + escapeHtml(paragraph) + '</p>';
+      }).join('');
+      const seenOutlets = {};
+      const outlets = (item.outlets || []).filter(function(outlet) {
+        const name = outlet.name || '';
+        if (seenOutlets[name]) return false;
+        seenOutlets[name] = true;
+        return true;
+      }).map(function(outlet) {
+        const name = escapeHtml(outlet.name || '');
+        if (outlet.url) return '<a href="' + escapeHtml(outlet.url) + '" target="_blank" rel="noopener">' + name + '</a>';
+        return name;
+      }).join(' · ');
+      const imagery = item.imagery && item.imagery.acquired
+        ? '<p class="fact-outlets">Sentinel-2 scene ' + escapeHtml(item.imagery.scene_id || '') + ', acquired ' + escapeHtml(item.imagery.acquired) + (item.imagery.cloud_cover_pct != null ? ', cloud cover ' + escapeHtml(String(item.imagery.cloud_cover_pct)) + '%' : '') + '.</p>'
+        : '';
+      return '<article class="fact-card"><div class="fact-kicker">' + labels + '</div>' + paragraphs + imagery +
+        (outlets ? '<p class="fact-outlets">' + outlets + '</p>' : '') + '</article>';
+    }).join('');
+  }
+  function renderFactBrief(brief) {
+    let html = '<p class="fact-method">' + escapeHtml(brief.method || '') + '</p>';
+    html += '<p class="fact-count">' + escapeHtml(brief.headline_brief || '') + '</p>';
+    const checks = brief.checks || {};
+    const checkBits = [];
+    if (checks.sentinel2) checkBits.push('Sentinel-2 search: ' + checks.sentinel2);
+    if (checks.firms) checkBits.push('NASA FIRMS: ' + checks.firms);
+    if (checks.acled) checkBits.push('ACLED: ' + checks.acled);
+    if (checkBits.length) html += '<p class="fact-checks">' + escapeHtml(checkBits.join(' · ')) + '</p>';
+    html += '<h2 class="fact-section">Corroborated or recorded</h2>';
+    html += (brief.events && brief.events.length) ? renderFactItems(brief.events) : '<div class="empty-placeholder">No item met the corroboration rule in this run.</div>';
+    if (brief.single_outlet && brief.single_outlet.length) {
+      html += '<h2 class="fact-section">One outlet only</h2>';
+      html += renderFactItems(brief.single_outlet);
+    }
+    if (brief.statements && brief.statements.length) {
+      html += '<h2 class="fact-section">Statements</h2>';
+      html += renderFactItems(brief.statements);
+    }
+    const sources = brief.sources || [];
+    if (sources.length) {
+      html += '<h2 class="fact-section">Sources this run</h2><p class="fact-sources">';
+      html += sources.map(function(source) {
+        const err = source.error ? ' — ' + source.error : '';
+        return escapeHtml((source.name || 'source') + ': ' + (source.items || 0) + ' items' + err);
+      }).join('<br>');
+      html += '</p>';
+    }
+    return html;
+  }
     async function loadBrief() {
     const container = document.getElementById('brief-content');
     if (!container) return;
@@ -1523,6 +1603,13 @@
         return;
       }
       const brief = await r.json();
+      if (brief && brief.edition === 'fact') {
+        const dateEl = document.getElementById('brief-date');
+        if (dateEl) dateEl.textContent = brief.date || '';
+        container.innerHTML = renderFactBrief(brief);
+        briefLoaded = true;
+        return;
+      }
       if (!brief || brief.error || !brief.headline_brief) {
         container.innerHTML = '<div class="empty-placeholder">Brief is being generated. Check back in a few minutes.</div>';
         return;
@@ -2557,6 +2644,12 @@ function v6_switchBriefRegion(chip) {
   if (!briefContent) { setTimeout(v6_briefBoot, 300); return; }
   fetch('/brief.json').then(function(r){return r.json()}).then(function(briefData){
     window._lastBriefData = briefData;
+    if (briefData && briefData.edition === 'fact') {
+      briefContent.innerHTML = renderFactBrief(briefData);
+      var dateEl = document.getElementById('brief-date');
+      if (dateEl) dateEl.textContent = briefData.date || '';
+      return;
+    }
     var existing = briefEl.innerHTML;
     briefEl.innerHTML = v6_renderBriefHeader(briefData) + v6_renderBriefTabs(briefData) + '<div class="v6-brief-legacy" style="display:none">' + existing + '</div>';
   }).catch(function(e){ console.log('Brief fetch error:', e); });

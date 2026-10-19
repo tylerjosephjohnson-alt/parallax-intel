@@ -3147,109 +3147,14 @@ Valid JSON only, no markdown.
 
 
 def generate_daily_brief():
-    """
-    Per-region daily brief engine v3.
-    Scrapes RSS feeds directly, classifies articles by region,
-    generates a brief for each region, then synthesizes global summary.
-    Uses Gemini free tier.
-    """
+    """Fact-only daily brief. No threat rating, forecast, or analyst note."""
+    from fact_brief import build_fact_brief
     print("\n" + "="*50)
-    import traceback
-    print(f"Daily Brief v3 -- {utc_now().strftime('%A %d %B %Y -- %H:%M UTC')}")
-    print("="*50)
+    print(f"Fact brief -- {utc_now().strftime('%A %d %B %Y -- %H:%M UTC')}")
+    print("="*50); sys.stdout.flush()
 
-    # Step 1: Fetch fresh articles from RSS feeds
-    print("  Fetching RSS feeds...")
-    all_articles = []
-    for feed in RSS_FEEDS:
-        try:
-            arts = fetch_rss(feed)
-            all_articles.extend(arts)
-        except Exception as e:
-            pass
-    
-    # Also fetch GDELT for conflict signals
-    try:
-        gdelt = fetch_gdelt()
-        all_articles.extend(gdelt)
-    except:
-        pass
-    
-    print(f"  Fetched {len(all_articles)} articles from {len(RSS_FEEDS)} feeds"); sys.stdout.flush()
-    
-    if len(all_articles) < 5:
-        print("  Too few articles -- skipping brief")
-        return
+    brief = build_fact_brief()
 
-    # Step 2: Classify articles by region
-    REGIONS = {
-        "middle-east": "Middle East",
-        "europe": "Europe",
-        "africa": "Africa",
-        "asia-pacific": "Asia Pacific",
-        "americas": "Americas",
-        "russia-fsu": "Russia / Eurasia",
-        "south-asia": "South Asia",
-    }
-    
-    region_articles = {k: [] for k in REGIONS}
-    unclassified = []
-    for article in all_articles:
-        region = classify_article_region(article)
-        if region in region_articles:
-            region_articles[region].append(article)
-        else:
-            unclassified.append(article)
-    print(f"  Unclassified articles: {len(unclassified)}"); sys.stdout.flush()
-    
-    for k, v in region_articles.items():
-        print(f"  {REGIONS[k]}: {len(v)} articles")
-    sys.stdout.flush()
-
-    # Step 3: Generate per-region briefs
-    region_briefs = []
-    for region_key, region_name in REGIONS.items():
-        articles = region_articles[region_key]
-        if len(articles) < 2:
-            print(f"  {region_name}: too few articles -- skipping")
-            continue
-        
-        print(f"  Generating brief for {region_name}...")
-        try:
-            rb = generate_region_brief(region_name, articles)
-        except Exception as e:
-            print(f"  [BRIEF] ERROR generating {region_name}: {e}")
-            import traceback
-            traceback.print_exc()
-            rb = None
-        if rb:
-            rb["region_key"] = region_key
-            region_briefs.append(rb)
-            print(f"    {rb.get('threat_level','?')} -- {rb.get('headline','')[:60]}")
-        else:
-            print(f"    Failed")
-        
-        time.sleep(15)  # Gemini free tier: 20 req/min limit
-    
-    # Step 4: Generate global summary
-    print("  Generating global summary...")
-    try:
-        global_summary = generate_global_summary(region_briefs)
-    except Exception as e:
-        print(f"  [BRIEF] ERROR generating global summary: {e}")
-        import traceback
-        traceback.print_exc()
-        global_summary = None
-    
-    if not global_summary:
-        global_summary = {
-            "date": utc_now().strftime('%A %d %B %Y'),
-            "threat_level": "elevated",
-            "headline_brief": "Brief generation partial -- see regional briefs",
-            "executive_summary": "Global summary generation failed.",
-        }
-    
-    # Step 5: Archive old brief
     try:
         if os.path.exists(BRIEF_FILE):
             with open(BRIEF_FILE, "r") as old_f:
@@ -3265,37 +3170,11 @@ def generate_daily_brief():
                 json.dump(archive, af, indent=2, ensure_ascii=False)
     except Exception as ae:
         print(f"  Archive error: {ae}")
-    
-    # Step 6: Build final brief
-    brief = {
-        "date": utc_now().strftime('%A %d %B %Y'),
-        "generated_at_iso": utc_now().isoformat(),
-        "generated_by": "Vantage per-region brief engine v3",
-        "global": global_summary,
-        "regions": {rb["region_key"]: rb for rb in region_briefs},
-        "region_count": len(region_briefs),
-        "article_count": len(all_articles),
-        "threat_level": global_summary.get("threat_level", "elevated"),
-        "headline_brief": global_summary.get("headline_brief", ""),
-        # Legacy compatibility
-        "intelligence_overview": {
-            "paragraph_1_situation": global_summary.get("executive_summary", ""),
-            "paragraph_2_connections": global_summary.get("cross_region_connections", ""),
-            "paragraph_3_what_watch": global_summary.get("what_to_watch", ""),
-            "paragraph_4_buried": "",
-        },
-        "overview_prose": global_summary.get("executive_summary", ""),
-        "analysis": global_summary.get("cross_region_connections", ""),
-        "expected_today": global_summary.get("what_to_watch", ""),
-        "top_stories": [],
-    }
-    
+
     with open(BRIEF_FILE, "w") as f:
         json.dump(brief, f, indent=2, ensure_ascii=False)
-    
-    print(f"\n  Brief complete: {len(region_briefs)} regions, {len(all_articles)} articles"); sys.stdout.flush()
-    print(f"  Threat level: {brief['threat_level']}")
-    print(f"  Headline: {brief['headline_brief'][:70]}")
+
+    print(f"\n  Fact brief written: {brief.get('headline_brief')}"); sys.stdout.flush()
 
 def run_scraper():
     global last_run
