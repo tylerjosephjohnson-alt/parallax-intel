@@ -1535,32 +1535,150 @@
     };
     return names[label] || label;
   }
+  function factStoryFromEvent(item) {
+    if (item && item.story_card) return item.story_card;
+    if (item && item.edition === 'fact' && item.headline) return item;
+    const paragraphs = item.paragraphs || [];
+    const outlets = item.outlets || [];
+    const sources = [];
+    outlets.forEach(function(outlet) {
+      if (outlet.name && sources.indexOf(outlet.name) < 0) sources.push(outlet.name);
+    });
+    const labels = item.labels || [];
+    let badge = 'RECORDED', badgeClass = 'b-single';
+    if (labels.indexOf('sensor-confirmed') >= 0) { badge = 'SENSOR RECORD'; badgeClass = 'b-verified'; }
+    else if (labels.indexOf('satellite-mapped') >= 0) { badge = 'SATELLITE MAP'; badgeClass = 'b-corroborated'; }
+    else if (labels.indexOf('multi-source') >= 0) { badge = 'MULTI-SOURCE'; badgeClass = 'b-corroborated'; }
+    else if (labels.indexOf('single-outlet') >= 0) { badge = 'ONE OUTLET'; badgeClass = 'b-single'; }
+    else if (labels.indexOf('statement') >= 0) { badge = 'STATEMENT'; badgeClass = 'b-unverified'; }
+    return {
+      id: item.id,
+      headline: item.headline || '',
+      summary: paragraphs[0] || item.headline || '',
+      what_is_known: paragraphs.slice(1),
+      paragraphs: paragraphs,
+      labels: labels,
+      sources: sources,
+      source_count: sources.length,
+      outlets: outlets,
+      instruments: item.instruments || [],
+      imagery: item.imagery || null,
+      published: item.published || '',
+      location: '',
+      region: 'global',
+      category: 'politics',
+      confidence_badge: badge,
+      confidence_badge_class: badgeClass,
+      figures: item.figures || [],
+      lat: item.lat,
+      lon: item.lon
+    };
+  }
+  function renderFactStoryCard(item) {
+    const card = factStoryFromEvent(item);
+    const title = card.headline || '(untitled)';
+    const summary = card.summary || '';
+    const sources = card.sources || [];
+    const srcCount = card.source_count || sources.length;
+    const region = card.region || 'global';
+    const category = (card.category || '').toLowerCase();
+    const topicRaw = category || region;
+    const topicLabel = topicRaw === 'middle-east' ? 'Middle East' :
+      topicRaw === 'east-asia' ? 'East Asia' :
+      topicRaw === 'asia-pacific' ? 'Asia Pacific' :
+      topicRaw === 'russia-fsu' ? 'Russia / FSU' :
+      topicRaw.split('-').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+    let tpClass = '';
+    if (category === 'conflict-war') tpClass = 'tp-conflict';
+    else if (category === 'politics') tpClass = 'tp-politics';
+    else if (category === 'economics') tpClass = 'tp-economics';
+    else if (category === 'environment') tpClass = 'tp-environment';
+    else {
+      tpClass = region === 'middle-east' ? 'tp-mideast' :
+        region === 'asia-pacific' ? 'tp-asia' :
+        region === 'europe' ? 'tp-europe' :
+        region === 'africa' ? 'tp-africa' :
+        region === 'americas' ? 'tp-americas' :
+        'tp-global';
+    }
+    const badge = card.confidence_badge || 'RECORDED';
+    const confBadge = card.confidence_badge_class || 'b-single';
+    const dateStr = (function() {
+      const d = card.updated || card.published;
+      if (!d) return '';
+      try {
+        const dt = new Date(d);
+        if (isNaN(dt)) return '';
+        return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase();
+      } catch (e) { return ''; }
+    })();
+    const location = card.location || '';
+    let expandHtml = '';
+    const known = card.what_is_known || [];
+    if (known.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Record</div>' +
+        known.map(function(line){ return '<p>' + escapeHtml(line) + '</p>'; }).join('') + '</div>';
+    }
+    if (card.figures && card.figures.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Published figures</div><p>' +
+        escapeHtml(card.figures.map(function(row){ return row.source + ': ' + row.value + ' ' + row.label; }).join('; ')) +
+        '</p></div>';
+    }
+    if (card.instruments && card.instruments.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Instruments</div>' +
+        card.instruments.map(function(inst){
+          const obs = escapeHtml(inst.observation || inst.source || '');
+          if (inst.url) return '<p><a href="' + escapeHtml(inst.url) + '" target="_blank" rel="noopener">' + escapeHtml(inst.source || 'Instrument') + '</a> — ' + obs + '</p>';
+          return '<p>' + obs + '</p>';
+        }).join('') + '</div>';
+    }
+    if (card.imagery && card.imagery.scene_id) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Satellite scene on file</div><p>' +
+        escapeHtml('Sentinel-2 scene ' + (card.imagery.scene_id || '') +
+          (card.imagery.acquired ? ', acquired ' + card.imagery.acquired : '') +
+          (card.imagery.cloud_cover_pct != null ? ', cloud cover ' + card.imagery.cloud_cover_pct + '%' : '') +
+          '. The image was not interpreted.') +
+        '</p></div>';
+    }
+    const outletLinks = (card.outlets || []).filter(function(outlet, index, arr) {
+      return outlet.name && arr.findIndex(function(other){ return other.name === outlet.name; }) === index;
+    }).map(function(outlet) {
+      const name = escapeHtml(outlet.name || '');
+      if (outlet.url) return '<a href="' + escapeHtml(outlet.url) + '" target="_blank" rel="noopener">' + name + '</a>';
+      return name;
+    }).join(' · ');
+    if (outletLinks || sources.length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Sources</div><div class="sc-sources-list">' +
+        (outletLinks || escapeHtml(sources.join(' · '))) + '</div></div>';
+    }
+    if ((card.labels || []).length) {
+      expandHtml += '<div class="sc-section"><div class="sc-section-label">Labels</div><div class="fact-kicker" style="margin:0">' +
+        card.labels.map(function(label){ return '<span class="fact-label">' + escapeHtml(factLabel(label)) + '</span>'; }).join('') +
+        '</div></div>';
+    }
+    let html = '<div class="story-card-v2 compact fact-story-card" onclick="this.classList.toggle(\'expanded\')">';
+    html += '<div class="sc-left">';
+    html += '<div class="sc-meta-row">';
+    html += '<span class="sc-topic ' + tpClass + '">' + escapeHtml(topicLabel) + '</span>';
+    if (location) html += '<span class="sc-location">' + escapeHtml(location) + '</span>';
+    if (dateStr) html += '<span class="sc-pill">' + dateStr + '</span>';
+    html += '<span class="sc-pill sc-sources">' + srcCount + ' SRC</span>';
+    html += '</div>';
+    html += '<div class="sc-headline">' + escapeHtml(title) + '</div>';
+    if (summary) html += '<div class="sc-summary">' + escapeHtml(summary) + '</div>';
+    html += '</div>';
+    html += '<div class="sc-right">';
+    html += '<span class="sc-badge ' + confBadge + '">' + escapeHtml(badge) + '</span>';
+    if ((card.labels || []).indexOf('figures-differ') >= 0) {
+      html += '<div class="sc-flags"><span class="sc-flag">FIGURES DIFFER</span></div>';
+    }
+    html += '</div>';
+    if (expandHtml) html += '<div class="sc-expand" onclick="event.stopPropagation()">' + expandHtml + '</div>';
+    html += '</div>';
+    return html;
+  }
   function renderFactItems(items) {
-    return items.map(function(item) {
-      const labels = (item.labels || []).map(function(label) {
-        return '<span class="fact-label">' + escapeHtml(factLabel(label)) + '</span>';
-      }).join('');
-      const paragraphs = (item.paragraphs || []).map(function(paragraph, index) {
-        const cls = index === 0 ? ' class="fact-headline"' : '';
-        return '<p' + cls + '>' + escapeHtml(paragraph) + '</p>';
-      }).join('');
-      const seenOutlets = {};
-      const outlets = (item.outlets || []).filter(function(outlet) {
-        const name = outlet.name || '';
-        if (seenOutlets[name]) return false;
-        seenOutlets[name] = true;
-        return true;
-      }).map(function(outlet) {
-        const name = escapeHtml(outlet.name || '');
-        if (outlet.url) return '<a href="' + escapeHtml(outlet.url) + '" target="_blank" rel="noopener">' + name + '</a>';
-        return name;
-      }).join(' · ');
-      const imagery = item.imagery && item.imagery.acquired
-        ? '<p class="fact-outlets">Sentinel-2 scene ' + escapeHtml(item.imagery.scene_id || '') + ', acquired ' + escapeHtml(item.imagery.acquired) + (item.imagery.cloud_cover_pct != null ? ', cloud cover ' + escapeHtml(String(item.imagery.cloud_cover_pct)) + '%' : '') + '.</p>'
-        : '';
-      return '<article class="fact-card"><div class="fact-kicker">' + labels + '</div>' + paragraphs + imagery +
-        (outlets ? '<p class="fact-outlets">' + outlets + '</p>' : '') + '</article>';
-    }).join('');
+    return (items || []).map(renderFactStoryCard).join('');
   }
   function renderFactBrief(brief) {
     let html = '<p class="fact-method">' + escapeHtml(brief.method || '') + '</p>';
@@ -1572,14 +1690,17 @@
     if (checks.acled) checkBits.push('ACLED: ' + checks.acled);
     if (checkBits.length) html += '<p class="fact-checks">' + escapeHtml(checkBits.join(' · ')) + '</p>';
     html += '<h2 class="fact-section">Corroborated or recorded</h2>';
-    html += (brief.events && brief.events.length) ? renderFactItems(brief.events) : '<div class="empty-placeholder">No item met the corroboration rule in this run.</div>';
-    if (brief.single_outlet && brief.single_outlet.length) {
+    const eventCards = (brief.story_cards && brief.story_cards.events) || brief.events || [];
+    html += eventCards.length ? renderFactItems(eventCards) : '<div class="empty-placeholder">No item met the corroboration rule in this run.</div>';
+    const singleCards = (brief.story_cards && brief.story_cards.single_outlet) || brief.single_outlet || [];
+    if (singleCards.length) {
       html += '<h2 class="fact-section">One outlet only</h2>';
-      html += renderFactItems(brief.single_outlet);
+      html += renderFactItems(singleCards);
     }
-    if (brief.statements && brief.statements.length) {
+    const statementCards = (brief.story_cards && brief.story_cards.statements) || brief.statements || [];
+    if (statementCards.length) {
       html += '<h2 class="fact-section">Statements</h2>';
-      html += renderFactItems(brief.statements);
+      html += renderFactItems(statementCards);
     }
     const sources = brief.sources || [];
     if (sources.length) {

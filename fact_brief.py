@@ -1053,6 +1053,172 @@ def _sort_key(event):
     return (rank, event.get("published") or "")
 
 
+def _card_category(event):
+    classes = [
+        (instrument.get("event_class") or "")
+        for instrument in event.get("instruments") or []
+        if instrument.get("event_class") not in (None, "", "other")
+    ]
+    if "earthquake" in classes or "volcano" in classes or "storm" in classes or "flood" in classes or "fire" in classes or "landslide" in classes:
+        return "environment"
+    text = " ".join(event.get("paragraphs") or []) + " " + (event.get("headline") or "")
+    low = text.lower()
+    if any(word in low for word in ("killed", "strike", "attack", "war", "conflict", "ceasefire", "missile")):
+        return "conflict-war"
+    if any(word in low for word in ("election", "parliament", "president", "minister", "court", "arrest")):
+        return "politics"
+    if any(word in low for word in ("bank", "oil", "market", "inflation", "sanctions")):
+        return "economics"
+    return "politics"
+
+
+def _card_region(event):
+    text = (event.get("headline") or "") + " " + " ".join(event.get("paragraphs") or [])
+    places = find_places(text)
+    region_for = {
+        "middle-east": [
+            "iran", "iraq", "syria", "israel", "gaza", "lebanon", "yemen", "saudi arabia",
+            "jordan", "qatar", "united arab emirates", "bahrain", "oman", "palestine",
+            "tehran", "baghdad", "damascus", "beirut", "sanaa", "rafah", "jerusalem", "tel aviv",
+        ],
+        "europe": [
+            "ukraine", "kyiv", "kharkiv", "odesa", "germany", "france", "united kingdom",
+            "poland", "spain", "italy", "romania", "greece", "belgium", "netherlands",
+            "london", "paris", "berlin", "brussels", "madrid", "rome", "vienna", "geneva",
+        ],
+        "africa": [
+            "sudan", "darfur", "el fasher", "khartoum", "ethiopia", "kenya", "nigeria",
+            "mali", "niger", "somalia", "south africa", "mozambique", "chad", "ghana",
+            "addis ababa", "nairobi", "lagos", "abuja", "bamako", "mogadishu",
+        ],
+        "asia-pacific": [
+            "china", "taiwan", "japan", "south korea", "north korea", "philippines",
+            "indonesia", "malaysia", "vietnam", "thailand", "australia", "new zealand",
+            "beijing", "shanghai", "hong kong", "tokyo", "seoul", "pyongyang", "taipei",
+            "manila", "jakarta", "vanuatu", "port-olry", "port vila",
+        ],
+        "americas": [
+            "united states", "canada", "mexico", "brazil", "colombia", "venezuela",
+            "argentina", "peru", "chile", "panama", "cuba", "haiti",
+            "los angeles", "san francisco", "california", "florida", "texas", "hawaii", "alaska",
+            "mexico city", "brasilia", "sao paulo", "bogota", "caracas", "lima",
+        ],
+        "russia-fsu": [
+            "russia", "moscow", "belarus", "minsk", "kazakhstan", "uzbekistan",
+            "georgia", "armenia", "azerbaijan", "kyrgyzstan", "tajikistan", "turkmenistan",
+            "st petersburg",
+        ],
+        "south-asia": [
+            "india", "pakistan", "bangladesh", "sri lanka", "afghanistan", "nepal", "myanmar",
+            "new delhi", "mumbai", "islamabad", "karachi", "kabul", "dhaka",
+        ],
+    }
+    for region, names in region_for.items():
+        if any(place in places for place in names):
+            return region
+    return "global"
+
+
+def _card_location(event):
+    text = (event.get("headline") or "") + " " + " ".join(event.get("paragraphs") or [])
+    places = find_places(text)
+    if not places:
+        return ""
+    preferred = [place for place in places if place not in LARGE_PLACES] or places
+    name = max(preferred, key=len)
+    return name.title()
+
+
+def _card_badge(labels):
+    if "sensor-confirmed" in labels:
+        return "SENSOR RECORD", "b-verified"
+    if "satellite-mapped" in labels:
+        return "SATELLITE MAP", "b-corroborated"
+    if "multi-source" in labels:
+        return "MULTI-SOURCE", "b-corroborated"
+    if "dataset-record" in labels:
+        return "DATASET", "b-single"
+    if "single-outlet" in labels:
+        return "ONE OUTLET", "b-single"
+    if "statement" in labels:
+        return "STATEMENT", "b-unverified"
+    return "RECORDED", "b-single"
+
+
+def event_to_story_card(event, section="events"):
+    """Shape a fact event as a story card. No analysis fields."""
+    labels = list(event.get("labels") or [])
+    paragraphs = list(event.get("paragraphs") or [])
+    outlets = event.get("outlets") or []
+    sources = list(dict.fromkeys(outlet["name"] for outlet in outlets if outlet.get("name")))
+    badge, badge_class = _card_badge(labels)
+    summary = paragraphs[0] if paragraphs else (event.get("headline") or "")
+    known = paragraphs[1:] if len(paragraphs) > 1 else []
+    instruments = [
+        {
+            "source": instrument.get("source"),
+            "observation": instrument.get("observation"),
+            "url": instrument.get("url") or "",
+            "confirms": bool(instrument.get("confirms")),
+        }
+        for instrument in event.get("instruments") or []
+        if instrument.get("observation")
+    ]
+    imagery = event.get("imagery")
+    card = {
+        "id": event.get("id"),
+        "headline": event.get("headline") or "",
+        "summary": summary,
+        "what_is_known": known,
+        "paragraphs": paragraphs,
+        "labels": labels,
+        "section": section,
+        "category": _card_category(event),
+        "region": _card_region(event),
+        "location": _card_location(event),
+        "published": event.get("published") or "",
+        "updated": event.get("published") or "",
+        "sources": sources,
+        "source_count": len(sources),
+        "article_urls": [outlet.get("url") for outlet in outlets if outlet.get("url")],
+        "outlets": outlets,
+        "instruments": instruments,
+        "figures": event.get("figures") or [],
+        "lat": event.get("lat"),
+        "lon": event.get("lon"),
+        "imagery": imagery,
+        "confidence_badge": badge,
+        "confidence_badge_class": badge_class,
+        "confidence": "high" if badge in ("SENSOR RECORD", "SATELLITE MAP", "MULTI-SOURCE") else "medium" if badge != "STATEMENT" else "low",
+        "confidence_reason": "Labels: " + ", ".join(labels) if labels else "Listed in the fact brief.",
+        # Keep analysis fields empty so older renderers cannot invent a narrative.
+        "who_benefits": None,
+        "significance": "",
+        "contested_claim": "",
+        "paragraph_2_connections": "",
+        "paragraph_3_watch": "",
+        "paragraph_4_buried": "",
+        "ground_truth": "",
+        "edition": "fact",
+    }
+    if "figures-differ" in labels:
+        card["has_figure_conflict"] = True
+    return card
+
+
+def attach_story_cards(brief):
+    for section in ("events", "single_outlet", "statements"):
+        for event in brief.get(section) or []:
+            event["story_card"] = event_to_story_card(event, section=section)
+    brief["top_stories"] = [event["story_card"] for event in (brief.get("events") or [])]
+    brief["story_cards"] = {
+        "events": [event["story_card"] for event in (brief.get("events") or [])],
+        "single_outlet": [event["story_card"] for event in (brief.get("single_outlet") or [])],
+        "statements": [event["story_card"] for event in (brief.get("statements") or [])],
+    }
+    return brief
+
+
 def assemble_brief(articles, now=None):
     now = now or utc_now()
     for article in articles:
@@ -1238,4 +1404,5 @@ def build_fact_brief(now=None):
         attach_imagery(brief)
     except Exception as exc:
         brief["checks"]["sentinel2"] = str(exc.__class__.__name__)
+    attach_story_cards(brief)
     return brief

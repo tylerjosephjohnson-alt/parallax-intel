@@ -5,6 +5,7 @@ from fact_brief import (
     IMAGERY_NOTE,
     METHOD,
     assemble_brief,
+    attach_story_cards,
     include_nhc_title,
     instrument_confirms,
     parse_feed_items,
@@ -128,6 +129,29 @@ class FactBriefTests(unittest.TestCase):
         names = {feed["source"].lower() for feed in FACT_FEEDS}
         for excluded in ("seymour hersh", "isw", "war on the rocks", "caitlin johnstone", "substack"):
             self.assertNotIn(excluded, names)
+
+    def test_story_cards_are_attached_without_analysis(self):
+        brief = assemble_brief([
+            article("Ceasefire talks resume in Gaza", "BBC", "bbc"),
+            article("Ceasefire talks resume in Gaza", "France 24", "france24"),
+            article(
+                "M 6.0 - 186 km NW of Port-Olry, Vanuatu",
+                "USGS", "usgs", standing="record", event_class="earthquake",
+                lat=-14.05, lon=165.67,
+                observation="USGS recorded a magnitude 6.0 earthquake near Vanuatu.",
+            ),
+        ])
+        attach_story_cards(brief)
+        self.assertEqual(len(brief["top_stories"]), 2)
+        card = next(item for item in brief["top_stories"] if "Gaza" in item["headline"])
+        self.assertEqual(card["confidence_badge"], "MULTI-SOURCE")
+        self.assertEqual(card["sources"], ["BBC", "France 24"])
+        self.assertEqual(card["who_benefits"], None)
+        self.assertEqual(card["significance"], "")
+        self.assertEqual(card["edition"], "fact")
+        quake = next(item for item in brief["top_stories"] if "Vanuatu" in item["headline"])
+        self.assertEqual(quake["confidence_badge"], "SENSOR RECORD")
+        self.assertEqual(quake["category"], "environment")
 
     def test_routine_hurricane_outlook_is_excluded_and_products_collapse(self):
         self.assertFalse(include_nhc_title("There are no tropical cyclones at this time."))
