@@ -8,7 +8,8 @@ interpreted. Copernicus map products are included only as that service
 published them.
 
 The wording around each item is a template. Source headlines are copied,
-not rewritten.
+not rewritten. Where a source summary or advisory text answers who, where,
+category, or what an acronym names, that published wording is included.
 """
 
 from __future__ import annotations
@@ -40,6 +41,32 @@ SINGLE_TOPIC_FLOOR = {
     "stability": 3,
 }
 USER_AGENT = "VantageFactBrief/1.0"
+SUMMARY_CHARS = 700
+
+# Expand on first mention so cards do not leave acronyms unexplained.
+ACRONYMS = {
+    "MSCI": "Morgan Stanley Capital International, a global equity-index provider",
+    "AI": "artificial intelligence",
+    "NHC": "National Hurricane Center",
+    "OPEC": "Organization of the Petroleum Exporting Countries",
+    "GDP": "gross domestic product",
+    "IMF": "International Monetary Fund",
+    "NATO": "North Atlantic Treaty Organization",
+    "LNG": "liquefied natural gas",
+    "ECB": "European Central Bank",
+    "BoE": "Bank of England",
+    "BOE": "Bank of England",
+    "BoJ": "Bank of Japan",
+    "BOJ": "Bank of Japan",
+    "CPI": "consumer price index",
+    "WTI": "West Texas Intermediate, a US crude-oil benchmark",
+    "IRGC": "Islamic Revolutionary Guard Corps",
+    "CEO": "chief executive officer",
+    "IPO": "initial public offering",
+    "EU": "European Union",
+    "UN": "United Nations",
+    "USGS": "US Geological Survey",
+}
 
 # Higher score = higher in the brief. Environment sensors stay in the brief,
 # but war, economy, persecution, and stability come first.
@@ -282,6 +309,8 @@ METHOD = (
     "A report is included when at least two independent news or OSINT outlets published it, "
     "or when a measurement institution recorded it. "
     "State and government outlets are quoted as statements and are not counted as confirmation. "
+    "Source summaries and National Hurricane Center advisory text are included when they answer "
+    "who, where, category, winds, or what an acronym names. Common acronyms are expanded on first mention. "
     "A Sentinel-2 scene, when listed, is a file covering that location. The image is not interpreted. "
     "A Copernicus Emergency Management Service entry is included only when that service published map products. "
     "USGS earthquakes are included at magnitude 5.5 or higher. "
@@ -561,7 +590,7 @@ def parse_feed_items(xml_bytes):
         if title and len(title) >= 8:
             items.append({
                 "title": title,
-                "summary": summary[:500],
+                "summary": summary[:SUMMARY_CHARS],
                 "url": link,
                 "published_raw": published,
                 "lat": lat,
@@ -592,17 +621,23 @@ def fetch_feed(feed, now=None):
         title = item["title"]
         if "nhc.noaa.gov" in feed["url"] and not include_nhc_title(title):
             continue
-        if "nhc.noaa.gov" in feed["url"]:
-            item["summary"] = ""
         text = title + " " + item["summary"]
         observation = None
+        summary = item["summary"]
         if feed["standing"] == "record":
-            observation = f"{feed['source']} published: {title}."
-            if item["summary"] and "nhc.noaa.gov" not in feed["url"]:
-                observation += " " + item["summary"]
+            if "nhc.noaa.gov" in feed["url"]:
+                observation, summary, lat_lon = nhc_observation_from_advisory(
+                    feed["source"], title, item.get("url") or ""
+                )
+                if lat_lon[0] is not None:
+                    item["lat"], item["lon"] = lat_lon
+            else:
+                observation = f"{feed['source']} published: {title}."
+                if summary:
+                    observation += " " + expand_acronyms(summary)
         articles.append({
             "title": title,
-            "summary": item["summary"],
+            "summary": summary,
             "url": item["url"],
             "source": feed["source"],
             "org": feed["org"],
@@ -996,6 +1031,167 @@ def conflicting_figures(articles):
     return conflicts
 
 
+def expand_acronyms(text):
+    """Expand known acronyms on first mention. Does not invent facts."""
+    if not text:
+        return text
+    used = set()
+
+    def _replace(match):
+        token = match.group(0)
+        key = token.upper() if token.upper() in ACRONYMS else token
+        # Prefer the glossary key that matches this casing variant.
+        meaning = ACRONYMS.get(token) or ACRONYMS.get(token.upper()) or ACRONYMS.get(key)
+        if not meaning:
+            for candidate, value in ACRONYMS.items():
+                if candidate.lower() == token.lower():
+                    meaning = value
+                    key = candidate
+                    break
+        if not meaning or key.upper() in used:
+            return token
+        used.add(key.upper())
+        return f"{token} ({meaning})"
+
+    # Longer keys first so BoE wins over bare letters if both appear.
+    keys = sorted(ACRONYMS.keys(), key=len, reverse=True)
+    pattern = r"\b(" + "|".join(re.escape(key) for key in keys) + r")\b"
+    return re.sub(pattern, _replace, text)
+
+
+def _clean_advisory_chunk(text):
+    text = re.sub(r"\s+", " ", (text or "").replace("\n", " ")).strip()
+    text = re.sub(r"\s+\.", ".", text)
+    return text.strip(" -")
+
+
+def parse_nhc_advisory_text(text):
+    """Pull who/where/category/winds/watches/hazards from an NHC bulletin."""
+    facts = {}
+    if not text:
+        return facts
+    kind = re.search(
+        r"\b(Tropical Storm|Hurricane|Tropical Depression|Post-Tropical Cyclone)\s+([A-Za-z]+)\b",
+        text,
+        re.I,
+    )
+    if kind:
+        facts["category"] = kind.group(1).title().replace("Post-Tropical Cyclone", "Post-tropical cyclone")
+        facts["name"] = kind.group(2).title()
+        facts["label"] = f"{facts['category']} {facts['name']}"
+    about = re.search(r"ABOUT\s+([^\n]+)", text, re.I)
+    if about:
+        facts["location_text"] = _clean_advisory_chunk(about.group(1).replace("...", " / "))
+    winds = re.search(r"MAXIMUM SUSTAINED WINDS\.\.\.([^\n]+)", text, re.I)
+    if winds:
+        facts["winds"] = _clean_advisory_chunk(winds.group(1).replace("...", " / "))
+    lat = re.search(r"LOCATION\.\.\.([0-9.]+[NS])\s+([0-9.]+[EW])", text, re.I)
+    if lat:
+        facts["lat_text"] = f"{lat.group(1)} {lat.group(2)}"
+        # Convert 19.5N 108.5W style to floats when possible.
+        def _coord(raw, positive):
+            value = float(re.sub(r"[NSEW]", "", raw, flags=re.I))
+            if re.search(r"[SW]$", raw, re.I):
+                value = -value
+            return value
+        try:
+            facts["lat"] = _coord(lat.group(1), "N")
+            facts["lon"] = _coord(lat.group(2), "E")
+        except ValueError:
+            pass
+    watches = re.search(
+        r"WATCHES AND WARNINGS\s*-+\s*(.+?)(?:DISCUSSION AND OUTLOOK|HAZARDS AFFECTING LAND|NEXT ADVISORY)",
+        text,
+        re.I | re.S,
+    )
+    if watches:
+        facts["watches"] = _clean_advisory_chunk(watches.group(1))
+    hazards = re.search(
+        r"HAZARDS AFFECTING LAND\s*-+\s*(.+?)(?:NEXT ADVISORY|\$\$)",
+        text,
+        re.I | re.S,
+    )
+    if hazards:
+        facts["hazards"] = _clean_advisory_chunk(hazards.group(1))
+    return facts
+
+
+def fetch_nhc_advisory_body(url):
+    if not url:
+        return ""
+    try:
+        payload = fetch_bytes(url, timeout=12).decode("utf-8", "replace")
+    except (HTTPError, URLError, TimeoutError, OSError, UnicodeDecodeError):
+        return ""
+    match = re.search(r"<pre[^>]*>(.*?)</pre>", payload, re.I | re.S)
+    if not match:
+        return ""
+    text = match.group(1)
+    text = (
+        text.replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+    )
+    return text
+
+
+def nhc_observation_from_advisory(source, title, url):
+    """Build a fact line that answers category, where, winds, and who is affected."""
+    body = fetch_nhc_advisory_body(url)
+    facts = parse_nhc_advisory_text(body)
+    lat_lon = (facts.get("lat"), facts.get("lon"))
+    if not facts:
+        return f"{source} published: {title}.", "", (None, None)
+    bits = [f"{source} published a public advisory for {facts.get('label') or title}."]
+    if facts.get("category") and facts.get("name"):
+        bits.append(f"Classification on that advisory: {facts['category']} {facts['name']}.")
+    if facts.get("location_text"):
+        bits.append(f"Center location on that advisory: {facts['location_text']}.")
+    elif facts.get("lat_text"):
+        bits.append(f"Center location on that advisory: {facts['lat_text']}.")
+    if facts.get("winds"):
+        bits.append(f"Maximum sustained winds on that advisory: {facts['winds']}.")
+    if facts.get("watches"):
+        bits.append(f"Watches and warnings on that advisory: {facts['watches'].rstrip('.')}." )
+    if facts.get("hazards"):
+        bits.append(f"Land hazards on that advisory: {facts['hazards'].rstrip('.')}." )
+    observation = " ".join(bits)
+    # Keep summary short and distinct so the card does not repeat the advisory twice.
+    summary = facts.get("hazards") or facts.get("location_text") or ""
+    return observation, summary, lat_lon
+
+
+def published_context_lines(cluster, headline):
+    """Use outlet summaries to answer who/what/where left open by the headline."""
+    lines = []
+    seen = set()
+    # Prefer report summaries, then statements, then record summaries.
+    ordered = sorted(
+        cluster,
+        key=lambda article: {"report": 0, "statement": 1, "record": 2}.get(article.get("standing"), 3),
+    )
+    for article in ordered:
+        summary = (article.get("summary") or "").strip()
+        if len(summary) < 28:
+            continue
+        if jaccard(tokens(summary), tokens(headline)) >= 0.72:
+            continue
+        key = re.sub(r"\s+", " ", summary.lower())[:140]
+        if key in seen:
+            continue
+        seen.add(key)
+        # One clean sentence from the publisher. Expand acronyms once.
+        clipped = summary
+        if len(clipped) > 420:
+            clipped = clipped[:417].rsplit(" ", 1)[0] + "..."
+        clipped = expand_acronyms(clipped.rstrip(" ."))
+        lines.append(f"{article['source']} published: {clipped}.")
+        if len(lines) >= 2:
+            break
+    return lines
+
+
 def choose_headline(articles):
     reports = [article for article in articles if article["standing"] == "report"] or articles
     preferred = [article for article in reports if re.search(r"public advisory", article["title"], re.I)]
@@ -1008,7 +1204,8 @@ def choose_headline(articles):
                 continue
             shared += len(title_tokens & tokens(other["title"]))
         return (shared, -len(article["title"]))
-    return max(reports, key=score)["title"]
+    # Expand acronyms in the displayed headline so "MSCI" / "AI" are not left bare.
+    return expand_acronyms(max(reports, key=score)["title"])
 
 
 def unique_sources(articles, standing):
@@ -1074,18 +1271,30 @@ def _paragraphs(cluster, confirmed, nearby, conflicts):
     statements = unique_sources(cluster, "statement")
     records = [article for article in cluster if article["standing"] == "record" and article.get("observation")]
     paragraphs = []
+    headline = choose_headline(cluster)
     if reports:
-        paragraphs.append(choose_headline(cluster))
+        paragraphs.append(headline)
+        paragraphs.extend(published_context_lines(cluster, headline))
         paragraphs.append(
             f"Reported by {len(reports)} independent outlets: {', '.join(reports)}."
         )
     elif records:
-        paragraphs.append(records[0]["observation"])
+        lead = expand_acronyms(records[0]["observation"])
+        paragraphs.append(lead)
+        # Record observations already carry advisory/sensor detail; only add
+        # attributed lines that are not already inside the lead observation.
+        for line in published_context_lines(cluster, records[0].get("title") or headline):
+            body = line.split(" published: ", 1)[-1].rstrip(".")
+            if body and body in lead:
+                continue
+            if line not in paragraphs:
+                paragraphs.append(line)
         extra = [article["source"] for article in records[1:]]
         if extra:
             paragraphs.append("Also recorded by " + ", ".join(dict.fromkeys(extra)) + ".")
     else:
-        paragraphs.append(choose_headline(cluster))
+        paragraphs.append(headline)
+        paragraphs.extend(published_context_lines(cluster, headline))
     if statements and reports:
         paragraphs.append(
             "Also published by " + ", ".join(statements) + ". Those outlets are not counted as confirmation."
@@ -1097,14 +1306,18 @@ def _paragraphs(cluster, confirmed, nearby, conflicts):
     if conflicts:
         bits = [f"{row['source']} published {row['value']} {row['label']}" for row in conflicts]
         paragraphs.append("The published figures differ: " + "; ".join(bits) + ".")
-    seen_obs = set()
+    seen_obs = set(paragraphs)
     for instrument in confirmed:
-        obs = instrument.get("observation")
-        if obs and obs not in seen_obs and obs not in paragraphs:
-            seen_obs.add(obs)
-            paragraphs.append(obs)
+        obs = expand_acronyms(instrument.get("observation") or "")
+        if not obs or obs in seen_obs:
+            continue
+        # Skip instrument lines already covered by the lead advisory text.
+        if any(obs in paragraph or paragraph in obs for paragraph in paragraphs):
+            continue
+        seen_obs.add(obs)
+        paragraphs.append(obs)
     for instrument in nearby:
-        obs = instrument.get("observation")
+        obs = expand_acronyms(instrument.get("observation") or "")
         if not obs or obs in seen_obs:
             continue
         seen_obs.add(obs)
@@ -1332,8 +1545,18 @@ def event_to_story_card(event, section="events"):
     outlets = event.get("outlets") or []
     sources = list(dict.fromkeys(outlet["name"] for outlet in outlets if outlet.get("name")))
     badge, badge_class = _card_badge(labels)
-    summary = paragraphs[0] if paragraphs else (event.get("headline") or "")
-    known = paragraphs[1:] if len(paragraphs) > 1 else []
+    headline = event.get("headline") or (paragraphs[0] if paragraphs else "")
+    # Prefer the first attributed context line so the card answers who/where/what.
+    context = next(
+        (
+            paragraph
+            for paragraph in paragraphs
+            if " published:" in paragraph or " published a public advisory" in paragraph
+        ),
+        "",
+    )
+    summary = context or (paragraphs[0] if paragraphs else headline)
+    known = [paragraph for paragraph in paragraphs if paragraph not in (headline, summary)]
     instruments = [
         {
             "source": instrument.get("source"),
