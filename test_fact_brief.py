@@ -6,6 +6,7 @@ from fact_brief import (
     METHOD,
     assemble_brief,
     attach_story_cards,
+    event_topic,
     include_nhc_title,
     instrument_confirms,
     parse_feed_items,
@@ -129,6 +130,48 @@ class FactBriefTests(unittest.TestCase):
         names = {feed["source"].lower() for feed in FACT_FEEDS}
         for excluded in ("seymour hersh", "isw", "war on the rocks", "caitlin johnstone", "substack"):
             self.assertNotIn(excluded, names)
+
+    def test_priority_topics_outrank_environment_sensors(self):
+        brief = assemble_brief([
+            article("Ceasefire talks resume in Gaza", "BBC", "bbc"),
+            article("Ceasefire talks resume in Gaza", "France 24", "france24"),
+            article("Inflation cools in the euro area", "FT", "ft", summary="Consumer prices fell and markets rose."),
+            article("Inflation cools in the euro area", "Bloomberg", "bloomberg", summary="Central bank data showed inflation easing."),
+            article(
+                "Crackdown detains hundreds of political prisoners",
+                "HRW", "hrw", summary="A human rights crackdown and mass detention were reported.",
+            ),
+            article(
+                "Crackdown detains hundreds of political prisoners",
+                "Amnesty International", "amnesty", summary="Persecution and detention of opponents continued.",
+            ),
+            article(
+                "M 6.0 - 186 km NW of Port-Olry, Vanuatu",
+                "USGS", "usgs", standing="record", event_class="earthquake",
+                lat=-14.05, lon=165.67,
+                observation="USGS recorded a magnitude 6.0 earthquake near Vanuatu.",
+            ),
+            article(
+                "Green flood alert in Spain",
+                "GDACS", "gdacs", standing="record", event_class="flood",
+                lat=41.4, lon=2.2,
+                observation="GDACS published: Green flood alert in Spain.",
+            ),
+            article(
+                "Tropical Storm Trudy Public Advisory Number 24",
+                "NHC Pacific", "nhc", standing="record", event_class="storm",
+                observation="NHC Pacific published: Tropical Storm Trudy Public Advisory Number 24.",
+            ),
+        ])
+        topics = [event.get("topic") or event_topic(event) for event in brief["events"]]
+        self.assertIn("conflict-war", topics)
+        self.assertIn("economics", topics)
+        self.assertIn("persecution", topics)
+        self.assertLessEqual(topics.count("environment"), 5)
+        # First items should be priority topics, not storms/quakes.
+        top_topics = [event_topic(event) for event in brief["events"][:3]]
+        self.assertTrue(all(topic != "environment" for topic in top_topics))
+        self.assertIn("Priority topics are war, economy, persecution, and stability", METHOD)
 
     def test_story_cards_are_attached_without_analysis(self):
         brief = assemble_brief([

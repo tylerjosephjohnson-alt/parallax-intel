@@ -1583,13 +1583,20 @@
     const region = card.region || 'global';
     const category = (card.category || '').toLowerCase();
     const topicRaw = category || region;
-    const topicLabel = topicRaw === 'middle-east' ? 'Middle East' :
+    const topicLabel = topicRaw === 'conflict-war' ? 'War' :
+      topicRaw === 'persecution' ? 'Persecution' :
+      topicRaw === 'stability' ? 'Stability' :
+      topicRaw === 'economics' ? 'Economy' :
+      topicRaw === 'environment' ? 'Environment' :
+      topicRaw === 'middle-east' ? 'Middle East' :
       topicRaw === 'east-asia' ? 'East Asia' :
       topicRaw === 'asia-pacific' ? 'Asia Pacific' :
       topicRaw === 'russia-fsu' ? 'Russia / FSU' :
       topicRaw.split('-').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
     let tpClass = '';
     if (category === 'conflict-war') tpClass = 'tp-conflict';
+    else if (category === 'persecution') tpClass = 'tp-humanrights';
+    else if (category === 'stability') tpClass = 'tp-politics';
     else if (category === 'politics') tpClass = 'tp-politics';
     else if (category === 'economics') tpClass = 'tp-economics';
     else if (category === 'environment') tpClass = 'tp-environment';
@@ -1683,6 +1690,16 @@
   function renderFactBrief(brief) {
     let html = '<p class="fact-method">' + escapeHtml(brief.method || '') + '</p>';
     html += '<p class="fact-count">' + escapeHtml(brief.headline_brief || '') + '</p>';
+    const counts = brief.counts || {};
+    if (counts.war != null || counts.economy != null) {
+      html += '<p class="fact-checks">' + escapeHtml(
+        'Priority: War ' + (counts.war || 0) +
+        ' · Economy ' + (counts.economy || 0) +
+        ' · Persecution ' + (counts.persecution || 0) +
+        ' · Stability ' + (counts.stability || 0) +
+        ' · Environment ' + (counts.environment || 0)
+      ) + '</p>';
+    }
     const checks = brief.checks || {};
     const checkBits = [];
     if (checks.sentinel2) checkBits.push('Sentinel-2 search: ' + checks.sentinel2);

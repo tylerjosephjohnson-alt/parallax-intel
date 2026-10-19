@@ -29,9 +29,53 @@ SENSOR_LOOKBACK_HOURS = 72
 EMS_LOOKBACK_HOURS = 240
 MAX_PER_FEED = 12
 MAX_EVENTS = 40
+MAX_ENVIRONMENT_EVENTS = 5
 MAX_SINGLE = 20
 MAX_STATEMENTS = 12
 USER_AGENT = "VantageFactBrief/1.0"
+
+# Higher score = higher in the brief. Environment sensors stay in the brief,
+# but war, economy, persecution, and stability come first.
+TOPIC_PRIORITY = {
+    "conflict-war": 500,
+    "persecution": 450,
+    "stability": 400,
+    "economics": 350,
+    "politics": 200,
+    "environment": 50,
+    "other": 20,
+}
+
+WAR_TERMS = (
+    "war", "warfare", "armed conflict", "conflict", "battlefield", "offensive",
+    "airstrike", "air strike", "missile", "drone strike", "artillery", "ceasefire",
+    "invasion", "occupied", "front line", "frontline", "militia", "insurgent",
+    "combat", "shelling", "troops", "military", "armed forces", "hostage",
+    "attack", "killed", "drone attack", "missile attack", "rocket attack",
+    "mortar", "bombardment", "ground offensive", "air raid", "warplane", "fighter jet",
+)
+PERSECUTION_TERMS = (
+    "persecution", "persecuted", "genocide", "ethnic cleansing", "mass detention",
+    "detention camp", "forced labor", "forced labour", "human rights", "crackdown",
+    "political prisoner", "prisoner of conscience", "refugee", "asylum", "deportation",
+    "expelled", "pogrom", "atrocity", "war crime", "crimes against humanity",
+    "torture", "disappeared", "extrajudicial", "lynching", "sectarian",
+)
+STABILITY_TERMS = (
+    "coup", "martial law", "state of emergency", "government collapse",
+    "no-confidence", "impeachment", "regime", "sanctions", "diplomatic",
+    "ambassador", "nuclear", "proliferation", "alliance", "nato", "unrest",
+    "riots", "uprising", "insurrection", "secession", "sovereignty",
+    "border clash", "mobilization", "mobilisation", "conscription",
+    "power grid", "blackout", "martial", "resolution", "security council",
+)
+ECONOMY_TERMS = (
+    "inflation", "interest rate", "central bank", "recession", "gdp",
+    "sanctions", "tariff", "trade war", "oil price", "crude", "market crash",
+    "stock market", "currency", "debt default", "bailout", "imf", "world bank",
+    "unemployment", "supply chain", "commodity", "budget deficit", "fiscal",
+    "energy crisis", "gas price", "wheat", "grain corridor", "shipping lane",
+)
 
 # Approximate gazetteer points are used only to decide whether an instrument
 # reading is near a reported place. They are not shown as measurements.
@@ -194,6 +238,9 @@ SATELLITE_ORGS = {"copernicus-ems"}
 
 METHOD = (
     "This brief states only what a source or an instrument published. "
+    "Priority topics are war, economy, persecution, and stability. "
+    "Environment and natural-hazard sensor records are kept, but ranked below those topics "
+    f"and capped at {MAX_ENVIRONMENT_EVENTS} items. "
     "A report is included when at least two independent news or OSINT outlets published it, "
     "or when a measurement institution recorded it. "
     "State and government outlets are quoted as statements and are not counted as confirmation. "
@@ -393,6 +440,11 @@ def related(left, right):
         ):
             return True
         return False
+    # Same or near-same headline from two outlets is enough even when
+    # summaries diverge (common for wire copy and rights-group releases).
+    title_score = jaccard(tokens(left.get("title") or ""), tokens(right.get("title") or ""))
+    if title_score >= 0.7:
+        return True
     score = jaccard(tokens(left_text), tokens(right_text))
     if score >= 0.45:
         return True
@@ -1042,38 +1094,104 @@ def _labels(cluster, promoting, conflicts):
     return labels
 
 
-def _sort_key(event):
-    rank = 0
-    labels = event["labels"]
-    if "sensor-confirmed" in labels or "satellite-mapped" in labels:
-        rank += 100
-    if "dataset-record" in labels:
-        rank += 40
-    rank += 10 * event["independent_outlet_count"]
-    return (rank, event.get("published") or "")
+def _text_has_term(text, terms):
+    """Match whole terms only (word boundaries). Avoids 'war' in 'warning'."""
+    low = " " + re.sub(r"\s+", " ", (text or "").lower()) + " "
+    for term in terms:
+        needle = f" {term} "
+        if needle in low:
+            return True
+        # Allow simple plural/suffix when the term is a single word.
+        if " " not in term and re.search(rf"\b{re.escape(term)}s?\b", low):
+            return True
+    return False
 
 
-def _card_category(event):
+def event_topic(event):
+    """Assign one priority topic. War / persecution / stability / economy first."""
+    text = (event.get("headline") or "") + " " + " ".join(event.get("paragraphs") or [])
     classes = [
         (instrument.get("event_class") or "")
         for instrument in event.get("instruments") or []
         if instrument.get("event_class") not in (None, "", "other")
     ]
-    if "earthquake" in classes or "volcano" in classes or "storm" in classes or "flood" in classes or "fire" in classes or "landslide" in classes:
-        return "environment"
-    text = " ".join(event.get("paragraphs") or []) + " " + (event.get("headline") or "")
-    low = text.lower()
-    if any(word in low for word in ("killed", "strike", "attack", "war", "conflict", "ceasefire", "missile")):
+    is_hazard = any(
+        kind in ("earthquake", "volcano", "storm", "flood", "fire", "landslide")
+        for kind in classes
+    ) or _text_has_term(
+        text,
+        ("earthquake", "magnitude", "tropical storm", "hurricane", "typhoon", "flood alert", "wildfire", "volcano"),
+    )
+
+    if _text_has_term(text, WAR_TERMS):
         return "conflict-war"
-    if any(word in low for word in ("election", "parliament", "president", "minister", "court", "arrest")):
-        return "politics"
-    if any(word in low for word in ("bank", "oil", "market", "inflation", "sanctions")):
+    if _text_has_term(text, PERSECUTION_TERMS):
+        return "persecution"
+    if _text_has_term(text, STABILITY_TERMS):
+        return "stability"
+    if _text_has_term(text, ECONOMY_TERMS):
         return "economics"
+    if _text_has_term(text, ("election", "parliament", "president", "minister", "court", "arrest", "protest", "vote", "cabinet")):
+        return "politics"
+    if is_hazard:
+        return "environment"
     return "politics"
 
 
+def _is_environment_event(event):
+    return event_topic(event) == "environment"
+
+
+def _sort_key(event):
+    labels = event["labels"]
+    topic = event.get("topic") or event_topic(event)
+    rank = TOPIC_PRIORITY.get(topic, TOPIC_PRIORITY["other"])
+    if "multi-source" in labels:
+        rank += 80
+    if "sensor-confirmed" in labels or "satellite-mapped" in labels:
+        # Sensor confirmation still matters, but not more than topic priority.
+        rank += 25 if topic != "environment" else 10
+    if "dataset-record" in labels:
+        rank += 15
+    if "figures-differ" in labels:
+        rank += 5
+    rank += 12 * event.get("independent_outlet_count", 0)
+    return (rank, event.get("published") or "")
+
+
+def _card_category(event):
+    return event.get("topic") or event_topic(event)
+
+
+def prioritize_events(events):
+    """Keep priority topics first; cap environment-only hazard records."""
+    for event in events:
+        event["topic"] = event_topic(event)
+    priority = [event for event in events if not _is_environment_event(event)]
+    environment = [event for event in events if _is_environment_event(event)]
+    priority.sort(key=_sort_key, reverse=True)
+    environment.sort(key=_sort_key, reverse=True)
+    environment = environment[:MAX_ENVIRONMENT_EVENTS]
+    combined = priority + environment
+    truncated_environment = len([event for event in events if _is_environment_event(event)]) > MAX_ENVIRONMENT_EVENTS
+    return combined[:MAX_EVENTS], truncated_environment
+
+
+def _story_place_text(event):
+    """Headline plus fact lines, excluding outlet-attribution boilerplate."""
+    parts = [event.get("headline") or ""]
+    for paragraph in event.get("paragraphs") or []:
+        low = (paragraph or "").lower()
+        if low.startswith("reported by ") or low.startswith("also recorded by "):
+            continue
+        if "independent outlets:" in low:
+            continue
+        parts.append(paragraph)
+    return " ".join(parts)
+
+
 def _card_region(event):
-    text = (event.get("headline") or "") + " " + " ".join(event.get("paragraphs") or [])
+    text = _story_place_text(event)
     places = find_places(text)
     region_for = {
         "middle-east": [
@@ -1120,7 +1238,7 @@ def _card_region(event):
 
 
 def _card_location(event):
-    text = (event.get("headline") or "") + " " + " ".join(event.get("paragraphs") or [])
+    text = _story_place_text(event)
     places = find_places(text)
     if not places:
         return ""
@@ -1284,24 +1402,27 @@ def assemble_brief(articles, now=None):
             ],
         }
         if "single-outlet" in labels and "sensor-confirmed" not in labels and "satellite-mapped" not in labels and "dataset-record" not in labels:
+            event["topic"] = event_topic(event)
             single.append(event)
         elif labels == ["statement"]:
+            event["topic"] = event_topic(event)
             statements.append(event)
         elif labels:
+            event["topic"] = event_topic(event)
             events.append(event)
-    events.sort(key=_sort_key, reverse=True)
-    single.sort(key=lambda item: item.get("published") or "", reverse=True)
+    events, truncated_environment = prioritize_events(events)
+    single.sort(key=_sort_key, reverse=True)
     statements.sort(key=lambda item: item.get("published") or "", reverse=True)
-    trimmed = len(events) > MAX_EVENTS
-    events = events[:MAX_EVENTS]
+    trimmed = truncated_environment or len(events) >= MAX_EVENTS
     return {
         "edition": "fact",
-        "rules_version": 1,
+        "rules_version": 2,
         "date": now.strftime("%A %d %B %Y"),
         "generated_at_iso": now.isoformat(),
         "generated_by": "Vantage fact brief",
         "headline_brief": "",
         "method": METHOD,
+        "priority_topics": ["conflict-war", "persecution", "stability", "economics"],
         "events": events,
         "single_outlet": single[:MAX_SINGLE],
         "statements": statements[:MAX_STATEMENTS],
@@ -1316,6 +1437,11 @@ def _fill_counts(brief, source_log):
         f"{len(brief['single_outlet'])} single-outlet reports, "
         f"{len(brief['statements'])} statements"
     )
+    topic_counts = {}
+    for event in brief.get("events") or []:
+        topic = event.get("topic") or event_topic(event)
+        event["topic"] = topic
+        topic_counts[topic] = topic_counts.get(topic, 0) + 1
     brief["counts"] = {
         "events": len(brief["events"]),
         "single_outlet": len(brief["single_outlet"]),
@@ -1323,6 +1449,12 @@ def _fill_counts(brief, source_log):
         "sensor_confirmed": sum("sensor-confirmed" in event["labels"] for event in brief["events"]),
         "satellite_mapped": sum("satellite-mapped" in event["labels"] for event in brief["events"]),
         "figures_differ": sum("figures-differ" in event["labels"] for event in brief["events"]),
+        "by_topic": topic_counts,
+        "war": topic_counts.get("conflict-war", 0),
+        "economy": topic_counts.get("economics", 0),
+        "persecution": topic_counts.get("persecution", 0),
+        "stability": topic_counts.get("stability", 0),
+        "environment": topic_counts.get("environment", 0),
     }
     brief["sources"] = source_log
     if brief["truncated"]:
